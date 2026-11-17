@@ -178,6 +178,9 @@ select.input{appearance:auto}
 
 .ringkasan-baris{display:flex;gap:32px;flex-wrap:wrap;margin-top:8px}
 .ringkasan-baris .skor{font-size:2rem}
+
+#kartu-ringkasan{cursor:pointer;transition:box-shadow .2s,border-color .2s}
+#kartu-ringkasan:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(37,99,235,.15)}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -190,7 +193,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   <nav class="nav">
     <a href="#" class="nav-link aktif" data-hal="menu">Beranda</a>
     <a href="#" class="nav-link" data-hal="bank">Bank Soal</a>
-    <a href="#" class="nav-link" data-hal="statistik">Statistik</a>
+    <a href="#" class="nav-link" data-hal="pengaturan">Pengaturan</a>
   </nav>
 </div></header>
 
@@ -219,10 +222,6 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <label class="chip"><input type="radio" name="mode" value="latihan" checked><span>Latihan</span></label>
         <label class="chip"><input type="radio" name="mode" value="tryout"><span>Try Out</span></label>
       </div>
-      <div id="blok-waktu" hidden>
-        <p class="label">Waktu per soal (Try Out)</p>
-        <div class="pilihan" id="pilih-waktu"></div>
-      </div>
       <p class="label">Jumlah soal</p>
       <div class="pilihan" id="pilih-jumlah">
         <label class="chip"><input type="radio" name="jumlah" value="5" checked><span>5</span></label>
@@ -247,6 +246,15 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 
   <section id="profil" class="halaman" hidden>
     <div class="card" id="kartu-profil"></div>
+  </section>
+
+  <section id="pengaturan" class="halaman" hidden>
+    <div class="card">
+      <h2>Pengaturan</h2>
+      <p class="label">Waktu per soal (Try Out)</p>
+      <div class="pilihan" id="pilih-waktu"></div>
+      <p class="muted info">Waktu ini berlaku untuk sesi Try Out berikutnya.</p>
+    </div>
   </section>
 
   <section id="kuis" class="halaman" hidden>
@@ -704,7 +712,7 @@ function isiOpsi(html) {
 }
 function tampil(id) {
   document.querySelectorAll('.halaman').forEach((h) => (h.hidden = h.id !== id));
-  const aktif = (id === 'statistik' || id === 'bank') ? id : 'menu';
+  const aktif = (id === 'statistik' || id === 'bank' || id === 'pengaturan') ? id : 'menu';
   const tombolProfil = $('btn-profil');
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
@@ -1599,6 +1607,7 @@ document.querySelectorAll('.nav-link').forEach((a) => a.addEventListener('click'
   }
   if (a.dataset.hal === 'statistik') renderStatistik();
   else if (a.dataset.hal === 'bank') renderBank();
+  else if (a.dataset.hal === 'pengaturan') tampil('pengaturan');
   else tampil('menu');
 }));
 
@@ -1639,7 +1648,8 @@ function renderBeranda() {
        <div class="ringkasan-baris">
          <div><div class="skor">${d.total}</div><p class="muted" style="margin:0">soal dikerjakan</p></div>
          <div><div class="skor">${Math.round((d.benar / d.total) * 100)}%</div><p class="muted" style="margin:0">akurasi keseluruhan</p></div>
-       </div>`
+       </div>
+       <p class="muted" style="margin:10px 0 0">Klik untuk melihat statistik lengkap &rsaquo;</p>`
     : '<h2>Progres kamu</h2><p class="muted">Belum ada latihan. Mulai satu sesi untuk melihat progres di sini.</p>';
 
   // Topik yang perlu diperkuat (minimal 3 soal di topik itu)
@@ -1657,6 +1667,8 @@ function renderBeranda() {
     <p>Topik <strong>${esc(lemah.nama)}</strong>: ${lemah.pct}% benar dari ${lemah.total} soal.</p>
     <button class="btn btn-primary btn-kecil" data-latihan="${esc(lemah.nama)}">Latihan 5 soal ${esc(lemah.nama)}</button>`;
 }
+$('kartu-ringkasan').addEventListener('click', () => renderStatistik());
+
 // Mulai latihan 5 soal dari satu topik, langsung tanpa membuka halaman atur latihan
 function latihanTopik(nama) {
   const setRadio = (nm, v) => { const el = document.querySelector(`input[name="${nm}"][value="${v}"]`); if (el) el.checked = true; };
