@@ -57,6 +57,14 @@ p{margin-bottom:12px}
 .riwayat-topik>summary .stat-judul span:first-child::before{content:"\25B8";display:inline-block;margin-right:6px;color:var(--accent);transition:transform .2s}
 .riwayat-topik[open]>summary .stat-judul span:first-child::before{transform:rotate(90deg)}
 .isi-riwayat{margin-top:10px;padding-bottom:6px}
+.mapel-pivot{margin-bottom:14px}
+.mapel-pivot>summary{list-style:none;cursor:pointer}
+.mapel-pivot>summary::-webkit-details-marker{display:none}
+.mapel-pivot>summary .stat-baris{margin-bottom:0}
+.mapel-pivot>summary .stat-judul span:first-child{font-weight:700}
+.mapel-pivot>summary .stat-judul span:first-child::before{content:"\25B8";display:inline-block;margin-right:6px;color:var(--accent);transition:transform .2s}
+.mapel-pivot[open]>summary .stat-judul span:first-child::before{transform:rotate(90deg)}
+.isi-mapel{margin:12px 0 4px;padding-left:14px;border-left:3px solid var(--border)}
 .progress-bar.gradasi{background:linear-gradient(90deg,#dc2626 0%,#f59e0b 50%,#16a34a 100%);background-size:calc(10000% / var(--p,100)) 100%;background-repeat:no-repeat}
 .baris-info{display:flex;justify-content:space-between;gap:8px}
 .timer{font-weight:700;color:var(--accent)}
@@ -248,6 +256,13 @@ select.input{appearance:auto}
 
 .akun-box{margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
 .akun-box .input{margin-top:6px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;margin-top:6px;padding:12px 16px;border:1px solid #dadce0;border-radius:999px;background:#fff;color:#1f1f1f;font:inherit;font-weight:600;cursor:pointer;box-shadow:var(--shadow);transition:background .2s,border-color .2s}
+.btn-google:hover{background:#f8fafc;border-color:#c0c4c9}
+.btn-google svg{width:20px;height:20px;flex-shrink:0}
+.opsi-email{margin-top:14px}
+.opsi-email>summary{cursor:pointer;color:var(--muted);font-size:.9rem;list-style:none;text-align:center;padding:6px}
+.opsi-email>summary::-webkit-details-marker{display:none}
+.opsi-email>summary:hover{color:var(--text)}
 textarea.input{resize:vertical;min-height:80px;font-family:inherit}
 
 /* Menu atas berbentuk ikon */
@@ -1628,6 +1643,35 @@ function renderStatistik() {
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   // Topik yang sudah dikerjakan bisa dibuka untuk melihat riwayat dan pembahasannya
   batasRiwayat = {};
+  // Susun topik di bawah mata pelajarannya (topik ikut mapel yang paling banyak memuatnya di bank soal)
+  const pivotMapel = () => {
+    const topikLengkap = lengkap(d.topik, 'topik');
+    const mapelObj = lengkap(d.mapel, 'mataPelajaran');
+    const hit = {};
+    semuaSoal.forEach((s) => {
+      if (!s.topik) return;
+      hit[s.topik] = hit[s.topik] || {};
+      hit[s.topik][s.mataPelajaran] = (hit[s.topik][s.mataPelajaran] || 0) + 1;
+    });
+    const mapelTopik = {};
+    Object.entries(hit).forEach(([tp, m]) => { mapelTopik[tp] = Object.entries(m).sort((a, b) => b[1] - a[1])[0][0]; });
+    // soal yang sudah dihapus: pakai mapel yang tercatat di riwayat
+    Riwayat.ambil().forEach((r) => { if (r.topik && r.mapel && !mapelTopik[r.topik]) mapelTopik[r.topik] = r.mapel; });
+    Object.values(mapelTopik).forEach((m) => { if (!mapelObj[m]) mapelObj[m] = { total: 0, benar: 0 }; });
+    const bagian = (nama, x, topikObj) => {
+      const isi = Object.keys(topikObj).length ? daftarTopik(topikObj) : '<p class="muted">Belum ada topik di mata pelajaran ini.</p>';
+      return `<details class="mapel-pivot"><summary>${baris2(nama, x)}</summary><div class="isi-mapel">${isi}</div></details>`;
+    };
+    let html = Object.entries(mapelObj).map(([m, x]) => bagian(namaMapel(m), x,
+      Object.fromEntries(Object.entries(topikLengkap).filter(([tp]) => mapelTopik[tp] === m)))).join('');
+    // topik yang punya statistik tapi mapelnya tidak diketahui
+    const sisa = Object.fromEntries(Object.entries(topikLengkap).filter(([tp]) => !mapelTopik[tp]));
+    if (Object.keys(sisa).length) {
+      const tot = Object.values(sisa).reduce((a, x) => ({ total: a.total + x.total, benar: a.benar + x.benar }), { total: 0, benar: 0 });
+      html += bagian('Lainnya', tot, sisa);
+    }
+    return html || '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
+  };
   const daftarTopik = (obj) => Object.keys(obj).length
     ? Object.entries(obj).map(([n, x]) => x.total
       ? `<details class="riwayat-topik" data-topik="${esc(n)}"><summary>${baris(n, x)}</summary><div class="isi-riwayat"></div></details>`
@@ -1641,8 +1685,7 @@ function renderStatistik() {
       <div><div class="skor" style="color:var(--salah)">${d.total - d.benar}</div><p class="muted" style="margin:0">jawaban salah</p></div>
     </div>` +
     `<p class="label">Akurasi keseluruhan</p>${baris('Semua soal', d)}` +
-    `<p class="label">Per mata pelajaran</p>${daftar(lengkap(d.mapel, 'mataPelajaran'), namaMapel)}` +
-    `<p class="label">Per topik</p><p class="muted" style="margin-bottom:10px">Ketuk topik untuk melihat riwayat soal yang pernah Anda kerjakan beserta pembahasannya.</p>${daftarTopik(lengkap(d.topik, 'topik'))}` + analisisHTML();
+    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + analisisHTML();
   tampil('statistik');
   rumus($('isi-statistik'));
 }
@@ -2809,6 +2852,7 @@ function umurDari(iso) {
 function formatTgl(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
+const LOGO_GOOGLE = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 function akunHTML(sesi) {
   if (sesi) {
     return `<div class="akun-box">
@@ -2818,14 +2862,18 @@ function akunHTML(sesi) {
     </div>`;
   }
   return `<div class="akun-box">
-    <p class="label">Akun</p>
-    <p class="muted">Masuk atau daftar supaya data tersimpan di akun dan bisa dipakai di perangkat lain.</p>
-    <input class="input" type="email" id="ak-email" placeholder="Email">
-    <input class="input" type="password" id="ak-pass" placeholder="Kata sandi (minimal 6 karakter)" style="margin-top:8px">
-    <div class="aksi aksi-kiri">
-      <button class="btn btn-primary btn-kecil" data-akun="masuk">Masuk</button>
-      <button class="btn btn-secondary btn-kecil" data-akun="daftar">Daftar</button>
-    </div>
+    <p class="label">Masuk</p>
+    <p class="muted">Masuk dengan akun Google supaya data tersimpan dan bisa dipakai di perangkat lain. Tanpa kata sandi.</p>
+    <button class="btn-google" data-akun="google">${LOGO_GOOGLE}<span>Lanjutkan dengan Google</span></button>
+    <details class="opsi-email">
+      <summary>Atau pakai email dan kata sandi</summary>
+      <input class="input" type="email" id="ak-email" placeholder="Email">
+      <input class="input" type="password" id="ak-pass" placeholder="Kata sandi (minimal 6 karakter)" style="margin-top:8px">
+      <div class="aksi aksi-kiri">
+        <button class="btn btn-primary btn-kecil" data-akun="masuk">Masuk</button>
+        <button class="btn btn-secondary btn-kecil" data-akun="daftar">Daftar</button>
+      </div>
+    </details>
     <p class="pesan" id="pesan-akun"></p>
   </div>`;
 }
@@ -2950,7 +2998,36 @@ async function simpanFormProfil() {
   renderProfil(false);
   renderSalam();
 }
+// Masuk dengan Google lewat Supabase: pengguna diarahkan ke Google, memilih akunnya, lalu kembali ke aplikasi
+function masukGoogle() {
+  const kembali = location.origin + location.pathname;
+  location.href = SB_URL + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(kembali);
+}
+// Dipanggil saat aplikasi dibuka: kalau baru kembali dari Google, token ada di bagian # pada alamat
+async function tanganiRedirectOAuth() {
+  const h = location.hash;
+  if (!/access_token=|error_description=/.test(h)) return false;
+  const q = new URLSearchParams(h.slice(1));
+  history.replaceState(null, '', location.pathname + location.search); // hapus token dari alamat
+  if (q.get('error_description')) {
+    alert('Masuk dengan Google gagal: ' + q.get('error_description'));
+    return false;
+  }
+  const at = q.get('access_token');
+  if (!at) return false;
+  try {
+    const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + at } });
+    const u = await r.json().catch(() => ({}));
+    if (!r.ok || !u.id) throw new Error(u.msg || u.message || 'Akun tidak terbaca');
+    simpanSesiDariRespon({ access_token: at, refresh_token: q.get('refresh_token'), expires_in: Number(q.get('expires_in')) || 3600, user: u }, u.email);
+    return true;
+  } catch (e) {
+    alert('Masuk dengan Google gagal: ' + e.message);
+    return false;
+  }
+}
 async function aksiAkun(aksi) {
+  if (aksi === 'google') return masukGoogle();
   if (aksi === 'keluar') {
     const s = AkunApp.sesi();
     try { if (s) await authReq('logout', {}, s.access_token); } catch (e) {}
@@ -3049,7 +3126,11 @@ renderProfil(false);
 renderPengaturan();
 renderSalam();
 segarkanSoalBawaan();
-if (AkunApp.sesi()) mulaiSesi();
+(async () => {
+  const baruMasuk = await tanganiRedirectOAuth();
+  if (AkunApp.sesi()) await mulaiSesi();
+  if (baruMasuk) { renderProfil(false); renderSalam(); }
+})();
 cekHashPublik();
 window.addEventListener('hashchange', cekHashPublik);
 setInterval(() => { if (AkunApp.sesi()) sinkron().catch(() => {}); }, 30000);
