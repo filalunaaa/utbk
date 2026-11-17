@@ -49,6 +49,15 @@ p{margin-bottom:12px}
 .info{margin-top:16px}
 .progress{height:8px;background:var(--border);border-radius:999px;overflow:hidden;margin-bottom:8px}
 .progress-bar{height:100%;background:var(--primary);border-radius:999px;transition:width .3s}
+/* Bar statistik: gradasi merah (kiri) ke hijau (kanan) di sepanjang bar penuh; bar pendek hanya menampakkan bagian merah/oranye */
+.riwayat-topik{margin-bottom:12px}
+.riwayat-topik>summary{list-style:none;cursor:pointer}
+.riwayat-topik>summary::-webkit-details-marker{display:none}
+.riwayat-topik>summary .stat-baris{margin-bottom:0}
+.riwayat-topik>summary .stat-judul span:first-child::before{content:"\25B8";display:inline-block;margin-right:6px;color:var(--accent);transition:transform .2s}
+.riwayat-topik[open]>summary .stat-judul span:first-child::before{transform:rotate(90deg)}
+.isi-riwayat{margin-top:10px;padding-bottom:6px}
+.progress-bar.gradasi{background:linear-gradient(90deg,#dc2626 0%,#f59e0b 50%,#16a34a 100%);background-size:calc(10000% / var(--p,100)) 100%;background-repeat:no-repeat}
 .baris-info{display:flex;justify-content:space-between;gap:8px}
 .timer{font-weight:700;color:var(--accent)}
 .timer.habis{color:var(--salah)}
@@ -623,6 +632,28 @@ const PilihanStat = {
 let ADMIN = false;
 let modeAdmin = false;
 
+// Riwayat pengerjaan: tiap soal yang dijawab dicatat (untuk melihat kembali per topik beserta pembahasannya)
+const Riwayat = {
+  KEY: 'utbk_riwayat',
+  MAKS: 600, // simpan 600 catatan terbaru saja agar penyimpanan browser tidak penuh
+  ambil() {
+    try { const a = JSON.parse(localStorage.getItem(this.KEY)); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
+  },
+  simpan(a) {
+    try { localStorage.setItem(this.KEY, JSON.stringify(a)); } catch (e) {}
+  },
+  catat(soal, jawaban, benar) {
+    const a = this.ambil();
+    a.push({ id: String(soal.id), topik: soal.topik, mapel: soal.mataPelajaran,
+      j: jawaban === undefined ? null : jawaban, b: !!benar, t: Date.now() });
+    this.simpan(a.slice(-this.MAKS));
+  },
+  reset() {
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
+  }
+};
+
 // Bank soal buatan pengajar (disimpan di localStorage browser)
 const BankSoal = {
   KEY: 'utbk_bank_custom',
@@ -982,6 +1013,8 @@ const SYNC = {
   utbk_pilihan_stat: 'pilihan_stat',
   utbk_pengaturan: 'pengaturan'
 };
+// Riwayat dikirim terpisah: kalau server menolaknya, data lain tetap tersinkron
+const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat' };
 let terakhirDikirim = {}; // isi terakhir yang sudah dikirim, supaya tidak mengirim ulang yang sama
 const AkunApp = {
   KEY: 'utbk_sesi',
@@ -1067,7 +1100,7 @@ async function pushProfil() {
 async function pullData() {
   const s = AkunApp.sesi();
   const rows = await rest(`data_pengguna?user_id=eq.${s.user_id}&select=kunci,nilai`);
-  const balik = Object.fromEntries(Object.entries(SYNC).map(([lokal, kunci]) => [kunci, lokal]));
+  const balik = Object.fromEntries(Object.entries({ ...SYNC, ...SYNC_OPSIONAL }).map(([lokal, kunci]) => [kunci, lokal]));
   (rows || []).forEach((r) => {
     const lokal = balik[r.kunci];
     if (!lokal) return;
@@ -1077,7 +1110,7 @@ async function pullData() {
   });
 }
 // Kirim hanya data yang berubah sejak terakhir dikirim
-async function sinkron() {
+async function sinkronInti() {
   const s = AkunApp.sesi();
   if (!s) return;
   const rows = [];
@@ -1095,6 +1128,35 @@ async function sinkron() {
     method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: rows
   });
   kirim.forEach(([lokal, raw]) => (terakhirDikirim[lokal] = raw));
+}
+let riwayatGagal = false;
+async function sinkronOpsional() {
+  const s = AkunApp.sesi();
+  if (!s || riwayatGagal) return;
+  const rows = [];
+  const kirim = [];
+  Object.entries(SYNC_OPSIONAL).forEach(([lokal, kunci]) => {
+    const raw = localStorage.getItem(lokal);
+    if (raw === null || raw === terakhirDikirim[lokal]) return;
+    try {
+      rows.push({ user_id: s.user_id, kunci, nilai: JSON.parse(raw), diperbarui_pada: new Date().toISOString() });
+      kirim.push([lokal, raw]);
+    } catch (e) {}
+  });
+  if (!rows.length) return;
+  try {
+    await rest('data_pengguna?on_conflict=user_id,kunci', {
+      method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: rows
+    });
+    kirim.forEach(([lokal, raw]) => (terakhirDikirim[lokal] = raw));
+  } catch (e) {
+    riwayatGagal = true;
+    console.warn('Riwayat tidak ikut tersinkron ke akun (tetap tersimpan di perangkat ini):', e);
+  }
+}
+async function sinkron() {
+  try { await sinkronInti(); }
+  finally { await sinkronOpsional(); }
 }
 // Dipanggil setelah masuk atau saat aplikasi dibuka dalam keadaan sudah masuk
 async function mulaiSesi() {
@@ -1372,6 +1434,7 @@ function selesai() {
   if (mode === 'latihan') jawab.forEach((j, k) => { if (!kunci[k]) jawab[k] = null; }); // belum dijawab = kosong
   if (mode === 'tryout') soal.forEach((s, k) => {
     Penyimpanan.catat(s, jawabBenar(s, jawab[k]));
+    Riwayat.catat(s, jawab[k], jawabBenar(s, jawab[k]));
     if (jawab[k] !== null) PilihanStat.catat(s, jawab[k]);
   });
   const benar = soal.filter((s, k) => jawabBenar(s, jawab[k])).length;
@@ -1408,7 +1471,7 @@ function renderLaporan() {
   }).filter(Boolean).sort((x, y) => (y.delta ?? -999) - (x.delta ?? -999));
   const baris = (it) => `<div class="lap-baris">
       <div class="stat-judul"><span>${esc(it.nama)}</span><span>${it.dBenar} dari ${it.dTotal} benar di sesi ini</span></div>
-      <div class="progress"><div class="progress-bar" style="width:${it.pKini}%"></div></div>
+      <div class="progress"><div class="progress-bar gradasi" style="width:${it.pKini}%;--p:${Math.max(1, it.pKini)}"></div></div>
       <div class="lap-ubah"><span>${it.pAwal === null ? `Data pertama: ${it.pKini}%` : `${it.pAwal}% &rarr; ${it.pKini}%`}</span>${badgeUbah(it.delta)}</div>
     </div>`;
   const topik = kumpul('topik', (n) => n);
@@ -1546,7 +1609,7 @@ function renderStatistik() {
   const baris = (nama, x) => {
     const p = x.total ? Math.round((x.benar / x.total) * 100) : 0;
     return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${x.benar} dari ${x.total} benar (${p}%)</span></div>
-      <div class="progress"><div class="progress-bar" style="width:${p}%"></div></div></div>`;
+      <div class="progress"><div class="progress-bar gradasi" style="width:${p}%;--p:${Math.max(1, p)}"></div></div></div>`;
   };
   // Tampilkan semua mapel/topik yang ada di bank soal, termasuk yang belum pernah dikerjakan
   const semuaSoal = [...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())];
@@ -1563,6 +1626,13 @@ function renderStatistik() {
   const daftar = (obj, lab = (n) => n) => Object.keys(obj).length
     ? Object.entries(obj).map(([n, x]) => baris2(lab(n), x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
+  // Topik yang sudah dikerjakan bisa dibuka untuk melihat riwayat dan pembahasannya
+  batasRiwayat = {};
+  const daftarTopik = (obj) => Object.keys(obj).length
+    ? Object.entries(obj).map(([n, x]) => x.total
+      ? `<details class="riwayat-topik" data-topik="${esc(n)}"><summary>${baris(n, x)}</summary><div class="isi-riwayat"></div></details>`
+      : baris2(n, x)).join('')
+    : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   $('isi-statistik').innerHTML =
     `<p class="label">Total soal dikerjakan</p>
     <div class="ringkasan-baris">
@@ -1572,10 +1642,76 @@ function renderStatistik() {
     </div>` +
     `<p class="label">Akurasi keseluruhan</p>${baris('Semua soal', d)}` +
     `<p class="label">Per mata pelajaran</p>${daftar(lengkap(d.mapel, 'mataPelajaran'), namaMapel)}` +
-    `<p class="label">Per topik</p>${daftar(lengkap(d.topik, 'topik'))}` + analisisHTML();
+    `<p class="label">Per topik</p><p class="muted" style="margin-bottom:10px">Ketuk topik untuk melihat riwayat soal yang pernah Anda kerjakan beserta pembahasannya.</p>${daftarTopik(lengkap(d.topik, 'topik'))}` + analisisHTML();
   tampil('statistik');
   rumus($('isi-statistik'));
 }
+
+// ---------- Riwayat pengerjaan per topik ----------
+const BATAS_RIWAYAT = 15;
+let batasRiwayat = {};
+function riwayatTopikHTML(topik, batas) {
+  const peta = new Map([...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())].map((s) => [String(s.id), s]));
+  const semua = Riwayat.ambil().filter((r) => r.topik === topik).reverse(); // terbaru dulu
+  if (!semua.length) {
+    return '<p class="muted">Riwayat topik ini belum tercatat. Riwayat mulai dicatat sejak fitur ini aktif, jadi kerjakan soal lagi untuk mengisinya.</p>';
+  }
+  const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.length);
+  const benar = semua.filter((r) => r.b).length;
+  const label = { benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
+  const items = semua.slice(0, batas).map((r) => {
+    const st = kosongJ(r.j) ? 'kosong' : r.b ? 'benar' : 'salah';
+    const tglPendek = new Date(r.t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    const tglPenuh = new Date(r.t).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const s = peta.get(r.id);
+    if (!s) {
+      return `<div class="kartu-soal" style="padding:10px 12px;display:flex;gap:8px;align-items:center">
+        <span class="badge ${st}">${label[st]}</span><span class="muted">${tglPendek} &middot; soal ini sudah dihapus dari bank</span></div>`;
+    }
+    const opsi = s.opsi.map((o, x) => {
+      let kelas = 'opsi';
+      if (kunciOpsi(s, x)) kelas += ' benar';
+      else if (dipilih(s, r.j, x)) kelas += ' salah';
+      return `<div class="${kelas}"><span class="huruf">${HURUF[x]}</span>${isiOpsi(o)}</div>`;
+    }).join('');
+    const jawabanmu = kosongJ(r.j) ? 'Tidak dijawab'
+      : (Array.isArray(r.j) ? r.j.map((k) => HURUF[k]).join(', ') : HURUF[r.j]);
+    return `<details class="kartu-soal">
+      <summary><span class="badge ${st}">${label[st]}</span>
+        <span class="pratinjau-soal">${esc(previewTeks(s.soal))}</span>
+        <span class="muted" style="flex-shrink:0;font-size:.8rem">${tglPendek}</span></summary>
+      <div class="isi-kartu">
+        <p class="muted" style="margin-top:8px">${tglPenuh} &middot; Jawaban Anda: <strong>${jawabanmu}</strong> &middot; Kunci: <strong>${kunciHuruf(s)}</strong></p>
+        <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+        <div class="opsi-list">${opsi}</div>
+        <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+      </div>
+    </details>`;
+  }).join('');
+  const lagi = semua.length > batas
+    ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi="${esc(topik)}">Tampilkan lebih banyak (${semua.length - batas} lagi)</button></div>` : '';
+  return `<p class="muted">${semua.length} pengerjaan &middot; ${benar} benar &middot; terbaru di atas</p>${items}${lagi}`;
+}
+function isiRiwayat(d) {
+  const topik = d.dataset.topik;
+  const isi = d.querySelector('.isi-riwayat');
+  isi.innerHTML = riwayatTopikHTML(topik, batasRiwayat[topik] || BATAS_RIWAYAT);
+  isi.dataset.terisi = '1';
+  rumus(isi);
+}
+// Riwayat diisi saat topik dibuka (bukan semuanya sekaligus, supaya halaman tetap ringan)
+$('isi-statistik').addEventListener('toggle', (e) => {
+  const d = e.target;
+  if (!d.matches || !d.matches('details.riwayat-topik') || !d.open) return;
+  if (!d.querySelector('.isi-riwayat').dataset.terisi) isiRiwayat(d);
+}, true);
+$('isi-statistik').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-lagi]');
+  if (!b) return;
+  const topik = b.dataset.lagi;
+  batasRiwayat[topik] = (batasRiwayat[topik] || BATAS_RIWAYAT) + BATAS_RIWAYAT;
+  isiRiwayat(b.closest('details.riwayat-topik'));
+});
 
 // ---------- Ikon (SVG) ----------
 function ikon(isi) {
@@ -2246,6 +2382,7 @@ $('btn-aksi').addEventListener('click', () => {
   if (mode === 'latihan' && !kunci[i]) {
     kunci[i] = true;
     Penyimpanan.catat(soal[i], jawabBenar(soal[i], jawab[i]));
+    Riwayat.catat(soal[i], jawab[i], jawabBenar(soal[i], jawab[i]));
     PilihanStat.catat(soal[i], jawab[i]);
     renderSoal();
   } else if (i === soal.length - 1) {
@@ -2265,7 +2402,7 @@ $('btn-reset').addEventListener('click', () => {
   if (konfirmReset) {
     clearTimeout(konfirmReset); konfirmReset = null;
     b.textContent = 'Reset statistik';
-    Penyimpanan.reset(); PilihanStat.reset(); renderStatistik();
+    Penyimpanan.reset(); PilihanStat.reset(); Riwayat.reset(); renderStatistik();
     return;
   }
   b.textContent = 'Yakin? Klik lagi untuk menghapus';
@@ -2571,7 +2708,7 @@ async function tampilPublik(u) {
         ${topik.map(([nama, x]) => {
           const pct = Math.round((x.benar / x.total) * 100);
           return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${pct}% dari ${x.total} soal</span></div>
-            <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div></div>`;
+            <div class="progress"><div class="progress-bar gradasi" style="width:${pct}%;--p:${Math.max(1, pct)}"></div></div></div>`;
         }).join('')}`;
     } else if (s) {
       statistikHTML = '<p class="muted">Belum ada data latihan.</p>';
@@ -2648,7 +2785,7 @@ async function hapusAkunDanData() {
       return;
     }
   }
-  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat',
+  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat',
     'utbk_pengaturan', 'utbk_profil', 'utbk_sesi'].forEach((k) => localStorage.removeItem(k));
   alert('Akun dan data kamu sudah dihapus.');
   location.href = location.pathname;
