@@ -181,6 +181,13 @@ select.input{appearance:auto}
 
 #kartu-ringkasan{cursor:pointer;transition:box-shadow .2s,border-color .2s}
 #kartu-ringkasan:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(37,99,235,.15)}
+
+.daftar-berita{list-style:none;padding:0;margin:8px 0 0}
+.daftar-berita li{padding:10px 0;border-top:1px solid var(--border)}
+.daftar-berita li:first-child{border-top:none}
+.daftar-berita a{color:var(--text);font-weight:600;text-decoration:none;line-height:1.4}
+.daftar-berita a:hover{color:var(--accent);text-decoration:underline}
+.daftar-berita .muted{font-size:.82rem;margin:2px 0 0}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -203,6 +210,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     <div class="card" id="kartu-hitung"></div>
     <div class="card" id="kartu-ringkasan"></div>
     <div class="card" id="kartu-perkuat"></div>
+    <div class="card" id="kartu-berita"></div>
     <button class="btn btn-primary btn-besar" id="btn-ke-setup">Mulai</button>
   </section>
 
@@ -1657,6 +1665,7 @@ function renderBeranda() {
     .filter(([, x]) => x.total >= 3)
     .map(([nama, x]) => ({ nama, total: x.total, pct: Math.round((x.benar / x.total) * 100) }))
     .sort((a, b) => a.pct - b.pct || b.total - a.total);
+  renderBerita();
   const kp = $('kartu-perkuat');
   if (!topik.length) {
     kp.innerHTML = '<h2>Perlu diperkuat</h2><p class="muted">Kerjakan minimal 3 soal di satu topik, nanti topik yang paling perlu diperkuat muncul di sini.</p>';
@@ -1687,6 +1696,32 @@ $('kartu-perkuat').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-latihan]');
   if (b) latihanTopik(b.dataset.latihan);
 });
+
+// ---------- Berita UTBK (dari /api/berita di Vercel) ----------
+function fmtTglBerita(s) {
+  const d = new Date(s);
+  return isNaN(d) ? s : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+async function renderBerita() {
+  const el = $('kartu-berita');
+  el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Memuat berita...</p>';
+  try {
+    const r = await fetch('/api/berita');
+    if (!r.ok) throw new Error('gagal');
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length) throw new Error('kosong');
+    el.innerHTML = `<h2>Berita UTBK terbaru</h2>
+      <ul class="daftar-berita">${data.slice(0, 5).map((b) => `
+        <li>
+          <a href="${esc(b.link)}" target="_blank" rel="noopener">${esc(b.judul)}</a>
+          <div class="muted">${esc(b.sumber || '')}${b.tanggal ? ' · ' + esc(fmtTglBerita(b.tanggal)) : ''}</div>
+        </li>`).join('')}
+      </ul>
+      <p class="muted" style="margin:10px 0 0;font-size:.82rem">Berita dari media, bukan pengumuman resmi. Info resmi ada di <a href="https://portal.snpmb.id" target="_blank" rel="noopener">portal SNPMB</a>.</p>`;
+  } catch (e) {
+    el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p>';
+  }
+}
 
 // ---------- Profil ----------
 const PROFIL_STATUS = [
