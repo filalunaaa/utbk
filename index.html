@@ -1548,8 +1548,20 @@ function renderStatistik() {
     return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${x.benar} dari ${x.total} benar (${p}%)</span></div>
       <div class="progress"><div class="progress-bar" style="width:${p}%"></div></div></div>`;
   };
+  // Tampilkan semua mapel/topik yang ada di bank soal, termasuk yang belum pernah dikerjakan
+  const semuaSoal = [...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())];
+  const lengkap = (obj, kunci) => {
+    const hasil = { ...obj };
+    semuaSoal.forEach((s) => { if (s[kunci] && !hasil[s[kunci]]) hasil[s[kunci]] = { total: 0, benar: 0 }; });
+    // yang sudah dikerjakan di atas, yang belum di bawah
+    return Object.fromEntries(Object.entries(hasil).sort((a, b) => (b[1].total > 0) - (a[1].total > 0)));
+  };
+  const baris2 = (nama, x) => x.total
+    ? baris(nama, x)
+    : `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span class="muted">Belum dikerjakan</span></div>
+      <div class="progress"><div class="progress-bar" style="width:0%"></div></div></div>`;
   const daftar = (obj, lab = (n) => n) => Object.keys(obj).length
-    ? Object.entries(obj).map(([n, x]) => baris(lab(n), x)).join('')
+    ? Object.entries(obj).map(([n, x]) => baris2(lab(n), x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   $('isi-statistik').innerHTML =
     `<p class="label">Total soal dikerjakan</p>
@@ -1559,8 +1571,8 @@ function renderStatistik() {
       <div><div class="skor" style="color:var(--salah)">${d.total - d.benar}</div><p class="muted" style="margin:0">jawaban salah</p></div>
     </div>` +
     `<p class="label">Akurasi keseluruhan</p>${baris('Semua soal', d)}` +
-    `<p class="label">Per mata pelajaran</p>${daftar(d.mapel, namaMapel)}` +
-    `<p class="label">Per topik</p>${daftar(d.topik)}` + analisisHTML();
+    `<p class="label">Per mata pelajaran</p>${daftar(lengkap(d.mapel, 'mataPelajaran'), namaMapel)}` +
+    `<p class="label">Per topik</p>${daftar(lengkap(d.topik, 'topik'))}` + analisisHTML();
   tampil('statistik');
   rumus($('isi-statistik'));
 }
