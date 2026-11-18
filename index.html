@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NEON UTBK - Learn. Practice. Improve.</title>
 <meta name="theme-color" content="#2563eb">
+<script>try{var m={terang:"light",gelap:"dark"}[localStorage.getItem("neon_tema")];if(m)document.documentElement.dataset.theme=m}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -516,6 +517,31 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
   .rev-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .rev-body .rev-pembahasan{grid-column:1/-1}
 }
+
+/* Profil, Profil Publik, Pengaturan v2 */
+.profil-grid{display:grid;gap:18px;grid-template-columns:minmax(0,1fr);margin-bottom:18px}
+.profil-grid>.card{margin:0;min-width:0}
+.profil-grid .akun-box{margin:0;padding:0;border:0}
+.panel-judul{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 12px}
+.profil-hero{display:flex;align-items:center;gap:16px;min-width:0}
+.profil-hero .avatar{width:72px;height:72px;font-size:1.8rem;flex-shrink:0}
+.chips-info{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chips-info .badge{margin:0}
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:0 16px}
+.form-grid>div{min-width:0}
+.profil-aksi{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 20px}
+.pub-hero{display:flex;align-items:center;gap:16px;background:var(--navy);color:#fff;border-radius:12px;padding:22px;min-width:0}
+.pub-hero .avatar{width:72px;height:72px;font-size:1.8rem;flex-shrink:0;border:3px solid rgba(255,255,255,.35)}
+.zona-bahaya{border:1.5px solid var(--salah);background:var(--salah-soft)}
+.zona-bahaya .kartu-judul{color:var(--salah)}
+.zona-bahaya .btn-bahaya{background:var(--salah);color:#fff}
+@media(min-width:700px){
+  .profil-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .profil-grid>.full{grid-column:1/-1}
+  .profil-grid>.full .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-grid .full{grid-column:1/-1}
+}
+@media(min-width:900px){#profil{max-width:1040px}}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -615,12 +641,15 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </section>
 
   <section id="profil" class="halaman" hidden>
-    <div class="card" id="kartu-profil"></div>
+    <div id="kartu-profil"></div>
   </section>
 
   <section id="pengaturan" class="halaman" hidden>
+    <div class="page-head"><div><h2>Pengaturan</h2><p class="muted">Atur akun, privasi, dan preferensi belajarmu.</p></div></div>
+
     <div class="card">
-      <h2>Pengaturan</h2>
+      <h3 class="kartu-judul">Akun dan profil</h3>
+      <p class="muted">Kelola identitas, informasi akademik, dan akun masuk.</p>
       <button class="btn-profil-baris" id="btn-profil">
         <span class="avatar" id="avatar-atur">?</span>
         <span>Profil dan akun</span>
@@ -629,7 +658,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     </div>
 
     <div class="card">
-      <h2>Profil publik</h2>
+      <h3 class="kartu-judul">Privasi</h3>
       <p class="muted">Orang lain bisa melihat profilmu lewat link. Username wajib diisi di halaman profil.</p>
       <div class="pilihan">
         <label class="chip"><input type="checkbox" id="pubatur-publik"><span>Tampilkan profil</span></label>
@@ -638,7 +667,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     </div>
 
     <div class="card">
-      <h2>Latihan default</h2>
+      <h3 class="kartu-judul">Preferensi latihan</h3>
       <p class="label">Mode</p>
       <div class="pilihan">
         <label class="chip"><input type="radio" name="def-mode" value="latihan" checked><span>Latihan</span></label>
@@ -656,7 +685,23 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     </div>
 
     <div class="card">
-      <h2>Hapus akun dan data</h2>
+      <h3 class="kartu-judul">Waktu Try Out</h3>
+      <p class="muted">Batas waktu per soal saat mode Try Out.</p>
+      <div class="pilihan" id="pilih-waktu-set"></div>
+    </div>
+
+    <div class="card">
+      <h3 class="kartu-judul">Tampilan</h3>
+      <p class="muted">Pilih tema warna aplikasi.</p>
+      <div class="pilihan">
+        <label class="chip"><input type="radio" name="tema" value="sistem" checked><span>Ikuti perangkat</span></label>
+        <label class="chip"><input type="radio" name="tema" value="terang"><span>Terang</span></label>
+        <label class="chip"><input type="radio" name="tema" value="gelap"><span>Gelap</span></label>
+      </div>
+    </div>
+
+    <div class="card zona-bahaya">
+      <h3 class="kartu-judul">Zona berbahaya: hapus akun dan data</h3>
       <p class="muted" id="teks-hapus"></p>
       <button class="btn btn-bahaya btn-kecil" id="btn-hapus-buka">Hapus akun dan data</button>
       <div id="blok-hapus" hidden>
@@ -3445,26 +3490,17 @@ async function tampilPublik(u) {
     const s = p.statistik;
     if (s && s.total) {
       const akurasi = Math.round((s.benar / s.total) * 100);
-      const topik = Object.entries(s.topik || {}).sort((a, b) => a[1].benar / a[1].total - b[1].benar / b[1].total);
-      statistikHTML = `<p class="label">Kemampuan</p>
-        <div class="ringkasan-baris">
-          <div><div class="skor">${s.total}</div><p class="muted" style="margin:0">soal dikerjakan</p></div>
-          <div><div class="skor">${akurasi}%</div><p class="muted" style="margin:0">akurasi keseluruhan</p></div>
-        </div>
-        <p class="label">Per topik</p>
-        ${topik.map(([nama, x]) => {
-          const pct = Math.round((x.benar / x.total) * 100);
-          return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${pct}% dari ${x.total} soal</span></div>
-            <div class="progress"><div class="progress-bar gradasi" style="width:${pct}%;--p:${Math.max(1, pct)}"></div></div></div>`;
-        }).join('')}`;
+      const topik = Object.entries(s.topik || {}).filter(([, x]) => x.total).sort((a, b) => b[1].benar / b[1].total - a[1].benar / a[1].total || b[1].total - a[1].total);
+      const tile = (t, v) => `<div class="stat-tile"><span>${t}</span><strong>${v}</strong></div>`;
+      statistikHTML = `<div class="ringkasan-bank" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:18px 0">${tile('Soal dikerjakan', s.total)}${tile('Akurasi', akurasi + '%')}${tile('Topik dilatih', topik.length)}</div>
+        <p class="label" style="margin-top:0">Kemampuan per topik</p>
+        ${topik.slice(0, 10).map(([nama, x]) => { const pct = Math.round((x.benar / x.total) * 100); return `<div class="hbar"><span class="nm" title="${esc(nama)}">${esc(nama)}</span><div class="tr"><div class="fl ${pct < 50 ? 'lv-rendah' : pct < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, pct)}%"></div></div><span class="nilai">${pct}% <span class="muted">· ${x.total}</span></span></div>`; }).join('')}`;
     } else if (s) {
-      statistikHTML = '<p class="muted">Belum ada data latihan.</p>';
+      statistikHTML = '<div class="state-kosong" style="margin-top:18px"><strong>Belum ada data latihan</strong></div>';
     }
-    el.innerHTML = `<div class="profil-header">
-        <div class="avatar">${esc(p.nama.charAt(0).toUpperCase())}</div>
-        <div style="min-width:0"><h2 style="margin:0">${esc(p.nama)}</h2><p class="muted" style="margin:0">@${esc(p.username)}</p></div>
-      </div>
-      ${p.deskripsi ? `<p style="margin-top:12px">${esc(p.deskripsi)}</p>` : ''}
+    el.innerHTML = `<div class="pub-hero"><div class="avatar">${esc(p.nama.charAt(0).toUpperCase())}</div>
+        <div style="min-width:0"><h2 style="margin:0;color:#fff">${esc(p.nama)}</h2><p style="margin:0;opacity:.8">@${esc(p.username)}</p></div></div>
+      ${p.deskripsi ? `<p style="margin:16px 0 0">${esc(p.deskripsi)}</p>` : ''}
       ${statistikHTML}`;
   } catch (e) {
     el.innerHTML = '<h2>Profil belum bisa dimuat</h2><p class="muted">Pastikan koneksi internet aktif, lalu coba lagi.</p>';
@@ -3606,73 +3642,63 @@ function renderProfil(mengedit = false) {
   const sesi = AkunApp.sesi();
   const kartu = $('kartu-profil');
   const linkPublik = p && p.username ? `${location.origin}${location.pathname}#/u/${p.username}` : '';
+  const akun = `<div class="card full"><p class="panel-judul">Akun</p>${akunHTML(sesi)}</div>`;
   if (p && !mengedit) {
+    const baris = (a, v) => `<dt>${a}</dt><dd>${v}</dd>`;
+    const sisa = p.tanggalUjian ? hariKeUjian(p.tanggalUjian) : null;
+    const ujian = p.tanggalUjian ? `${esc(formatTgl(p.tanggalUjian))}${sisa >= 0 ? ` <span class="muted">(${sisa} hari lagi)</span>` : ''}` : '-';
     const tgl = p.tanggalLahir ? `${esc(formatTgl(p.tanggalLahir))} (${umurDari(p.tanggalLahir)} tahun)` : '-';
-    kartu.innerHTML = `
-      <div class="profil-header">
-        <div class="avatar">${avatarIsi(p.nama)}</div>
-        <div style="min-width:0">
-          <h2 style="margin:0">${esc(p.nama)}</h2>
-          <p class="muted" style="margin:0">${esc(p.username ? '@' + p.username : labelStatus(p.statusPendidikan))}</p>
-        </div>
+    kartu.innerHTML = `<div class="profil-grid">
+      <div class="card"><p class="panel-judul">Identitas</p>
+        <div class="profil-hero"><div class="avatar">${avatarIsi(p.nama)}</div>
+          <div style="min-width:0"><h2 style="margin:0">${esc(p.nama)}</h2><p class="muted" style="margin:0">${esc(p.username ? '@' + p.username : labelStatus(p.statusPendidikan))}</p></div></div>
+        ${p.deskripsi ? `<p style="margin:14px 0 0">${esc(p.deskripsi)}</p>` : ''}
+        <div class="chips-info"><span class="badge ${p.publik ? 'benar' : 'kosong'}">${p.publik ? 'Profil publik' : 'Profil privat'}</span>${p.publik && !p.tampilkanStatistik ? '<span class="badge kosong">Statistik disembunyikan</span>' : ''}</div>
+        ${p.publik && linkPublik ? `<p class="muted" style="margin:12px 0 0">Link profil: <a href="${linkPublik}" target="_blank" rel="noopener" style="word-break:break-all">${esc(linkPublik)}</a></p>` : ''}
       </div>
-      ${p.deskripsi ? `<p style="margin-top:12px">${esc(p.deskripsi)}</p>` : ''}
-      <dl class="info-profil">
-        <dt>Tanggal lahir</dt><dd>${tgl}</dd>
-        <dt>Status</dt><dd>${esc(labelStatus(p.statusPendidikan))}</dd>
-        <dt>Tanggal ujian UTBK</dt><dd>${p.tanggalUjian ? esc(formatTgl(p.tanggalUjian)) : '-'}</dd>
-        <dt>Sekolah / kampus</dt><dd>${esc(p.sekolah || '-')}</dd>
-        <dt>Jurusan</dt><dd>${esc(p.jurusan || '-')}</dd>
-        <dt>Target PTN dan prodi</dt><dd>${esc(p.target || '-')}</dd>
-        <dt>Kota domisili</dt><dd>${esc(p.kota || '-')}</dd>
-        <dt>Profil publik</dt><dd>${p.publik ? 'Ya' : 'Tidak (privat)'}${p.publik && !p.tampilkanStatistik ? ', statistik disembunyikan' : ''}</dd>
-      </dl>
-      ${p.publik && linkPublik ? `<p class="muted" style="margin-top:12px">Link profil publik: <a href="${linkPublik}" target="_blank" rel="noopener" style="word-break:break-all">${esc(linkPublik)}</a></p>` : ''}
-      ${akunHTML(sesi)}
-      <div class="aksi aksi-kiri" style="margin-top:14px">
-        <button class="btn btn-primary btn-kecil" data-profil="ubah">Ubah profil</button>
-        <button class="btn btn-secondary btn-kecil" data-profil="kembali">Kembali</button>
-      </div>`;
+      <div class="card"><p class="panel-judul">Informasi akademik</p>
+        <dl class="info-profil">${baris('Status', esc(labelStatus(p.statusPendidikan)))}${baris('Tanggal ujian UTBK', ujian)}${baris('Sekolah / kampus', esc(p.sekolah || '-'))}${baris('Jurusan', esc(p.jurusan || '-'))}${baris('Target PTN dan prodi', esc(p.target || '-'))}</dl></div>
+      <div class="card full"><p class="panel-judul">Informasi pribadi (hanya terlihat olehmu)</p>
+        <dl class="info-profil">${baris('Tanggal lahir', tgl)}${baris('Kota domisili', esc(p.kota || '-'))}</dl></div>
+      ${akun}
+    </div>
+    <div class="profil-aksi"><button class="btn btn-primary" data-profil="ubah">Ubah profil</button><button class="btn btn-secondary" data-profil="kembali">Kembali</button></div>`;
     return;
   }
   const v = (k) => (p && p[k] ? esc(p[k]) : '');
-  const sekolah = p ? esc(p.sekolah || '') : '';
   const hariIni = new Date().toISOString().slice(0, 10);
-  kartu.innerHTML = `
-    <h2>${p ? 'Ubah profil' : 'Buat profil'}</h2>
-    <p class="muted">Tanda * wajib diisi.</p>
-    ${pilihanAvatarHTML()}
-    <p class="label">Nama lengkap *</p>
-    <input class="input" id="pf-nama" maxlength="50" value="${v('nama')}">
-    <p class="label">Username (untuk link profil publik)</p>
-    <input class="input" id="pf-username" maxlength="20" placeholder="huruf kecil, angka, atau _ (3-20 karakter)" value="${v('username')}">
-    <p class="label">Tanggal lahir</p>
-    <input class="input" type="date" id="pf-tgl" max="${hariIni}" value="${v('tanggalLahir')}">
-    <p class="label">Status pendidikan sekarang *</p>
-    <select class="input" id="pf-status">${PROFIL_STATUS.map(([val, lab]) =>
-      `<option value="${val}" ${p && p.statusPendidikan === val ? 'selected' : ''}>${lab}</option>`).join('')}</select>
-    <p class="label">Tanggal ujian UTBK (opsional)</p>
-    <input class="input" type="date" id="pf-ujian" value="${v('tanggalUjian')}">
-    <p class="label">Sekolah / kampus</p>
-    <input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${sekolah}">
-    <p class="label">Jurusan</p>
-    <select class="input" id="pf-jurusan">${PROFIL_JURUSAN.map(([val, lab]) =>
-      `<option value="${val}" ${p && p.jurusan === val ? 'selected' : ''}>${lab}</option>`).join('')}</select>
-    <p class="label">Target PTN dan prodi (opsional)</p>
-    <input class="input" id="pf-target" maxlength="80" placeholder="contoh: UI, Kedokteran" value="${v('target')}">
-    <p class="label">Kota domisili (opsional)</p>
-    <input class="input" id="pf-kota" maxlength="40" value="${v('kota')}">
-    <p class="label">Deskripsi singkat (opsional, maks 300 karakter)</p>
-    <textarea class="input" id="pf-deskripsi" maxlength="300" rows="3" placeholder="contoh: Fokus di PM, target UI">${v('deskripsi')}</textarea>
-    <p class="label">Privasi profil publik</p>
-    <label class="chip"><input type="checkbox" id="pf-publik" ${p && p.publik ? 'checked' : ''}><span>Tampilkan profil di link publik</span></label>
-    <label class="chip" style="margin-left:6px"><input type="checkbox" id="pf-statistik" ${p && p.tampilkanStatistik ? 'checked' : ''}><span>Tampilkan statistik</span></label>
-    <p class="muted" style="margin-top:8px">Tanggal lahir, sekolah, dan kota tidak pernah ditampilkan ke orang lain.</p>
-    ${akunHTML(sesi)}
-    <div class="aksi aksi-kiri" style="margin-top:14px">
-      <button class="btn btn-primary btn-kecil" data-profil="simpan">Simpan profil</button>
-      ${p ? '<button class="btn btn-secondary btn-kecil" data-profil="batal">Batal</button>' : ''}
-      <button class="btn btn-secondary btn-kecil" data-profil="kembali">Kembali</button>
+  const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
+  const opt = (daftar, kunci) => daftar.map(([val, lab]) => `<option value="${val}" ${p && p[kunci] === val ? 'selected' : ''}>${lab}</option>`).join('');
+  kartu.innerHTML = `<h2 style="margin:0 0 4px">${p ? 'Ubah profil' : 'Buat profil'}</h2>
+    <p class="muted" style="margin:0 0 16px">Tanda * wajib diisi.</p>
+    <div class="profil-grid">
+      <div class="card full"><p class="panel-judul">Identitas</p>${pilihanAvatarHTML()}
+        <div class="form-grid">
+          ${fld('Nama lengkap *', `<input class="input" id="pf-nama" maxlength="50" value="${v('nama')}">`)}
+          ${fld('Username (untuk link profil publik)', `<input class="input" id="pf-username" maxlength="20" placeholder="huruf kecil, angka, atau _ (3-20 karakter)" value="${v('username')}">`)}
+          ${fld('Deskripsi singkat (opsional, maks 300 karakter)', `<textarea class="input" id="pf-deskripsi" maxlength="300" rows="3" placeholder="contoh: Fokus di PM, target UI">${v('deskripsi')}</textarea>`, true)}
+        </div></div>
+      <div class="card"><p class="panel-judul">Informasi akademik</p>
+        ${fld('Status pendidikan sekarang *', `<select class="input" id="pf-status">${opt(PROFIL_STATUS, 'statusPendidikan')}</select>`)}
+        ${fld('Tanggal ujian UTBK (opsional)', `<input class="input" type="date" id="pf-ujian" value="${v('tanggalUjian')}">`)}
+        ${fld('Sekolah / kampus', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
+        ${fld('Jurusan', `<select class="input" id="pf-jurusan">${opt(PROFIL_JURUSAN, 'jurusan')}</select>`)}
+        ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="80" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}
+      </div>
+      <div class="card"><p class="panel-judul">Informasi pribadi dan privasi</p>
+        ${fld('Tanggal lahir', `<input class="input" type="date" id="pf-tgl" max="${hariIni}" value="${v('tanggalLahir')}">`)}
+        ${fld('Kota domisili (opsional)', `<input class="input" id="pf-kota" maxlength="40" value="${v('kota')}">`)}
+        <p class="label">Privasi profil publik</p>
+        <label class="chip"><input type="checkbox" id="pf-publik" ${p && p.publik ? 'checked' : ''}><span>Tampilkan profil di link publik</span></label>
+        <label class="chip" style="margin-top:6px"><input type="checkbox" id="pf-statistik" ${p && p.tampilkanStatistik ? 'checked' : ''}><span>Tampilkan statistik</span></label>
+        <p class="muted" style="margin-top:8px">Tanggal lahir, sekolah, dan kota tidak pernah ditampilkan ke orang lain.</p>
+      </div>
+      ${akun}
+    </div>
+    <div class="profil-aksi">
+      <button class="btn btn-primary" data-profil="simpan">Simpan profil</button>
+      ${p ? '<button class="btn btn-secondary" data-profil="batal">Batal</button>' : ''}
+      <button class="btn btn-secondary" data-profil="kembali">Kembali</button>
     </div>
     <p class="pesan" id="pesan-profil"></p>`;
 }
@@ -3810,6 +3836,9 @@ function renderPengaturan() {
   const p = PengaturanApp.ambil();
   $('pilih-waktu').innerHTML = [60, 90, 120, 180].map((o) =>
     `<label class="chip"><input type="radio" name="waktu" value="${o}" ${o === p.waktuPerSoal ? 'checked' : ''}><span>${o} detik</span></label>`).join('');
+  $('pilih-waktu-set').innerHTML = [60, 90, 120, 180].map((o) =>
+    `<label class="chip"><input type="radio" name="set-waktu" value="${o}" ${o === p.waktuPerSoal ? 'checked' : ''}><span>${o} detik</span></label>`).join('');
+  document.querySelectorAll('input[name="tema"]').forEach((i) => (i.checked = i.value === temaTersimpan()));
   const prof = ProfilApp.ambil() || {};
   $('pubatur-publik').checked = !!prof.publik;
   $('pubatur-statistik').checked = !!prof.tampilkanStatistik;
@@ -3840,6 +3869,21 @@ $('pilih-waktu').addEventListener('change', (e) => {
 });
 $('btn-ke-setup').addEventListener('click', () => tampil('setup'));
 $('setup').addEventListener('change', ringkasSesi);
+function temaTersimpan() { try { return localStorage.getItem('neon_tema') || 'sistem'; } catch (e) { return 'sistem'; } }
+function terapkanTema(t) {
+  const m = { terang: 'light', gelap: 'dark' }[t];
+  if (m) document.documentElement.dataset.theme = m; else delete document.documentElement.dataset.theme;
+  try { localStorage.setItem('neon_tema', t); } catch (e) {}
+}
+$('pengaturan').addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.name === 'set-waktu') {
+    const v = Number(t.value);
+    PengaturanApp.simpan({ ...PengaturanApp.ambil(), waktuPerSoal: v });
+    DETIK_PER_SOAL = v;
+    renderPengaturan();
+  } else if (t.name === 'tema') terapkanTema(t.value);
+});
 $('btn-kembali-menu').addEventListener('click', () => tampil('menu'));
 
 buatDatalist();
