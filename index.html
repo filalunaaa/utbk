@@ -542,6 +542,90 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
   .form-grid .full{grid-column:1/-1}
 }
 @media(min-width:900px){#profil{max-width:1040px}}
+
+#btn-ke-setup{margin:0;padding:6px 12px}
+/* ===== NEON v3: Beranda dashboard & mode ujian ===== */
+#menu{gap:16px}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.dash-teks{min-width:0}
+#salam{font-size:1.45rem;font-weight:800;line-height:1.25;margin:0;letter-spacing:-.01em;color:var(--text)}
+#salam-sub{margin:2px 0 0}.dash-tgl{margin:2px 0 0!important;font-size:.8rem}
+.dash-avatar{width:48px;height:48px;flex-shrink:0;border:2px solid var(--border);cursor:pointer;padding:0;font-size:1.2rem}
+.dash-avatar:hover{border-color:var(--primary)}
+#menu>#kartu-hitung.hero{border:0;background:linear-gradient(135deg,#2563eb,#1d4ed8 70%);color:#fff;padding:22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hero .hero-lbl{font-size:.75rem;font-weight:800;letter-spacing:.12em;opacity:.85;margin:0}
+.hero .hero-hari{font-size:2.6rem;font-weight:800;line-height:1.1;margin:2px 0}
+.hero p{margin:0}.hero .hero-tgl{opacity:.9;font-size:.9rem}
+.hero h2{color:#fff;margin:0 0 4px}
+.hero .btn{background:#fff;color:#1d4ed8}.hero .btn:hover{background:#dbeafe}
+.sum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sum-card{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px;text-align:left;font:inherit;color:var(--text);cursor:pointer;min-width:0;transition:border-color .15s,transform .15s}
+.sum-card:hover{border-color:var(--primary);transform:translateY(-1px)}
+.sum-card b{font-size:1.6rem;font-weight:800;line-height:1.15}
+.sum-card>span:last-child{font-size:.78rem;color:var(--muted)}
+.sum-ik,.qa-ik{display:inline-flex;width:34px;height:34px;border-radius:10px;background:var(--primary-soft);color:var(--accent);align-items:center;justify-content:center;margin-bottom:6px}
+.sum-ik svg,.qa-ik svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gr-ctrl{display:flex;flex-wrap:wrap;gap:8px 12px;margin:10px 0 6px}
+.seg{display:inline-flex;background:var(--primary-soft);border-radius:10px;padding:3px;max-width:100%}
+.seg button{border:0;background:transparent;color:var(--accent);font:inherit;font-size:.82rem;font-weight:600;padding:6px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--primary);color:#fff}
+.grafik{position:relative;min-height:220px;width:100%}
+.grafik svg{display:block;width:100%;touch-action:pan-y;overflow:visible}
+.gr-tip{position:absolute;top:0;pointer-events:none;background:var(--text);color:var(--bg);font-size:.78rem;padding:6px 9px;border-radius:8px;white-space:nowrap;transform:translateX(-50%);z-index:2;line-height:1.35}
+.gr-kosong{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 10px;gap:4px}
+.gr-kosong svg{width:52px;height:52px;fill:none;stroke:var(--primary);stroke-width:1.6;stroke-linecap:round;margin-bottom:6px}
+.gr-kosong b{font-size:1.05rem}.gr-kosong p{margin:0 0 10px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.sec-head h2{margin:0}
+.qa-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.qa{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:left;font:inherit;color:var(--text);cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s,background .15s;min-width:0}
+.qa:hover{border-color:var(--primary);background:var(--primary-soft);transform:translateY(-2px)}
+.qa b{font-size:1rem}.qa>span:last-child{font-size:.82rem;color:var(--muted)}
+.rek-baris{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0 12px;font-size:.88rem}
+.prio{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px}
+.prio.tinggi{background:var(--salah-soft);color:var(--salah)}.prio.sedang{background:var(--warning-soft,#fef3c7);color:var(--warning,#b45309)}.prio.baik{background:var(--benar-soft);color:var(--benar)}
+.berita-aksi{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#menu .card,#menu .sum-card,#menu .qa{min-width:0}
+@media(max-width:480px){.sum-card{padding:11px}.sum-card b{font-size:1.3rem}.qa{padding:13px}.hero .hero-hari{font-size:2.2rem}}
+@media(max-width:380px){.qa-grid{grid-template-columns:1fr}}
+@media(min-width:900px){#menu>*{grid-column:1/-1}#menu>#kartu-perkuat,#menu>#kartu-berita{grid-column:auto}#menu>#salam{grid-column:auto}}
+/* --- Mode ujian --- */
+body[data-hal="kuis"] .topbar{display:none!important}
+body[data-hal="kuis"] .container{padding-top:0}
+#kuis{max-width:780px}
+.ex-head{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 4px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--border);margin:0 -4px 14px}
+.ex-kiri,.ex-kanan{display:flex;align-items:center;gap:8px;min-width:0}
+.ex-logo{font-size:.85rem}.ex-mode{font-size:.7rem;font-weight:800;letter-spacing:.1em;background:var(--primary);color:#fff;padding:3px 9px;border-radius:6px}
+.ex-status{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.ex-kanan .timer{font-size:1.15rem;font-variant-numeric:tabular-nums;background:var(--primary-soft);padding:4px 12px;border-radius:10px;white-space:nowrap}
+.timer.hampir{background:var(--warning-soft,#fef3c7);color:var(--warning,#b45309)}
+.timer.habis{background:var(--salah-soft);color:var(--salah)}
+.ex-card{padding:20px 20px 0;overflow:visible}
+.ex-prog{display:flex;justify-content:space-between;font-weight:800;font-size:.85rem;letter-spacing:.06em;margin-bottom:6px}
+.ex-detail{margin:6px 0 0}.ex-detail summary{cursor:pointer;font-size:.85rem;font-weight:600;color:var(--accent);padding:6px 0}
+.ex-nav{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:6px;padding:6px 0 10px}
+.ex-nav button{height:40px;border:1.5px solid var(--border);border-radius:9px;background:var(--card);color:var(--muted);font:inherit;font-weight:700;cursor:pointer}
+.ex-nav button.terjawab{background:var(--primary-soft);border-color:var(--primary);color:var(--accent)}
+.ex-nav button.aktif{background:var(--primary);border-color:var(--primary);color:#fff}
+.ex-nav button:disabled{opacity:.4;cursor:not-allowed}
+.teks-soal{font-size:1.08rem;line-height:1.75;margin:16px 0 20px;overflow-x:auto;overflow-wrap:anywhere}
+.teks-soal img,.opsi-isi img{max-width:100%;height:auto}
+.teks-soal table{display:block;max-width:100%;overflow-x:auto}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
+#opsi-list .opsi{min-height:56px;border-radius:14px;padding:12px 14px;border-width:2px;cursor:pointer}
+#opsi-list .opsi .huruf{width:34px;height:34px;border-radius:50%;font-weight:800}
+#opsi-list .opsi.terpilih .huruf{background:var(--primary);color:#fff}
+#opsi-list .opsi.benar .huruf{background:var(--benar);color:#fff}#opsi-list .opsi.salah .huruf{background:var(--salah);color:#fff}
+#opsi-list .opsi.nonaktif{opacity:.55;cursor:default}
+#opsi-list .opsi:focus-visible{outline:3px solid rgba(37,99,235,.45);outline-offset:2px}
+.isian-input{font-size:1.8rem;min-height:64px;max-width:100%;width:100%}
+.isian-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.2);outline:0}
+.ex-foot{position:sticky;bottom:0;z-index:5;align-items:center;margin:18px -20px 0;padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius)}
+.ex-foot .btn{min-height:46px;min-width:104px}.ex-pos{font-size:.85rem;font-weight:700;color:var(--muted)}
+body[data-mode="tryout"] #kuis .ex-detail summary{color:var(--text)}
+@media(max-width:480px){.ex-logo,.ex-status{display:none}.ex-card{padding:16px 14px 0}.ex-foot{margin:16px -14px 0;padding-left:14px;padding-right:14px}.ex-foot .btn{min-width:0;flex:0 1 auto;padding-inline:14px}}
+.modal-ex{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:var(--card);color:var(--text);border-radius:16px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.mx-aksi{display:flex;flex-direction:column;gap:8px;margin-top:6px}.mx-aksi .btn{width:100%;min-height:46px}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -575,12 +659,30 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 
 <main class="container">
   <section id="menu" class="halaman">
-    <p class="muted" id="salam" style="margin:0 0 14px;font-size:1rem"></p>
-    <div class="card" id="kartu-hitung"></div>
-    <div class="card" id="kartu-ringkasan"></div>
+    <header class="dash-head">
+      <div class="dash-teks"><h1 id="salam"></h1><p class="muted" id="salam-sub"></p><p class="muted dash-tgl" id="tgl-hari"></p></div>
+      <button type="button" class="avatar dash-avatar" id="dash-avatar" aria-label="Buka profil">?</button>
+    </header>
+    <div class="card hero" id="kartu-hitung"></div>
+    <div class="sum-grid" id="kartu-ringkasan"></div>
+    <div class="card" id="kartu-grafik">
+      <div class="gr-head"><div><h2>Perkembangan Belajar</h2><p class="muted">Lihat bagaimana progres belajarmu berkembang.</p></div></div>
+      <div class="gr-ctrl">
+        <div class="seg" role="group" aria-label="Periode" id="gr-periode"><button type="button" data-p="7" aria-pressed="true">7 Hari</button><button type="button" data-p="30" aria-pressed="false">30 Hari</button><button type="button" data-p="semua" aria-pressed="false">Semua Waktu</button></div>
+        <div class="seg" role="group" aria-label="Metrik" id="gr-metrik"><button type="button" data-m="jumlah" aria-pressed="true">Soal Dikerjakan</button><button type="button" data-m="akurasi" aria-pressed="false">Akurasi</button></div>
+      </div>
+      <div id="grafik" class="grafik"></div>
+    </div>
+    <section id="mulai-belajar" aria-labelledby="jdl-mulai">
+      <div class="sec-head"><h2 id="jdl-mulai">Mulai Belajar</h2><button type="button" class="btn btn-secondary btn-kecil" id="btn-ke-setup">Atur sesi lengkap</button></div>
+      <div class="qa-grid">
+        <button type="button" class="qa" data-qa="latihan"><span class="qa-ik"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></span><b>Latihan</b><span>Latihan soal dengan pembahasan langsung.</span></button>
+        <button type="button" class="qa" data-qa="tryout"><span class="qa-ik"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span><b>Try Out</b><span>Simulasikan ujian dengan batas waktu.</span></button>
+        <button type="button" class="qa" data-qa="bank"><span class="qa-ik"><svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H19"/></svg></span><b>Bank Soal</b><span>Jelajahi koleksi soal dan pembelajaran.</span></button>
+      </div>
+    </section>
     <div class="card" id="kartu-perkuat"></div>
     <div class="card" id="kartu-berita"></div>
-    <button class="btn btn-primary btn-besar" id="btn-ke-setup">Mulai</button>
   </section>
 
   <section id="setup" class="halaman" hidden>
@@ -730,14 +832,21 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </section>
 
   <section id="kuis" class="halaman" hidden>
-    <div class="card">
+    <header class="ex-head">
+      <div class="ex-kiri"><span class="brand-mark" aria-hidden="true">N</span><b class="ex-logo">NEON UTBK</b><span class="ex-mode" id="ex-mode"></span></div>
+      <div class="ex-kanan"><span class="ex-status" id="ex-status"></span><span class="timer" id="timer" role="timer" aria-live="off"></span><button type="button" class="btn btn-secondary btn-kecil" id="btn-keluar-ujian">Keluar</button></div>
+    </header>
+    <div class="card ex-card">
+      <div class="ex-prog"><span id="ex-prog"></span><span id="ex-pct"></span></div>
       <div class="progress"><div class="progress-bar" id="bar"></div></div>
-      <div class="baris-info"><span class="muted" id="info-nomor"></span><span class="timer" id="timer"></span></div>
+      <div class="baris-info"><span class="muted" id="info-nomor"></span></div>
+      <details id="ex-detail" class="ex-detail"><summary>Daftar soal</summary><div id="ex-nav" class="ex-nav"></div></details>
       <div class="teks-soal" id="teks-soal"></div>
       <div class="opsi-list" id="opsi-list"></div>
       <div class="feedback" id="feedback" hidden></div>
-      <div class="aksi">
+      <div class="aksi ex-foot">
         <button class="btn btn-secondary" id="btn-prev">Sebelumnya</button>
+        <span class="ex-pos" id="ex-pos"></span>
         <button class="btn btn-primary" id="btn-aksi">Jawab</button>
       </div>
     </div>
@@ -891,6 +1000,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <button class="btn btn-secondary" id="btn-reset">Reset statistik</button>
     </div>
   </section>
+<div class="modal-ex" id="modal-ex" hidden role="dialog" aria-modal="true" aria-labelledby="mx-judul"><div class="modal-box"><h2 id="mx-judul"></h2><p id="mx-teks"></p><div class="mx-aksi" id="mx-aksi"></div></div></div>
 </main>
 <div class="overlay-pv" id="overlay-pv" hidden role="dialog" aria-modal="true" aria-label="Pratinjau soal">
   <div class="pv-panel">
@@ -1876,6 +1986,7 @@ function mulai() {
     const tik = () => {
       $('timer').textContent = 'Sisa ' + format(sesi.sisa);
       $('timer').classList.toggle('habis', sesi.sisa <= 30);
+      $('timer').classList.toggle('hampir', sesi.sisa > 30 && sesi.sisa <= 120);
     };
     tik();
     sesi.timer = setInterval(() => {
@@ -1885,6 +1996,7 @@ function mulai() {
     }, 1000);
   }
   tampil('kuis');
+  $('ex-detail').open = window.innerWidth >= 900;
   renderSoal();
 }
 
@@ -1930,6 +2042,7 @@ function renderSoal() {
     btn.textContent = i === soal.length - 1 ? 'Selesai' : 'Lanjut';
     btn.disabled = false;
   }
+  renderUjianUI();
   rumus($('kuis'));
 }
 
@@ -1951,6 +2064,8 @@ function hasilRinci(soal, jawab, benar, mode) {
     <p class="label">Akurasi per mata pelajaran</p>${baris}`;
 }
 function selesai() {
+  if (!sesi || !sesi.aktif) return; // cegah penyelesaian ganda
+  $('modal-ex').hidden = true;
   filterReview = 'semua';
   clearInterval(sesi.timer);
   sesi.aktif = false;
@@ -3057,13 +3172,61 @@ $('btn-aksi').addEventListener('click', () => {
     PilihanStat.catat(soal[i], jawab[i]);
     renderSoal();
   } else if (i === soal.length - 1) {
-    selesai();
+    akhiriDenganKonfirmasi();
   } else {
     sesi.i++;
     renderSoal();
   }
 });
 $('btn-prev').addEventListener('click', () => { sesi.i--; renderSoal(); });
+
+// ---------- Mode ujian: UI, panel soal, konfirmasi keluar ----------
+function renderUjianUI() {
+  const { soal, jawab, kunci, i, mode } = sesi, n = soal.length;
+  document.body.dataset.mode = mode;
+  $('ex-mode').textContent = mode === 'tryout' ? 'TRY OUT' : 'LATIHAN';
+  $('ex-prog').textContent = `SOAL ${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+  $('ex-pct').textContent = Math.round(((i + 1) / n) * 100) + '%';
+  $('ex-pos').textContent = `${i + 1} / ${n}`;
+  const sudah = (k) => (mode === 'latihan' ? kunci[k] : jawab[k] !== null && jawab[k] !== undefined);
+  $('ex-status').textContent = `${soal.filter((s, k) => sudah(k)).length}/${n} terjawab`;
+  $('ex-nav').innerHTML = soal.map((s, k) => `<button type="button" data-k="${k}" class="${k === i ? 'aktif' : sudah(k) ? 'terjawab' : ''}" aria-label="Soal ${k + 1}${sudah(k) ? ', sudah dijawab' : ', kosong'}"${k === i ? ' aria-current="true"' : ''}${mode === 'latihan' && k > i && !kunci[k - 1] ? ' disabled' : ''}>${k + 1}</button>`).join('');
+  document.querySelectorAll('#opsi-list .opsi').forEach((o) => {
+    o.tabIndex = kunci[i] ? -1 : 0; o.setAttribute('role', adaGanda(soal[i]) ? 'checkbox' : 'radio');
+    o.setAttribute('aria-checked', String(o.classList.contains('terpilih')));
+    if (kunci[i] && !o.classList.contains('benar') && !o.classList.contains('salah')) o.classList.add('nonaktif');
+  });
+  const inp = $('inp-isian'); if (inp) { inp.setAttribute('pattern', '[0-9]*'); inp.setAttribute('enterkeyhint', 'done'); }
+}
+$('ex-nav').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-k]');
+  if (!b || b.disabled || !sesi || !sesi.aktif) return;
+  sesi.i = Number(b.dataset.k); renderSoal(); window.scrollTo(0, 0);
+});
+$('opsi-list').addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.opsi')) { e.preventDefault(); e.target.click(); const k = e.target.dataset.k, n = document.querySelector(`#opsi-list .opsi[data-k="${k}"]`); if (n) n.focus(); }
+});
+function konfirmUjian(judul, teks, aksi) {
+  $('mx-judul').textContent = judul; $('mx-teks').textContent = teks;
+  const w = $('mx-aksi'); w.innerHTML = '';
+  aksi.forEach((a) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + (a.kelas || 'btn-secondary'); b.textContent = a.label; b.onclick = () => { $('modal-ex').hidden = true; if (a.fn) a.fn(); }; w.appendChild(b); });
+  $('modal-ex').hidden = false; w.firstChild.focus();
+}
+function batalSesi() { if (sesi) { clearInterval(sesi.timer); sesi.timer = null; sesi.aktif = false; } tampil('menu'); }
+function akhiriDenganKonfirmasi() {
+  if (sesi.mode === 'tryout') {
+    const k = sesi.jawab.filter((j) => j === null || j === undefined).length;
+    if (k) return konfirmUjian('Akhiri Try Out?', `Masih ada ${k} soal yang belum dijawab. Soal kosong tidak dihitung benar.`, [{ label: 'Kembali mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri sekarang', fn: selesai }]);
+  }
+  selesai();
+}
+$('btn-keluar-ujian').addEventListener('click', () => {
+  if (!sesi || !sesi.aktif) return tampil('menu');
+  if (sesi.mode === 'tryout') konfirmUjian('Keluar dari Try Out?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri & lihat hasil', fn: selesai }, { label: 'Keluar tanpa menyimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
+  else konfirmUjian('Keluar dari latihan?', 'Soal yang sudah kamu jawab tetap tercatat di statistik. Soal yang belum dijawab tidak dihitung.', [{ label: 'Lanjut latihan', kelas: 'btn-primary' }, { label: 'Keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('modal-ex').hidden = true; });
+window.addEventListener('beforeunload', (e) => { if (sesi && sesi.aktif && sesi.mode === 'tryout') { e.preventDefault(); e.returnValue = ''; } });
 $('btn-review').addEventListener('click', renderReview);
 $('btn-kembali-hasil').addEventListener('click', () => tampil('hasil'));
 $('btn-menu').addEventListener('click', () => tampil('menu'));
@@ -3275,54 +3438,131 @@ function hariKeUjian(iso) {
   const t = new Date(iso + 'T00:00:00');
   return Math.round((t - hariIni) / 86400000);
 }
+function salamWaktu(h) { return h < 4 ? 'Selamat malam' : h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 19 ? 'Selamat sore' : 'Selamat malam'; }
+function renderHeader() {
+  const p = ProfilApp.ambil(), now = new Date();
+  const nama = p && p.nama ? String(p.nama).trim().split(/\s+/)[0] : '';
+  $('salam').textContent = nama ? `${salamWaktu(now.getHours())}, ${nama}!` : `${salamWaktu(now.getHours())}!`;
+  $('salam-sub').textContent = nama ? 'Siap meningkatkan kemampuan hari ini?' : 'Lengkapi profilmu agar belajar terasa lebih personal.';
+  $('tgl-hari').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  $('dash-avatar').innerHTML = avatarIsi(p ? p.nama : '?');
+}
+var grafikState = { p: '7', m: 'jumlah' };
+function kunciTgl(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function dataGrafik() {
+  const r = Riwayat.ambil().filter((x) => x && Number.isFinite(x.t));
+  const per = {};
+  r.forEach((x) => { const k = kunciTgl(new Date(x.t)); const o = per[k] || (per[k] = { n: 0, b: 0 }); o.n++; if (x.b) o.b++; });
+  const hariIni = new Date(); hariIni.setHours(0, 0, 0, 0);
+  let awal = new Date(hariIni);
+  if (grafikState.p === 'semua') { if (r.length) { awal = new Date(Math.min(...r.map((x) => x.t))); awal.setHours(0, 0, 0, 0); } }
+  else awal.setDate(awal.getDate() - (Number(grafikState.p) - 1));
+  const pts = [];
+  for (const d = new Date(awal); d <= hariIni; d.setDate(d.getDate() + 1)) {
+    const o = per[kunciTgl(d)] || { n: 0, b: 0 };
+    pts.push({ d: new Date(d), n: o.n, b: o.b, acc: o.n ? Math.round((o.b / o.n) * 100) : null });
+  }
+  return { pts, total: r.length };
+}
+function gambarGrafik() {
+  const el = $('grafik'); if (!el) return;
+  const { pts, total } = dataGrafik();
+  if (!total) {
+    el.innerHTML = `<div class="gr-kosong"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><b>Belum ada riwayat belajar.</b><p class="muted">Mulai latihan pertamamu dan perkembanganmu akan muncul di sini.</p><button type="button" class="btn btn-primary" data-qa="latihan">Mulai Latihan</button></div>`;
+    return;
+  }
+  const m = grafikState.m, val = (p) => (m === 'jumlah' ? p.n : p.acc);
+  const ada = pts.filter((p) => val(p) !== null && (m === 'akurasi' || p.n > 0));
+  if (!ada.length) { el.innerHTML = '<div class="gr-kosong"><b>Belum ada pengerjaan di periode ini.</b><p class="muted">Pilih periode yang lebih panjang atau mulai latihan.</p></div>'; return; }
+  const W = Math.max(260, el.clientWidth || 320), H = 220, pl = 34, pr = 10, pt = 14, pb = 28;
+  const ymax = m === 'akurasi' ? 100 : Math.max(4, Math.ceil(Math.max(...pts.map((p) => p.n)) * 1.15));
+  const X = (i) => pl + (pts.length === 1 ? (W - pl - pr) / 2 : (i * (W - pl - pr)) / (pts.length - 1));
+  const Y = (v) => pt + (H - pt - pb) * (1 - v / ymax);
+  const idx = pts.map((p, i) => i).filter((i) => (m === 'akurasi' ? pts[i].acc !== null : true));
+  let path = '';
+  idx.forEach((i, k) => { const x = X(i), y = Y(val(pts[i])); if (!k) path = `M${x} ${y}`; else { const px = X(idx[k - 1]), py = Y(val(pts[idx[k - 1]])), mx = (px + x) / 2; path += ` C${mx} ${py} ${mx} ${y} ${x} ${y}`; } });
+  const base = H - pb;
+  const area = idx.length > 1 ? `${path} L${X(idx[idx.length - 1])} ${base} L${X(idx[0])} ${base} Z` : '';
+  let grid = '';
+  for (let g = 0; g <= 4; g++) { const v = (ymax * g) / 4, y = Y(v); grid += `<line x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}" stroke="var(--border)" stroke-width="1"/><text x="${pl - 6}" y="${y + 4}" text-anchor="end" font-size="10.5" fill="var(--muted)">${Math.round(v)}${m === 'akurasi' ? '%' : ''}</text>`; }
+  const langkah = Math.ceil(pts.length / Math.max(2, Math.floor((W - pl - pr) / 62)));
+  let lbl = '';
+  pts.forEach((p, i) => { if (i % langkah === 0) lbl += `<text x="${X(i)}" y="${H - 8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${p.d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</text>`; });
+  const dots = pts.length <= 45 ? idx.map((i) => `<circle cx="${X(i)}" cy="${Y(val(pts[i]))}" r="3.5" fill="var(--card)" stroke="var(--primary)" stroke-width="2"/>`).join('') : '';
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Grafik ${m === 'jumlah' ? 'soal dikerjakan' : 'akurasi'} per hari">${grid}${area ? `<path d="${area}" fill="var(--primary)" fill-opacity=".12"/>` : ''}<path d="${path}" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${lbl}<circle id="gr-hov" r="5" fill="var(--primary)" stroke="#fff" stroke-width="2" display="none"/></svg><div class="gr-tip" id="gr-tip" hidden></div>`;
+  const svg = el.querySelector('svg'), tip = $('gr-tip'), hov = $('gr-hov');
+  const tunjuk = (ev) => {
+    const rc = svg.getBoundingClientRect(), x = ((ev.clientX - rc.left) / rc.width) * W;
+    let b = 0, jb = 1e9; pts.forEach((p, i) => { const j = Math.abs(X(i) - x); if (j < jb) { jb = j; b = i; } });
+    const p = pts[b], tgl = p.d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+    tip.innerHTML = `<b>${tgl}</b><br>${p.n ? `${p.n} soal · ${p.acc}% akurat (${p.b} benar)` : 'Tidak ada pengerjaan'}`;
+    tip.hidden = false;
+    const v = val(p);
+    if (v !== null) { hov.setAttribute('cx', X(b)); hov.setAttribute('cy', Y(v)); hov.removeAttribute('display'); } else hov.setAttribute('display', 'none');
+    const px = (X(b) / W) * rc.width;
+    tip.style.left = Math.min(Math.max(px, 70), rc.width - 70) + 'px';
+  };
+  svg.addEventListener('pointermove', tunjuk); svg.addEventListener('pointerdown', tunjuk);
+  svg.addEventListener('pointerleave', () => { tip.hidden = true; hov.setAttribute('display', 'none'); });
+}
+function mulaiMode(mode) {
+  tampil('setup');
+  document.querySelectorAll('input[name="mode"]').forEach((i) => (i.checked = i.value === mode));
+  syncBlokWaktu(); ringkasSesi();
+}
 function renderBeranda() {
   const p = ProfilApp.ambil();
   const d = Penyimpanan.ambil();
-
-  // Hitung mundur ke ujian
+  renderHeader();
   const kh = $('kartu-hitung');
+  kh.classList.add('hero');
   if (p && p.tanggalUjian) {
     const hari = hariKeUjian(p.tanggalUjian);
-    if (hari > 0) {
-      kh.innerHTML = `<p class="muted" style="margin:0">Menuju UTBK</p>
-        <div class="skor">${hari} hari</div>
-        <p class="muted" style="margin:0">Ujian pada ${esc(formatTgl(p.tanggalUjian))}</p>`;
-    } else if (hari === 0) {
-      kh.innerHTML = '<h2>Hari ini ujian. Semangat!</h2>';
-    } else {
-      kh.innerHTML = '<h2>Tanggal ujian sudah lewat</h2><p class="muted">Ubah tanggal ujian di profil untuk melihat hitung mundur.</p>';
-    }
-  } else {
-    kh.innerHTML = '<h2>Hitung mundur</h2><p class="muted">Isi tanggal ujian UTBK di profil untuk melihat sisa hari.</p>';
-  }
+    if (hari > 0) kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><div class="hero-hari">${hari} hari</div><p class="hero-tgl">Ujian pada ${esc(formatTgl(p.tanggalUjian))}</p></div><button type="button" class="btn btn-kecil" id="btn-detail-hitung">Lihat countdown</button>`;
+    else if (hari === 0) kh.innerHTML = '<div><p class="hero-lbl">MENUJU UTBK</p><h2>Hari ini ujian. Semangat!</h2></div><button type="button" class="btn btn-kecil">Lihat countdown</button>';
+    else kh.innerHTML = '<div><p class="hero-lbl">MENUJU UTBK</p><h2>Tanggal ujian sudah lewat</h2><p class="hero-tgl">Ubah tanggal ujian di profil.</p></div><button type="button" class="btn btn-kecil">Buka profil</button>';
+  } else kh.innerHTML = '<div><p class="hero-lbl">MENUJU UTBK</p><h2>Tanggal ujian belum diatur</h2><p class="hero-tgl">Isi tanggal ujian di profil untuk melihat hitung mundur.</p></div><button type="button" class="btn btn-kecil">Lengkapi profil</button>';
 
-  // Ringkasan progres
-  $('kartu-ringkasan').innerHTML = d.total
-    ? `<h2>Progres kamu</h2>
-       <div class="ringkasan-baris">
-         <div><div class="skor">${d.total}</div><p class="muted" style="margin:0">soal dikerjakan</p></div>
-         <div><div class="skor">${Math.round((d.benar / d.total) * 100)}%</div><p class="muted" style="margin:0">akurasi keseluruhan</p></div>
-       </div>
-       <p class="muted" style="margin:10px 0 0">Klik untuk melihat statistik lengkap &rsaquo;</p>`
-    : '<h2>Progres kamu</h2><p class="muted">Belum ada latihan. Mulai satu sesi untuk melihat progres di sini.</p>';
+  const ik = (path) => `<span class="sum-ik"><svg viewBox="0 0 24 24">${path}</svg></span>`;
+  const kartu = (path, angka, label) => `<button type="button" class="sum-card" aria-label="${label}: ${angka}. Buka statistik lengkap">${ik(path)}<b>${angka}</b><span>${label}</span></button>`;
+  $('kartu-ringkasan').innerHTML =
+    kartu('<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>', d.total, 'Soal dikerjakan') +
+    kartu('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>', d.total ? Math.round((d.benar / d.total) * 100) + '%' : '–', 'Akurasi') +
+    kartu('<path d="M5 12l5 5L20 7"/>', d.benar, 'Jawaban benar');
 
-  // Topik yang perlu diperkuat (minimal 3 soal di topik itu)
-  const topik = Object.entries(d.topik)
-    .filter(([, x]) => x.total >= 3)
+  gambarGrafik();
+  renderBerita();
+
+  const topik = Object.entries(d.topik).filter(([, x]) => x.total >= 3)
     .map(([nama, x]) => ({ nama, total: x.total, pct: Math.round((x.benar / x.total) * 100) }))
     .sort((a, b) => a.pct - b.pct || b.total - a.total);
-  renderBerita();
   const kp = $('kartu-perkuat');
   if (!topik.length) {
     kp.innerHTML = '<h2>Perlu diperkuat</h2><p class="muted">Kerjakan minimal 3 soal di satu topik, nanti topik yang paling perlu diperkuat muncul di sini.</p>';
     return;
   }
   const lemah = topik[0];
+  const rr = Riwayat.ambil().slice().reverse().find((x) => x && x.topik === lemah.nama);
+  const mapel = rr && rr.mapel ? namaMapel(rr.mapel) : '';
+  const pr = lemah.pct < 50 ? ['tinggi', 'Prioritas tinggi'] : lemah.pct < 75 ? ['sedang', 'Prioritas sedang'] : ['baik', 'Cukup baik'];
   kp.innerHTML = `<h2>Perlu diperkuat</h2>
-    <p>Topik <strong>${esc(lemah.nama)}</strong>: ${lemah.pct}% benar dari ${lemah.total} soal.</p>
-    <button class="btn btn-primary btn-kecil" data-latihan="${esc(lemah.nama)}">Latihan 5 soal ${esc(lemah.nama)}</button>
+    <p style="margin:0 0 2px"><strong>${esc(lemah.nama)}</strong> <span class="prio ${pr[0]}">${pr[1]}</span></p>
+    <div class="rek-baris muted">${mapel ? `<span>${esc(mapel)}</span>` : ''}<span>${lemah.pct}% akurat</span><span>${lemah.total} soal dikerjakan</span></div>
+    <div class="progress"><div class="progress-bar" style="width:${lemah.pct}%"></div></div>
+    <button type="button" class="btn btn-primary btn-kecil" data-latihan="${esc(lemah.nama)}" style="margin-top:8px">Latihan 5 Soal</button>
     <p class="muted" style="margin:10px 0 0">Klik kartu ini untuk rekomendasi lengkap &rsaquo;</p>`;
 }
+$('grafik').addEventListener('click', (e) => { if (e.target.closest('[data-qa="latihan"]')) mulaiMode('latihan'); });
+$('gr-periode').addEventListener('click', (e) => { const b = e.target.closest('button[data-p]'); if (!b) return; grafikState.p = b.dataset.p; document.querySelectorAll('#gr-periode button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); gambarGrafik(); });
+$('gr-metrik').addEventListener('click', (e) => { const b = e.target.closest('button[data-m]'); if (!b) return; grafikState.m = b.dataset.m; document.querySelectorAll('#gr-metrik button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); gambarGrafik(); });
+$('mulai-belajar').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-qa]'); if (!b) return;
+  if (b.dataset.qa === 'bank') document.querySelector('.side-nav [data-hal="bank"]').click();
+  else mulaiMode(b.dataset.qa);
+});
+$('dash-avatar').addEventListener('click', () => { renderProfil(!ProfilApp.ambil()); tampil('profil'); });
+var _rsz = null;
+window.addEventListener('resize', () => { clearTimeout(_rsz); _rsz = setTimeout(() => { if (!$('menu').hidden) gambarGrafik(); }, 150); });
 $('kartu-ringkasan').addEventListener('click', () => renderStatistik());
 $('kartu-hitung').addEventListener('click', () => {
   const p = ProfilApp.ambil();
@@ -3358,31 +3598,44 @@ $('kartu-perkuat').addEventListener('click', (e) => {
   tampil('rekomendasi');
 });
 
-// ---------- Berita UTBK (dari /api/berita di Vercel) ----------
+// ---------- Berita UTBK (dari /api/berita di Vercel), dengan cache ----------
 function fmtTglBerita(s) {
   const d = new Date(s);
   return isNaN(d) ? s : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
-async function renderBerita() {
+var _berita = { t: 0, data: null, p: null, gagal: 0 };
+var BERITA_TTL = 15 * 60 * 1000;
+try { const c = JSON.parse(sessionStorage.getItem('neon_berita')); if (c && Array.isArray(c.data)) { _berita.t = c.t; _berita.data = c.data; } } catch (e) {}
+function tampilBerita(basi) {
   const el = $('kartu-berita');
-  el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Memuat berita...</p>';
-  try {
-    const r = await fetch('/api/berita');
-    if (!r.ok) throw new Error('gagal');
-    const data = await r.json();
-    if (!Array.isArray(data) || !data.length) throw new Error('kosong');
-    el.innerHTML = `<h2>Berita UTBK terbaru</h2>
-      <ul class="daftar-berita">${data.slice(0, 5).map((b) => `
-        <li>
-          <a href="${esc(b.link)}" target="_blank" rel="noopener">${esc(b.judul)}</a>
-          <div class="muted">${esc(b.sumber || '')}${b.tanggal ? ' · ' + esc(fmtTglBerita(b.tanggal)) : ''}</div>
-        </li>`).join('')}
-      </ul>
-      <p class="muted" style="margin:10px 0 0;font-size:.82rem">Berita dari media, bukan pengumuman resmi. Info resmi ada di <a href="https://portal.snpmb.id" target="_blank" rel="noopener">portal SNPMB</a>.</p>`;
-  } catch (e) {
-    el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p>';
-  }
+  el.innerHTML = `<div class="berita-aksi"><h2 style="margin:0">Berita UTBK terbaru</h2><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Perbarui</button></div>
+    ${basi ? '<p class="muted">Gagal memperbarui, menampilkan berita tersimpan.</p>' : ''}
+    <ul class="daftar-berita">${_berita.data.slice(0, 5).map((b) => `<li><a href="${esc(b.link)}" target="_blank" rel="noopener">${esc(b.judul)}</a>
+      <div class="muted">${esc(b.sumber || '')}${b.tanggal ? ' · ' + esc(fmtTglBerita(b.tanggal)) : ''}</div></li>`).join('')}</ul>
+    <p class="muted" style="margin:10px 0 0;font-size:.82rem">Berita dari media, bukan pengumuman resmi. Info resmi ada di <a href="https://portal.snpmb.id" target="_blank" rel="noopener">portal SNPMB</a>.</p>`;
 }
+function renderBerita(paksa) {
+  const el = $('kartu-berita');
+  if (_berita.p) return _berita.p;
+  if (!paksa && _berita.data && Date.now() - _berita.t < BERITA_TTL) { tampilBerita(); return Promise.resolve(); }
+  if (!paksa && !_berita.data && Date.now() - _berita.gagal < 60000) { el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>'; return Promise.resolve(); }
+  if (!_berita.data) el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Memuat berita...</p>';
+  _berita.p = fetch('/api/berita').then((r) => { if (!r.ok) throw new Error('gagal'); return r.json(); })
+    .then((data) => {
+      if (!Array.isArray(data) || !data.length) throw new Error('kosong');
+      _berita.data = data; _berita.t = Date.now(); _berita.gagal = 0;
+      try { sessionStorage.setItem('neon_berita', JSON.stringify({ t: _berita.t, data })); } catch (e) {}
+      tampilBerita();
+    })
+    .catch(() => {
+      _berita.gagal = Date.now();
+      if (_berita.data) tampilBerita(true);
+      else el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>';
+    })
+    .finally(() => { _berita.p = null; });
+  return _berita.p;
+}
+$('kartu-berita').addEventListener('click', (e) => { if (e.target.closest('[data-berita="muat"]')) { e.stopPropagation(); renderBerita(true); } });
 
 // ---------- Hitung mundur (overlay animasi) ----------
 let timerHitung = null;
@@ -3819,8 +4072,7 @@ async function aksiAkun(aksi) {
 }
 function renderSalam() {
   const p = ProfilApp.ambil();
-  $('salam').textContent = p ? `Halo, ${p.nama}. Siap latihan hari ini?` : 'Halo! Lengkapi profil lewat ikon di pojok kiri bawah.';
-  $('avatar-atur').innerHTML = avatarIsi(p ? p.nama : '?');
+    $('avatar-atur').innerHTML = avatarIsi(p ? p.nama : '?');
   $('avatar-side').innerHTML = avatarIsi(p ? p.nama : '?');
   $('side-nama').textContent = p ? p.nama : 'Profil';
   renderBeranda();
