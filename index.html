@@ -460,6 +460,32 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .legenda{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-top:8px}
 .legenda i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
 @media(min-width:900px){.grafik-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grafik-grid .lebar{grid-column:1/-1}}
+
+/* Hasil dan Rekomendasi v2 */
+.hasil-atas{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:10px 0 18px}
+#hasil .skor{font-size:2.6rem;line-height:1.1}
+#hasil .hasil-atas p{margin:2px 0}
+.ring{position:relative;width:128px;height:128px;flex-shrink:0}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .dasar{fill:none;stroke:var(--border);stroke-width:10}
+.ring .isi{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .6s}
+.ring .isi.t{stroke:var(--benar)}.ring .isi.s{stroke:var(--warning)}.ring .isi.r{stroke:var(--salah)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:1.6rem;font-weight:800}
+.komposisi{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--border);margin:6px 0 10px}
+.komposisi span{display:block;height:100%}
+.seg-benar{background:var(--benar)}.seg-salah{background:var(--salah)}.seg-kosong{background:var(--muted);opacity:.55}
+.legenda.besar{font-size:.88rem;gap:16px;margin:0 0 16px}
+.rek-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.rek-grid .kartu-rek{margin:0;display:flex;flex-direction:column}
+.rek-grid .kartu-rek .btn{margin-top:auto;align-self:flex-start}
+.rek-akurasi{display:flex;align-items:center;gap:10px;margin:8px 0 4px}
+.rek-akurasi .progress{flex:1;margin:0}
+.rek-saran{margin:0 0 12px;font-size:.92rem}
+.pill-mapel{font-size:.75rem;font-weight:700;padding:2px 9px;border:1px solid var(--border);border-radius:999px;color:var(--muted)}
+.kartu-rek.kat-sedang{border-left-color:var(--warning)}
+.kartu-rek.kat-sedang .badge-rek{background:var(--warning-soft);color:var(--warning)}
+@media(min-width:700px){.rek-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1100px){.rek-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -628,11 +654,13 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </section>
 
   <section id="hasil" class="halaman" hidden>
-    <div class="card pusat">
+    <div class="card">
       <h2>Hasil akhir</h2>
-      <div class="skor" id="skor"></div>
-      <p id="persen"></p>
-      <p class="muted" id="waktu"></p>
+      <div class="hasil-atas">
+        <div class="ring" id="hasil-ring"></div>
+        <div><div class="skor" id="skor"></div><p id="persen"></p><p class="muted" id="waktu"></p><p class="muted" id="hasil-ket"></p></div>
+      </div>
+      <div id="hasil-rinci"></div>
       <div class="aksi">
         <button class="btn btn-secondary" id="btn-menu">Menu utama</button>
         <button class="btn btn-primary" id="btn-review">Review soal</button>
@@ -1802,6 +1830,23 @@ function renderSoal() {
   rumus($('kuis'));
 }
 
+function hasilRinci(soal, jawab, benar, mode) {
+  const n = soal.length;
+  const kosong = soal.filter((s, k) => jawab[k] === null || jawab[k] === undefined).length;
+  const salah = Math.max(0, n - benar - kosong);
+  const p = Math.round((benar / n) * 100);
+  const C = 2 * Math.PI * 52;
+  $('hasil-ring').innerHTML = `<svg viewBox="0 0 128 128" aria-hidden="true"><circle class="dasar" cx="64" cy="64" r="52"/><circle class="isi ${p >= 75 ? 't' : p >= 50 ? 's' : 'r'}" cx="64" cy="64" r="52" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p / 100)).toFixed(1)}"/></svg><b>${p}%</b>`;
+  $('hasil-ket').textContent = `${mode === 'tryout' ? 'Try Out' : 'Latihan'} · ${n} soal`;
+  const w = (v) => `${(v / n) * 100}%`;
+  const mp = {};
+  soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; if (jawabBenar(s, jawab[k])) mp[m].b++; });
+  const baris = Object.entries(mp).map(([m, x]) => { const q = Math.round((x.b / x.n) * 100); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">· ${x.b}/${x.n}</span></span></div>`; }).join('');
+  $('hasil-rinci').innerHTML = `<p class="label" style="margin-top:0">Komposisi jawaban</p>
+    <div class="komposisi" role="img" aria-label="${benar} benar, ${salah} salah, ${kosong} kosong"><span class="seg-benar" style="width:${w(benar)}"></span><span class="seg-salah" style="width:${w(salah)}"></span><span class="seg-kosong" style="width:${w(kosong)}"></span></div>
+    <div class="legenda besar"><span><i class="seg-benar"></i>Benar ${benar}</span><span><i class="seg-salah"></i>Salah ${salah}</span><span><i class="seg-kosong"></i>Kosong ${kosong}</span></div>
+    <p class="label">Akurasi per mata pelajaran</p>${baris}`;
+}
 function selesai() {
   filterReview = 'semua';
   clearInterval(sesi.timer);
@@ -1818,6 +1863,7 @@ function selesai() {
   $('skor').textContent = `${benar} / ${soal.length}`;
   $('persen').textContent = `Akurasi ${Math.round((benar / soal.length) * 100)}%`;
   $('waktu').textContent = mode === 'tryout' ? `Waktu pengerjaan: ${format(durasi)}` : '';
+  hasilRinci(soal, jawab, benar, mode);
   renderLaporan();
   tampil('hasil');
 }
@@ -3305,20 +3351,18 @@ function renderRekomendasi() {
     return { nama, mapel: mapelDari[nama] || '', total: x.total, pct, kat, judul, saran, urut };
   }).sort((a, b) => a.urut - b.urut || (a.pct ?? 0) - (b.pct ?? 0));
 
-  const tinggi = daftar.filter((r) => r.kat === 'tinggi').length;
+  const jml = (...k) => daftar.filter((r) => k.includes(r.kat)).length;
+  const tile = (t, v, w) => `<div class="stat-tile"><span>${t}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`;
+  const kartu = (r) => `<div class="kartu-rek kat-${r.kat}">
+      <div class="baris-rek"><span class="badge-rek">${esc(r.judul)}</span><span class="pill-mapel" title="${esc(namaMapel(r.mapel))}">${esc(r.mapel || '-')}</span></div>
+      <h3>${esc(r.nama)}</h3>
+      ${r.total ? `<div class="rek-akurasi"><div class="progress"><div class="progress-bar gradasi" style="width:${r.pct}%;--p:${Math.max(1, r.pct)}"></div></div><strong>${r.pct}%</strong></div><p class="muted" style="margin:0 0 8px">${r.total} soal dikerjakan</p>` : '<p class="muted" style="margin:6px 0 8px">Belum ada latihan</p>'}
+      <p class="rek-saran">${esc(r.saran)}</p>
+      <button class="btn btn-primary btn-kecil" data-latihan="${esc(r.nama)}">Latihan 5 soal</button>
+    </div>`;
   $('isi-rekomendasi').innerHTML =
-    `<p class="muted" style="margin:14px 0 4px">${tinggi ? `${tinggi} topik perlu prioritas.` : 'Tidak ada topik yang akurasinya rendah saat ini.'}</p>` +
-    daftar.map((r) => `
-      <div class="kartu-rek kat-${r.kat}">
-        <div class="baris-rek">
-          <span class="badge-rek">${esc(r.judul)}</span>
-          <span class="muted">${esc(namaMapel(r.mapel))}</span>
-        </div>
-        <h3>${esc(r.nama)}</h3>
-        <p class="muted" style="margin:0 0 6px">${r.total ? `${r.pct}% benar dari ${r.total} soal` : 'Belum ada latihan'}</p>
-        <p style="margin:0 0 10px">${esc(r.saran)}</p>
-        <button class="btn btn-primary btn-kecil" data-latihan="${esc(r.nama)}">Latihan 5 soal</button>
-      </div>`).join('');
+    `<div class="ringkasan-bank" style="margin-top:16px">${tile('Prioritas tinggi', jml('tinggi'), 'salah')}${tile('Perlu latihan', jml('sedang'), 'warning')}${tile('Data kurang', jml('belum', 'sedikit'))}${tile('Sudah baik', jml('baik'), 'benar')}</div>` +
+    (daftar.length ? `<div class="rek-grid">${daftar.map(kartu).join('')}</div>` : '<div class="state-kosong"><strong>Belum ada topik</strong><p class="muted">Tambahkan soal ke bank atau tunggu soal bawaan dimuat.</p></div>');
 }
 
 // ---------- Profil publik (#/u/username) ----------
