@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NEON UTBK - Learn. Practice. Improve.</title>
+<title>nalarin - Learn. Practice. Improve.</title>
 <meta name="theme-color" content="#2563eb">
 <script>try{var m={terang:"light",gelap:"dark"}[localStorage.getItem("neon_tema")];if(m)document.documentElement.dataset.theme=m}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -364,7 +364,7 @@ h1,h2,h3{letter-spacing:-.01em;font-weight:700}
 .lap-ringkasan p{margin:0 0 4px}
 .lap-ringkasan p:last-child{margin:0}
 
-/* ===== NEON UTBK v2: design system, tata letak, navigasi ===== */
+/* ===== nalarin v2: design system, tata letak, navigasi ===== */
 :root{--primary:#2563eb;--primary-dark:#1d4ed8;--primary-soft:#eff6ff;--navy:#14213d;--bg:#f5f7fc;--card:#fff;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;--benar:#0d9488;--benar-soft:#f0fdfa;--warning:#d97706;--warning-soft:#fffbeb;--salah:#dc2626;--salah-soft:#fef2f2;--radius:14px;--shadow:0 1px 2px rgba(20,33,61,.06),0 2px 8px rgba(20,33,61,.04);--side-w:248px;--nav-h:64px}
 body{-webkit-font-smoothing:antialiased}
 h2{font-weight:800;letter-spacing:-.01em}
@@ -731,7 +731,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 </head>
 <body>
 <aside class="sidebar" aria-label="Navigasi utama">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">N</span><div><b>NEON UTBK</b><small>Learn. Practice. Improve.</small></div></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">N</span><div><b>nalarin</b><small>Learn. Practice. Improve.</small></div></div>
   <nav class="side-nav">
     <a href="#" class="nav-link nl aktif" data-hal="menu" aria-label="Beranda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></a>
     <a href="#" class="nav-link nl" data-hal="setup" aria-label="Atur Latihan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span>Atur Latihan</span></a>
@@ -743,7 +743,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   <a href="#" class="nav-link nl side-profil" data-hal="profil" aria-label="Profil saya"><span class="avatar" id="avatar-side">?</span><span><b id="side-nama">Profil</b><small>Lihat profil</small></span></a>
 </aside>
 <header class="topbar"><div class="topbar-inner">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">N</span><div><b>NEON UTBK</b><small>Learn. Practice. Improve.</small></div></div>
+  <div class="brand"><span class="brand-mark" aria-hidden="true">N</span><div><b>nalarin</b><small>Learn. Practice. Improve.</small></div></div>
   <a href="#" class="nav-link nl keluar-kuis" data-hal="menu">Keluar</a>
 </div></header>
 <nav class="bottomnav" aria-label="Navigasi utama">
@@ -852,10 +852,10 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 <div class="card"><h3 class="kartu-judul">Ekspor data</h3><p class="muted">Berisi riwayat pengerjaanmu: tanggal, topik, mapel, status, dan jawaban. Tidak memuat email atau data profil.</p><div class="aksi aksi-kiri"><button class="btn btn-secondary btn-kecil" id="set-csv">Ekspor CSV</button><button class="btn btn-secondary btn-kecil" id="set-pdf">Laporan PDF</button></div><p class="muted" id="set-ekspor-msg" style="margin-top:8px"></p></div>
 <div class="card"><h3 class="kartu-judul">Reset statistik</h3><p class="muted">Menghapus statistik, riwayat, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak dihapus.</p><button class="btn btn-secondary btn-kecil" id="set-reset">Reset statistik</button></div>
 <div class="card"><h3 class="kartu-judul">Hapus data lokal</h3><p class="muted">Menghapus data yang tersimpan di perangkat ini: statistik, riwayat, bank soal, profil, dan pengaturan. Akunmu tidak dihapus, dan jika masuk dengan akun, data bisa diunduh lagi dari server saat sinkronisasi.</p><button class="btn btn-secondary btn-kecil" id="set-lokal">Hapus data lokal</button></div>
-<div class="card zona-bahaya"><h3 class="kartu-judul">Zona berbahaya: hapus akun dan data</h3><p class="muted" id="teks-hapus"></p><button class="btn btn-bahaya btn-kecil" id="btn-hapus-buka">Hapus akun dan data</button><div id="blok-hapus" hidden><p class="label">Ketik HAPUS untuk konfirmasi</p><input class="input" id="hapus-konfirmasi" placeholder="HAPUS" autocomplete="off"><div class="aksi aksi-kiri"><button class="btn btn-bahaya btn-kecil" id="btn-hapus-final" disabled>Hapus permanen</button></div><p class="pesan" id="pesan-hapus"></p></div></div></div><div class="set-panel" data-isi="tentang" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Tentang Aplikasi</h2><div class="card"><div class="akun-ringkas"><span class="brand-mark" aria-hidden="true">N</span><div><b>NEON UTBK</b><small class="muted">Learn. Practice. Improve.</small><small class="muted" id="set-versi"></small></div></div><p style="margin-top:10px">Aplikasi latihan soal UTBK dengan statistik belajar, Try Out, dan bank soal.</p></div>
+<div class="card zona-bahaya"><h3 class="kartu-judul">Zona berbahaya: hapus akun dan data</h3><p class="muted" id="teks-hapus"></p><button class="btn btn-bahaya btn-kecil" id="btn-hapus-buka">Hapus akun dan data</button><div id="blok-hapus" hidden><p class="label">Ketik HAPUS untuk konfirmasi</p><input class="input" id="hapus-konfirmasi" placeholder="HAPUS" autocomplete="off"><div class="aksi aksi-kiri"><button class="btn btn-bahaya btn-kecil" id="btn-hapus-final" disabled>Hapus permanen</button></div><p class="pesan" id="pesan-hapus"></p></div></div></div><div class="set-panel" data-isi="tentang" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Tentang Aplikasi</h2><div class="card"><div class="akun-ringkas"><span class="brand-mark" aria-hidden="true">N</span><div><b>nalarin</b><small class="muted">Learn. Practice. Improve.</small><small class="muted" id="set-versi"></small></div></div><p style="margin-top:10px">Aplikasi latihan soal UTBK dengan statistik belajar, Try Out, dan bank soal.</p></div>
 <div class="card"><details class="set-det" open><summary>Changelog</summary><ul class="set-info"><li><b>18 Nov 2026:</b> Pusat Pengaturan baru: preferensi belajar, Try Out, tampilan, ekspor data.</li><li>Beranda dashboard dengan grafik perkembangan, akses cepat, dan rekomendasi topik.</li><li>Mode ujian bebas gangguan dengan panel nomor soal dan konfirmasi keluar.</li><li>Dropdown dengan desain NEON.</li></ul></details>
 <details class="set-det"><summary>Kebijakan privasi</summary><p class="muted">Statistik, riwayat, dan bank soal disimpan di browser perangkatmu. Jika kamu masuk dengan akun, data disinkronkan ke server. Profil publik hanya menampilkan nama, username, avatar, dan statistik bila kamu mengaktifkannya. Kamu bisa menghapus data lokal atau akunmu kapan saja di Data dan Penyimpanan.</p></details>
-<details class="set-det"><summary>Ketentuan penggunaan</summary><p class="muted">Gunakan NEON UTBK untuk belajar. Jangan membagikan akunmu, dan jangan mengunggah soal atau gambar yang melanggar hak cipta. Berita yang ditampilkan berasal dari media dan bukan pengumuman resmi; info resmi ada di portal SNPMB.</p></details>
+<details class="set-det"><summary>Ketentuan penggunaan</summary><p class="muted">Gunakan nalarin untuk belajar. Jangan membagikan akunmu, dan jangan mengunggah soal atau gambar yang melanggar hak cipta. Berita yang ditampilkan berasal dari media dan bukan pengumuman resmi; info resmi ada di portal SNPMB.</p></details>
 <details class="set-det"><summary>Bantuan dan laporan bug</summary><p class="muted" id="set-kontak"></p></details></div></div></section>
 
   <section id="rekomendasi" class="halaman" hidden>
@@ -874,7 +874,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 
   <section id="kuis" class="halaman" hidden>
     <header class="ex-head">
-      <div class="ex-kiri"><span class="brand-mark" aria-hidden="true">N</span><b class="ex-logo">NEON UTBK</b><span class="ex-mode" id="ex-mode"></span></div>
+      <div class="ex-kiri"><span class="brand-mark" aria-hidden="true">N</span><b class="ex-logo">nalarin</b><span class="ex-mode" id="ex-mode"></span></div>
       <div class="ex-kanan"><span class="ex-status" id="ex-status"></span><span class="timer" id="timer" role="timer" aria-live="off"></span><button type="button" class="btn btn-secondary btn-kecil" id="btn-keluar-ujian">Keluar</button></div>
     </header>
     <div class="card ex-card">
@@ -4548,7 +4548,7 @@ setInterval(() => { if (AkunApp.sesi()) sinkron().catch(() => {}); }, 30000);
 // ===== Pusat Pengaturan: data, tampilan, ekspor, manajemen data =====
 var PENG_DEF={peringatanWaktu:true,konfirmAkhiri:true,tampilTimer:true,ukuranTeks:'normal',animasi:'normal',ukuranSoal:'normal',jarakBaris:'normal',lebarSoal:'normal',mapelDefault:'semua',ingatTerakhir:false};
 var PENG_OK={ukuranTeks:['kecil','normal','besar'],animasi:['normal','kurang'],ukuranSoal:['kecil','normal','besar'],jarakBaris:['rapat','normal','lega'],lebarSoal:['sempit','normal','lebar'],mapelDefault:['semua','PK','PM']};
-var KONTAK_BANTUAN='';var VERSI_APP='';
+var KONTAK_BANTUAN='testingwebutbk@gmail.com';var VERSI_APP='0.9.0-beta';
 function toastNeon(msg,err){var t=document.createElement('div');t.className='toast-neon'+(err?' err':'');t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2400)}
 function pengaturan(){return Object.assign({},PENG_DEF,PengaturanApp.ambil())}
 function simpanPeng(patch){
@@ -4597,13 +4597,13 @@ function teksJawab(j){return j===null||j===undefined?'':Array.isArray(j)?j.map(f
 $('set-csv').addEventListener('click',function(){var r=Riwayat.ambil();var m=$('set-ekspor-msg');if(!r.length){m.textContent='Belum ada riwayat untuk diekspor.';return}
   var baris=[['Tanggal','Topik','Mata pelajaran','Status','Jawaban (PG: 0=A sampai 4=E; isian: angka)'].map(sel).join(',')];
   r.forEach(function(x){baris.push([tglLokal(x.t),x.topik,namaMapel(x.mapel),x.j===null||x.j===undefined?'Kosong':x.b?'Benar':'Salah',teksJawab(x.j)].map(sel).join(','))});
-  var u=URL.createObjectURL(new Blob(['\ufeff'+baris.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='riwayat-neon-utbk-'+tglLokal(Date.now()).slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
+  var u=URL.createObjectURL(new Blob(['\ufeff'+baris.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='riwayat-nalarin-'+tglLokal(Date.now()).slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
   m.textContent=r.length+' catatan diekspor.';toastNeon('File CSV dibuat.')});
 $('set-pdf').addEventListener('click',function(){var d=Penyimpanan.ambil(),r=Riwayat.ambil(),m=$('set-ekspor-msg');if(!d.total&&!r.length){m.textContent='Belum ada data untuk dilaporkan.';return}
   var pr=ProfilApp.ambil()||{},E=esc,pct=function(x){return x.total?Math.round(x.benar/x.total*100)+'%':'–'};
   var tb=function(o,lbl){return '<table><tr><th>'+lbl+'</th><th>Dikerjakan</th><th>Benar</th><th>Akurasi</th></tr>'+Object.keys(o).map(function(k){return '<tr><td>'+E(lbl==='Mapel'?namaMapel(k):k)+'</td><td>'+o[k].total+'</td><td>'+o[k].benar+'</td><td>'+pct(o[k])+'</td></tr>'}).join('')+'</table>'};
   var ar=$('area-cetak')||document.body.appendChild(Object.assign(document.createElement('div'),{id:'area-cetak'}));
-  ar.innerHTML='<h1>Laporan Perkembangan NEON UTBK</h1><p>'+E(pr.nama||'')+' · dicetak '+tglLokal(Date.now())+'</p><h2>Ringkasan</h2><p>'+d.total+' soal dikerjakan, '+d.benar+' benar, akurasi '+pct(d)+'.</p><h2>Per mata pelajaran</h2>'+tb(d.mapel,'Mapel')+'<h2>Per topik</h2>'+tb(d.topik,'Topik')+'<h2>30 pengerjaan terakhir</h2><table><tr><th>Tanggal</th><th>Topik</th><th>Status</th></tr>'+r.slice(-30).reverse().map(function(x){return '<tr><td>'+tglLokal(x.t)+'</td><td>'+E(x.topik)+'</td><td>'+(x.j===null||x.j===undefined?'Kosong':x.b?'Benar':'Salah')+'</td></tr>'}).join('')+'</table>';
+  ar.innerHTML='<h1>Laporan Perkembangan nalarin</h1><p>'+E(pr.nama||'')+' · dicetak '+tglLokal(Date.now())+'</p><h2>Ringkasan</h2><p>'+d.total+' soal dikerjakan, '+d.benar+' benar, akurasi '+pct(d)+'.</p><h2>Per mata pelajaran</h2>'+tb(d.mapel,'Mapel')+'<h2>Per topik</h2>'+tb(d.topik,'Topik')+'<h2>30 pengerjaan terakhir</h2><table><tr><th>Tanggal</th><th>Topik</th><th>Status</th></tr>'+r.slice(-30).reverse().map(function(x){return '<tr><td>'+tglLokal(x.t)+'</td><td>'+E(x.topik)+'</td><td>'+(x.j===null||x.j===undefined?'Kosong':x.b?'Benar':'Salah')+'</td></tr>'}).join('')+'</table>';
   document.body.classList.add('mencetak');window.addEventListener('afterprint',function f(){document.body.classList.remove('mencetak');window.removeEventListener('afterprint',f)});
   m.textContent='Pada dialog cetak, pilih "Simpan sebagai PDF".';window.print()});
 // reset & hapus lokal (terpisah, masing-masing dengan konfirmasi)
