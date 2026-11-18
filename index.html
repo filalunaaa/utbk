@@ -41,6 +41,14 @@ p{margin-bottom:12px}
 .btn-besar{width:100%;margin-top:8px}
 .aksi{display:flex;justify-content:space-between;gap:12px;margin-top:20px}
 .aksi-kiri{justify-content:flex-start;flex-wrap:wrap;align-items:center}
+.alat-dev{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
+.alat-dev summary{cursor:pointer;font-weight:700}
+.vl-ringkas{margin:10px 0;font-weight:700}
+.vl-item{border:1px solid var(--border);border-left:4px solid var(--salah);border-radius:8px;background:var(--card);padding:8px 12px;margin-top:8px;font-size:.9rem}
+.vl-item.peringatan{border-left-color:#d97706}
+.vl-item b{display:block}
+.vl-item ul{margin:4px 0 0 18px}
+.vl-item .btn{margin-top:6px}
 .aksi-kecil{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
 .pilihan{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative}
@@ -432,7 +440,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .badge.tk-mudah{background:var(--benar-soft);color:var(--benar)}
 .badge.tk-sedang{background:var(--warning-soft);color:var(--warning)}
 .badge.tk-sulit{background:var(--salah-soft);color:var(--salah)}
-#judul-form{scroll-margin-top:76px}
+#kartu-form{scroll-margin-top:76px}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--warning-soft:#3b2506;--warning:#fbbf24}}
 :root[data-theme="dark"]{--warning-soft:#3b2506;--warning:#fbbf24}
 @media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #cari-soal{grid-column:1/-1}.page-head .btn{width:100%}}
@@ -891,8 +899,14 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <p class="muted" style="margin-top:8px">Saat aktif, form dan daftar di bawah mengubah soal bawaan di server, bukan bank soal pribadi Anda. Matikan untuk kembali ke bank pribadi.</p>
       <div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" id="btn-muat-ulang-bawaan">Muat ulang dari server</button></div>
       <p class="pesan" id="pesan-admin"></p>
+      <details class="alat-dev" id="alat-dev">
+        <summary>Alat developer</summary>
+        <p class="muted">Periksa semua soal bawaan yang sedang aktif: opsi kembar, kunci di luar jangkauan, pembahasan kosong, rumus tanpa tanda $, dan lainnya.</p>
+        <div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" id="btn-validasi">Cek semua soal</button></div>
+        <div id="hasil-validasi"></div>
+      </details>
     </div>
-    <div class="card">
+    <div class="card" id="kartu-form" hidden>
       <h2 id="judul-form">Tambah soal baru</h2>
       <p class="muted">Ketik seperti di Word. Rumus ditulis di antara tanda $, contoh: $\frac{1}{2}$ atau $x^2 + y^2$.</p>
 
@@ -962,7 +976,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 
       <div class="aksi">
         <button class="btn btn-secondary" id="btn-pratinjau">Pratinjau</button>
-        <button class="btn btn-secondary" id="btn-batal-edit" hidden>Batal edit</button>
+        <button class="btn btn-secondary" id="btn-batal-edit">Batal</button>
         <button class="btn btn-primary" id="btn-simpan-soal">Simpan soal</button>
       </div>
       <p class="pesan" id="pesan-form"></p>
@@ -2788,6 +2802,79 @@ $('btn-muat-ulang-bawaan').addEventListener('click', async () => {
     statusAdmin('Soal bawaan dimuat ulang dari server.', false);
   } catch (err) { statusAdmin('Gagal memuat ulang: ' + err.message, true); }
 });
+function validasiSoal(daftar) {
+  const hasil = [];
+  const teksDari = (h) => { const d = document.createElement('div'); d.innerHTML = h || ''; return d; };
+  const kosong = (h) => { const d = teksDari(h); return !d.textContent.trim() && !d.querySelector('img,table'); };
+  const norm = (h) => { const d = teksDari(h); return d.querySelector('img') ? 'img:' + h : d.textContent.replace(/\s+/g, ' ').trim().toLowerCase(); };
+  const idPernah = new Map(), soalPernah = new Map();
+  daftar.forEach((s, n) => {
+    const err = [], per = [];
+    const id = String(s.id);
+    if (idPernah.has(id)) err.push('ID kembar dengan soal no. ' + (idPernah.get(id) + 1)); else idPernah.set(id, n);
+    if (!['PK', 'PM'].includes(s.mataPelajaran)) err.push('Mata pelajaran harus PK atau PM (sekarang: ' + s.mataPelajaran + ')');
+    if (!['mudah', 'sedang', 'sulit'].includes(s.tingkatKesulitan)) err.push('Tingkat kesulitan tidak valid (' + s.tingkatKesulitan + ')');
+    if (!String(s.topik || '').trim()) err.push('Topik kosong');
+    if (kosong(s.soal)) err.push('Teks soal kosong');
+    if (kosong(s.pembahasan)) err.push('Pembahasan kosong');
+    const tipe = tipeSoal(s);
+    if (tipe === 'isian') {
+      if (!Number.isInteger(s.jawaban) || s.jawaban < 0) err.push('Kunci isian harus bilangan cacah (sekarang: ' + s.jawaban + ')');
+      if (s.opsi && s.opsi.length) per.push('Soal isian tidak perlu pilihan');
+    } else {
+      if (!Array.isArray(s.opsi) || s.opsi.length !== 5) err.push('Pilihan harus tepat 5 (sekarang: ' + (s.opsi ? s.opsi.length : 0) + ')');
+      else {
+        const lihat = new Map();
+        s.opsi.forEach((o, k) => {
+          if (kosong(o)) err.push('Pilihan ' + HURUF[k] + ' kosong');
+          else {
+            const kunci = norm(o);
+            if (lihat.has(kunci)) err.push('Pilihan ' + HURUF[k] + ' sama dengan pilihan ' + HURUF[lihat.get(kunci)]); else lihat.set(kunci, k);
+            if (adaRumusTanpaTanda(teksDari(o).textContent)) per.push('Pilihan ' + HURUF[k] + ' punya rumus tanpa tanda $');
+            if ((teksDari(o).textContent.match(/\$/g) || []).length % 2) per.push('Pilihan ' + HURUF[k] + ' punya jumlah tanda $ ganjil');
+          }
+        });
+      }
+      if (tipe === 'kompleks') {
+        if (!s.jawaban.length) err.push('Kunci kompleks kosong');
+        if (s.jawaban.some((k) => !Number.isInteger(k) || k < 0 || k > 4)) err.push('Kunci di luar A-E');
+        if (new Set(s.jawaban).size !== s.jawaban.length) err.push('Kunci kompleks ada yang dobel');
+      } else if (!Number.isInteger(s.jawaban) || s.jawaban < 0 || s.jawaban > 4) err.push('Kunci di luar A-E (sekarang: ' + s.jawaban + ')');
+    }
+    [['soal', s.soal], ['pembahasan', s.pembahasan]].forEach(([nm, h]) => {
+      const tk = teksDari(h).textContent;
+      if (adaRumusTanpaTanda(tk)) per.push('Teks ' + nm + ' punya rumus tanpa tanda $');
+      if ((tk.match(/\$/g) || []).length % 2) per.push('Teks ' + nm + ' punya jumlah tanda $ ganjil');
+    });
+    const kS = norm(s.soal);
+    if (kS && soalPernah.has(kS)) per.push('Teks soal sama dengan soal no. ' + (soalPernah.get(kS) + 1)); else if (kS) soalPernah.set(kS, n);
+    if (err.length || per.length) hasil.push({ n, s, err, per });
+  });
+  return hasil;
+}
+function jalankanValidasi() {
+  const daftar = SOAL;
+  const hasil = validasiSoal(daftar);
+  const kotak = $('hasil-validasi');
+  const nErr = hasil.filter((h) => h.err.length).length;
+  let html = hasil.length
+    ? `<p class="vl-ringkas">${daftar.length} soal diperiksa: ${nErr} bermasalah, ${hasil.length - nErr} hanya peringatan.</p>`
+    : `<p class="vl-ringkas" style="color:var(--benar)">${daftar.length} soal diperiksa: tidak ada masalah.</p>`;
+  hasil.forEach(({ n, s, err, per }) => {
+    const ringkas = esc((teksDari2(s.soal)).slice(0, 70));
+    html += `<div class="vl-item${err.length ? '' : ' peringatan'}"><b>No. ${n + 1} (id ${esc(String(s.id))}, ${esc(String(s.mataPelajaran))} · ${esc(String(s.topik))})</b><span class="muted">${ringkas}</span><ul>`
+      + err.map((e) => `<li>${esc(e)}</li>`).join('') + per.map((e) => `<li>${esc(e)} (peringatan)</li>`).join('') + '</ul>'
+      + (modeAdmin ? `<button class="btn btn-secondary btn-kecil" data-edit="${esc(String(s.id))}">Edit soal ini</button>` : '') + '</div>';
+  });
+  if (hasil.length && !modeAdmin) html += '<p class="muted" style="margin-top:8px">Aktifkan "Kelola soal bawaan" di atas untuk membuka tombol Edit.</p>';
+  kotak.innerHTML = html;
+}
+function teksDari2(h) { const d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent.replace(/\s+/g, ' ').trim(); }
+$('btn-validasi').addEventListener('click', jalankanValidasi);
+$('hasil-validasi').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-edit]');
+  if (b) mulaiEdit(b.dataset.edit);
+});
 function pesanForm(teks, err) {
   const p = $('pesan-form');
   p.textContent = teks;
@@ -2868,7 +2955,7 @@ function resetForm() {
   editId = null;
   $('judul-form').textContent = modeAdmin ? 'Tambah soal bawaan baru' : 'Tambah soal baru';
   $('btn-simpan-soal').textContent = 'Simpan soal';
-  $('btn-batal-edit').hidden = true;
+  $('btn-batal-edit').hidden = false;
 }
 function isiForm(s) {
   $('f-topik').value = s.topik;
@@ -2906,10 +2993,18 @@ function simpanSoal() {
     return pesanForm('Penyimpanan browser penuh. Coba gambar yang lebih kecil atau hapus soal lama.', true);
   }
   resetForm();
+  tutupForm();
   pesanForm(pesan, false);
+  pesanBank(pesan, false);
   renderSemuaBank();
   buatDatalist();
 }
+function bukaForm() {
+  const k = $('kartu-form');
+  k.hidden = false;
+  k.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function tutupForm() { $('kartu-form').hidden = true; }
 function mulaiEdit(id) {
   const s = BankSoal.ambil().find((x) => x.id === id);
   if (!s) return;
@@ -2919,12 +3014,12 @@ function mulaiEdit(id) {
   $('btn-simpan-soal').textContent = 'Simpan perubahan';
   $('btn-batal-edit').hidden = false;
   pesanForm('', false);
-  window.scrollTo(0, 0);
+  bukaForm();
 }
 function hapusSoal(id) {
   if (!confirm(modeAdmin ? 'Hapus soal bawaan ini untuk SEMUA pengguna?' : 'Hapus soal ini dari bank?')) return;
   BankSoal.simpan(BankSoal.ambil().filter((x) => x.id !== id));
-  if (editId === id) resetForm();
+  if (editId === id) { resetForm(); tutupForm(); }
   renderSemuaBank();
   buatDatalist();
   pesanBank('Soal dihapus.', false);
@@ -3031,7 +3126,12 @@ let tundaCari;
 $('cari-soal').addEventListener('input', (e) => { clearTimeout(tundaCari); tundaCari = setTimeout(() => { FB.q = e.target.value.trim().toLowerCase(); renderDaftarCustom(); }, 150); });
 $('filter-mapel').addEventListener('change', (e) => { FB.mapel = e.target.value; renderDaftarCustom(); });
 $('filter-sulit').addEventListener('change', (e) => { FB.sulit = e.target.value; renderDaftarCustom(); });
-$('btn-ke-form').addEventListener('click', () => $('judul-form').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+$('btn-ke-form').addEventListener('click', () => {
+  if (editId !== null) resetForm();
+  pesanForm('', false);
+  bukaForm();
+  setTimeout(() => { const f = $('kartu-form').querySelector('textarea, input[type=text]'); if (f) f.focus({ preventScroll: true }); }, 250);
+});
 // Muat ulang seluruh tampilan bank (folder, pilihan form, daftar soal, dan sumber di menu latihan)
 function renderSemuaBank() {
   // Soal bawaan tidak memakai folder, jadi bagian folder disembunyikan di mode admin
@@ -3375,7 +3475,7 @@ $('pv-opsi').addEventListener('input', (e) => {
 $('btn-pratinjau-semua').addEventListener('click', () => {
   bukaPratinjau(grupSoal().flatMap((g) => g.items), 'Pratinjau: ' + $('label-cetak').textContent);
 });
-$('btn-batal-edit').addEventListener('click', () => { resetForm(); pesanForm('', false); });
+$('btn-batal-edit').addEventListener('click', () => { resetForm(); pesanForm('', false); tutupForm(); });
 $('daftar-custom').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-aksi]');
   if (!b) return;
