@@ -218,6 +218,9 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 .pilih-av.aktif{border-color:var(--primary)}
 .kotak-pratinjau{margin-top:16px;padding:16px;border:2px dashed var(--primary);border-radius:12px}
 .pratinjau-judul{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.overlay-pv{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.55);display:flex;justify-content:center;overflow-y:auto;padding:16px}
+.pv-panel{width:100%;max-width:720px;height:fit-content;margin:auto 0;background:var(--card);border-radius:12px;padding:20px}
+.pv-atas{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .pilih-av:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 #btn-ke-setup{margin-top:4px;padding:14px}
 
@@ -603,6 +606,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <p class="muted" style="margin-top:14px">Unduh PDF: yang dicetak adalah <strong id="label-cetak">semua soal</strong>. Halaman cetak akan terbuka di tab baru, lalu pilih "Simpan sebagai PDF".</p>
       <div class="aksi aksi-kiri">
         <label class="chip"><input type="checkbox" id="cetak-kunci" checked><span>Sertakan kunci &amp; pembahasan</span></label>
+        <button class="btn btn-secondary btn-kecil" id="btn-pratinjau-semua">Pratinjau soal</button>
         <button class="btn btn-primary btn-kecil" id="btn-cetak">Unduh PDF</button>
       </div>
       <p class="pesan" id="pesan-bank"></p>
@@ -618,6 +622,21 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     </div>
   </section>
 </main>
+<div class="overlay-pv" id="overlay-pv" hidden role="dialog" aria-modal="true" aria-label="Pratinjau soal">
+  <div class="pv-panel">
+    <div class="pv-atas"><strong id="pv-judul">Pratinjau</strong><button class="btn btn-secondary btn-kecil" id="pv-tutup">Tutup</button></div>
+    <div class="progress"><div class="progress-bar" id="pv-bar"></div></div>
+    <p class="muted" id="pv-info"></p>
+    <div class="teks-soal" id="pv-soal"></div>
+    <div class="opsi-list" id="pv-opsi"></div>
+    <div class="feedback" id="pv-fb" hidden></div>
+    <div class="aksi">
+      <button class="btn btn-secondary" id="pv-prev">Sebelumnya</button>
+      <button class="btn btn-secondary" id="pv-kunci">Tampilkan kunci dan pembahasan</button>
+      <button class="btn btn-primary" id="pv-next">Lanjut</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay-hitung" id="overlay-hitung" hidden>
   <div class="isi-hitung">
@@ -2448,6 +2467,7 @@ function itemSoalHTML(s, nomor) {
       <div class="aksi-kecil">
         ${modeAdmin ? '' : `<label class="muted">Pindah ke</label>
         <select class="input kecil" data-pindah="${esc(s.id)}">${optionsPindah(s.folderId || '')}</select>`}
+        <button class="btn btn-secondary btn-kecil" data-aksi="pratinjau" data-id="${esc(s.id)}">Pratinjau</button>
         <button class="btn btn-secondary btn-kecil" data-aksi="edit" data-id="${esc(s.id)}">Edit</button>
         <button class="btn btn-bahaya btn-kecil" data-aksi="hapus" data-id="${esc(s.id)}">Hapus</button>
       </div>
@@ -2475,7 +2495,7 @@ function folderHTML(g, terbuka) {
     : '<p class="muted">Belum ada soal di folder ini.</p>';
   return `<details class="wadah-folder" data-kunci="folder:${esc(key)}"${buka}>
     <summary><span class="nama-folder">${esc(g.nama)}</span><span class="muted">${g.items.length} soal</span></summary>
-    <div class="isi-folder">${isi}</div>
+    <div class="isi-folder">${g.items.length ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-aksi="pratinjau-folder" data-folder="${esc(key)}">Pratinjau semua soal di sini (${g.items.length})</button></div>` : ''}${isi}</div>
   </details>`;
 }
 function renderDaftarCustom() {
@@ -2693,6 +2713,7 @@ function dataPratinjau() {
     opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => baca('opsi' + k)),
     mapel: nilai('f-mapel'), topik: $('f-topik').value.trim(), level: nilai('f-level') };
 }
+let kunciEditor = false;
 function renderPratinjau() {
   const kotak = $('kotak-pratinjau');
   if (kosongEditor(getArea('soal'))) {
@@ -2707,20 +2728,25 @@ function renderPratinjau() {
   const nama = { pg: 'pilihan ganda', kompleks: 'centang semua yang benar', isian: 'isian bilangan cacah' }[s.tipe];
   const kunci = isian ? esc(s.jawaban || '(belum diisi)') : kunciHuruf(s);
   const badan = isian
-    ? `<div class="isian"><input class="input isian-input benar" disabled value="${esc(s.jawaban)}" placeholder="(kunci belum diisi)"></div>`
-    : `<div class="opsi-list">${s.opsi.map((o, k) => `<div class="opsi${kunciOpsi(s, k) ? ' benar' : ''}">${s.tipe === 'kompleks' ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`).join('')}</div>`;
+    ? '<div class="isian"><input class="input isian-input" disabled placeholder="Ketik angka"></div>'
+    : `<div class="opsi-list">${s.opsi.map((o, k) => `<div class="opsi${kunciEditor && kunciOpsi(s, k) ? ' benar' : ''}">${s.tipe === 'kompleks' ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`).join('')}</div>`;
   const cek = bacaForm();
-  kotak.innerHTML = `<div class="pratinjau-judul"><strong>Pratinjau</strong><span class="muted">Seperti tampilan saat latihan. Kunci jawaban ditandai hijau.</span></div>
+  kotak.innerHTML = `<div class="pratinjau-judul"><strong>Pratinjau</strong><span class="muted">Tampilan siswa: kunci dan pembahasan disembunyikan.</span></div>
     <p class="muted">${namaMapel(s.mapel)}, ${esc(s.topik || 'topik belum diisi')}, ${s.level}, ${nama}</p>
     <div class="teks-soal">${konten(s.soal)}</div>${badan}
-    <div class="feedback"><strong>Kunci jawaban: ${kunci}</strong><div>${konten(s.pembahasan)}</div></div>
+    ${kunciEditor ? `<div class="feedback"><strong>Kunci jawaban: ${kunci}</strong><div>${konten(s.pembahasan)}</div></div>` : ''}
+    <div style="margin-top:12px"><button class="btn btn-secondary btn-kecil" type="button" id="btn-pv-kunci">${kunciEditor ? 'Sembunyikan kunci' : 'Tampilkan kunci dan pembahasan'}</button></div>
     ${cek.error ? `<p class="muted" style="margin-top:10px">Sebelum disimpan: ${esc(cek.error)}</p>` : ''}`;
   kotak.hidden = false;
   $('btn-pratinjau').textContent = 'Sembunyikan pratinjau';
   rumus(kotak);
 }
+$('kotak-pratinjau').addEventListener('click', (e) => {
+  if (e.target.closest('#btn-pv-kunci')) { kunciEditor = !kunciEditor; renderPratinjau(); }
+});
 $('btn-pratinjau').addEventListener('click', () => {
   if (!$('kotak-pratinjau').hidden) { $('kotak-pratinjau').hidden = true; $('btn-pratinjau').textContent = 'Pratinjau'; return; }
+  kunciEditor = false;
   renderPratinjau();
   if (!$('kotak-pratinjau').hidden) $('kotak-pratinjau').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
@@ -2732,12 +2758,75 @@ let timerPratinjau = null;
   timerPratinjau = setTimeout(() => { if (!$('kotak-pratinjau').hidden) renderPratinjau(); }, 500);
 }));
 
+// ---------- Pratinjau tampilan siswa untuk soal tersimpan (kunci disembunyikan) ----------
+const pv = { daftar: [], i: 0, pilih: [], kunci: false };
+function bukaPratinjau(daftar, judul) {
+  if (!daftar.length) return pesanBank('Belum ada soal untuk dipratinjau.', true);
+  Object.assign(pv, { daftar, i: 0, pilih: daftar.map(() => null), kunci: false });
+  $('pv-judul').textContent = judul;
+  $('overlay-pv').hidden = false;
+  document.body.style.overflow = 'hidden';
+  renderPv();
+}
+function tutupPratinjau() { $('overlay-pv').hidden = true; document.body.style.overflow = ''; }
+function renderPv() {
+  const s = pv.daftar[pv.i], n = pv.daftar.length, p = pv.pilih[pv.i];
+  $('pv-bar').style.width = ((pv.i + 1) / n) * 100 + '%';
+  $('pv-info').textContent = `Soal ${pv.i + 1} dari ${n} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ', centang semua yang benar' : adaIsian(s) ? ', isian bilangan cacah' : ''}`;
+  $('pv-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal');
+  $('pv-opsi').innerHTML = adaIsian(s)
+    ? `<div class="isian"><label class="label" for="pv-isian" style="margin-top:0">Jawaban Anda (bilangan cacah)</label><input id="pv-isian" class="input isian-input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Ketik angka" value="${p === null ? '' : esc(p)}"></div>`
+    : s.opsi.map((o, k) => {
+      const dipil = adaGanda(s) ? Array.isArray(p) && p.includes(k) : p === k;
+      const kelas = pv.kunci && kunciOpsi(s, k) ? ' benar' : dipil ? ' terpilih' : '';
+      return `<div class="opsi${kelas}" data-k="${k}">${adaGanda(s) ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`;
+    }).join('');
+  const fb = $('pv-fb');
+  fb.hidden = !pv.kunci;
+  if (pv.kunci) fb.innerHTML = `<strong>Kunci jawaban: ${kunciHuruf(s)}</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div>`;
+  $('pv-kunci').textContent = pv.kunci ? 'Sembunyikan kunci' : 'Tampilkan kunci dan pembahasan';
+  $('pv-prev').disabled = pv.i === 0;
+  $('pv-next').textContent = pv.i === n - 1 ? 'Selesai' : 'Lanjut';
+  rumus($('overlay-pv'));
+}
+$('pv-tutup').addEventListener('click', tutupPratinjau);
+$('overlay-pv').addEventListener('click', (e) => { if (e.target === $('overlay-pv')) tutupPratinjau(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('overlay-pv').hidden) tutupPratinjau(); });
+$('pv-prev').addEventListener('click', () => { if (pv.i > 0) { pv.i--; pv.kunci = false; renderPv(); } });
+$('pv-next').addEventListener('click', () => {
+  if (pv.i >= pv.daftar.length - 1) return tutupPratinjau();
+  pv.i++; pv.kunci = false; renderPv();
+});
+$('pv-kunci').addEventListener('click', () => { pv.kunci = !pv.kunci; renderPv(); });
+$('pv-opsi').addEventListener('click', (e) => {
+  const b = e.target.closest('.opsi');
+  if (!b) return;
+  const s = pv.daftar[pv.i], k = Number(b.dataset.k);
+  if (adaGanda(s)) {
+    const cur = Array.isArray(pv.pilih[pv.i]) ? pv.pilih[pv.i] : [];
+    const baru = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k].sort();
+    pv.pilih[pv.i] = baru.length ? baru : null;
+  } else pv.pilih[pv.i] = k;
+  renderPv();
+});
+$('pv-opsi').addEventListener('input', (e) => {
+  if (!e.target.matches('.isian-input')) return;
+  const v = e.target.value.replace(/\D/g, '');
+  if (v !== e.target.value) e.target.value = v;
+  pv.pilih[pv.i] = v === '' ? null : Number(v);
+});
+$('btn-pratinjau-semua').addEventListener('click', () => {
+  bukaPratinjau(grupSoal().flatMap((g) => g.items), 'Pratinjau: ' + $('label-cetak').textContent);
+});
 $('btn-batal-edit').addEventListener('click', () => { resetForm(); pesanForm('', false); });
 $('daftar-custom').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-aksi]');
   if (!b) return;
-  if (b.dataset.aksi === 'edit') mulaiEdit(b.dataset.id);
-  else hapusSoal(b.dataset.id);
+  const a = b.dataset.aksi;
+  if (a === 'edit') mulaiEdit(b.dataset.id);
+  else if (a === 'hapus') hapusSoal(b.dataset.id);
+  else if (a === 'pratinjau') { const x = BankSoal.ambil().find((q) => q.id === b.dataset.id); if (x) bukaPratinjau([x], 'Pratinjau soal'); }
+  else if (a === 'pratinjau-folder') { const g = grupSoal().find((q) => (q.id || 'none') === b.dataset.folder); if (g) bukaPratinjau(g.items, 'Pratinjau: ' + g.nama); }
 });
 $('daftar-custom').addEventListener('change', (e) => {
   const sel = e.target.closest('select[data-pindah]');
