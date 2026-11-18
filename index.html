@@ -4631,9 +4631,15 @@ function sel(v){v=v==null?'':String(v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return 
 function tglLokal(t){var d=new Date(t),z=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())}
 function teksJawab(j){return j===null||j===undefined?'':Array.isArray(j)?j.map(function(k){return HURUF[k]}).join('+'):String(j)}
 $('set-csv').addEventListener('click',function(){var r=Riwayat.ambil();var m=$('set-ekspor-msg');if(!r.length){m.textContent='Belum ada riwayat untuk diekspor.';return}
-  var baris=[['Tanggal','Topik','Mata pelajaran','Status','Jawaban (PG: 0=A sampai 4=E; isian: angka)'].map(sel).join(',')];
-  r.forEach(function(x){baris.push([tglLokal(x.t),x.topik,namaMapel(x.mapel),x.j===null||x.j===undefined?'Kosong':x.b?'Benar':'Salah',teksJawab(x.j)].map(sel).join(','))});
-  var u=URL.createObjectURL(new Blob(['\ufeff'+baris.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='riwayat-nalarin-'+tglLokal(Date.now()).slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
+  var peta={};try{[].concat(SOAL,BankSoal.ambil()).forEach(function(q){peta[String(q.id)]=q})}catch(e){}
+  var kosongJ=function(j){return j===null||j===undefined||(Array.isArray(j)&&!j.length)};
+  var kunciTeks=function(q){if(!q)return '';try{return adaIsian(q)?String(q.jawaban):Array.isArray(q.jawaban)?q.jawaban.map(function(k){return HURUF[k]}).join(', '):HURUF[q.jawaban]}catch(e){return ''}};
+  var jawabTeks=function(q,j){if(kosongJ(j))return 'Tidak dijawab';if(q){try{return teksJawabanmu(q,j)}catch(e){}}return Array.isArray(j)?j.map(function(k){return HURUF[k]}).join(', '):String(j)};
+  var tgl=function(t){var d=new Date(t),z=function(n){return String(n).padStart(2,'0')};return [d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()),z(d.getHours())+':'+z(d.getMinutes())]};
+  var baris=[['No','Tanggal','Jam','Mata pelajaran','Topik','Hasil','Jawabanmu','Kunci jawaban'].map(sel).join(';')];
+  r.slice().sort(function(a,b){return b.t-a.t}).forEach(function(x,n){var q=peta[String(x.id)],w=tgl(x.t);
+    baris.push([n+1,w[0],w[1],namaMapel(x.mapel),x.topik,kosongJ(x.j)?'Kosong':x.b?'Benar':'Salah',jawabTeks(q,x.j),kunciTeks(q)].map(sel).join(';'))});
+  var u=URL.createObjectURL(new Blob(['﻿'+baris.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='riwayat-nalarin-'+tglLokal(Date.now()).slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
   m.textContent=r.length+' catatan diekspor.';toastNeon('File CSV dibuat.')});
 $('set-pdf').addEventListener('click',function(){var d=Penyimpanan.ambil(),r=Riwayat.ambil(),m=$('set-ekspor-msg');if(!d.total&&!r.length){m.textContent='Belum ada data untuk dilaporkan.';return}
   var pr=ProfilApp.ambil()||{},E=esc,pct=function(x){return x.total?Math.round(x.benar/x.total*100)+'%':'–'};
