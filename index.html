@@ -232,6 +232,67 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 /* Analisis pilihan jawaban */
 /* Riwayat sesi & pivot analisis pilihan */
 /* Riwayat sesi: kartu per sesi + halaman pembahasan */
+/* Riwayat sesi v4: timeline, ring skor, peta hasil */
+.sx-ringkas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}
+.sx-ringkas div{background:var(--primary-soft);border-radius:12px;padding:8px 10px}
+.sx-ringkas small{display:block;font-size:.72rem;color:var(--muted);font-weight:600}
+.sx-ringkas b{font-size:1.15rem;font-weight:800}
+.sx-filter{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:4px;scrollbar-width:none}
+.sx-filter::-webkit-scrollbar{display:none}
+.sx-f,.sx-urut{flex-shrink:0;border:1.5px solid var(--border);background:var(--card);color:var(--muted);border-radius:999px;padding:5px 14px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}
+.sx-f.on{background:var(--text);border-color:var(--text);color:var(--card)}
+.sx-urut{margin-left:auto;display:inline-flex;align-items:center;gap:5px;border-style:dashed}
+.sx-urut svg{width:14px;height:14px}
+.sx-hari{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px 2px}
+.sx-kartu{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:14px;width:100%;padding:12px 12px 12px 14px;margin-bottom:8px;border-radius:18px;border:1px solid var(--border);background:var(--card);cursor:pointer;position:relative;overflow:hidden}
+.sx-kartu::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--muted)}
+.sx-kartu.t::before{background:var(--benar)}.sx-kartu.s::before{background:var(--warning)}.sx-kartu.r::before{background:var(--salah)}
+.sx-kartu:hover,.sx-kartu:focus-visible{border-color:var(--primary);box-shadow:var(--shadow)}
+.sx-tengah{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.sx-atas{display:flex;align-items:baseline;gap:8px}
+.sx-atas b{font-size:1rem;font-weight:800}
+.sx-atas span,.sx-meta{font-size:.8rem;color:var(--muted)}
+.sx-tags{display:flex;gap:5px;flex-wrap:wrap}
+.sx-tag{font-size:.7rem;font-weight:800;padding:1px 8px;border-radius:6px;background:var(--primary-soft);color:var(--accent);letter-spacing:.03em}
+.sx-strip{display:flex;gap:2px;height:7px}
+.sx-strip i{flex:1;min-width:2px;max-width:16px;border-radius:2px;background:var(--border)}
+.sx-strip i.benar{background:var(--benar)}.sx-strip i.salah{background:var(--salah)}
+.sx-kanan{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;color:var(--muted)}
+.sx-kanan>svg{width:18px;height:18px}
+.sx-ring{position:relative;width:var(--u,52px);height:var(--u,52px);flex-shrink:0;display:inline-block}
+.sx-ring svg{width:100%;height:100%;display:block}
+.sx-ring circle{fill:none;stroke-width:5;stroke-linecap:round}
+.sx-ring .d{stroke:var(--border)}
+.sx-ring.t .i{stroke:var(--benar)}.sx-ring.s .i{stroke:var(--warning)}.sx-ring.r .i{stroke:var(--salah)}
+.sx-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--u,52px)*.3);font-weight:800}
+.sx-ring b small{font-size:.55em;margin-left:1px;color:var(--muted)}
+.sx-hero{padding:18px}
+.sx-hero.t{background:linear-gradient(135deg,var(--benar-soft),var(--card) 70%)}
+.sx-hero.s{background:linear-gradient(135deg,rgba(245,158,11,.12),var(--card) 70%)}
+.sx-hero.r{background:linear-gradient(135deg,var(--salah-soft),var(--card) 70%)}
+.sx-hero-atas{display:flex;align-items:center;gap:16px}
+.sx-hero h2{margin:2px 0 0;font-size:1.15rem}
+.sx-mode{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.ub-grup{margin-top:12px}
+.ub-grup>p{font-size:.78rem;font-weight:800;margin:0 0 6px}
+.ub-grup.naik>p{color:var(--benar)}.ub-grup.turun>p{color:var(--salah)}.ub-grup.tetap>p,.ub-grup.baru>p,.ub-grup.netral>p{color:var(--muted)}
+.ub-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ubah{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:10px;font-size:.82rem;border:1px solid var(--border);background:var(--card)}
+.ubah span{color:var(--muted);font-size:.78rem}
+.ubah i{font-style:normal;font-weight:800}
+.ubah.naik{background:var(--benar-soft);border-color:transparent}.ubah.naik i{color:var(--benar)}
+.ubah.turun{background:var(--salah-soft);border-color:transparent}.ubah.turun i{color:var(--salah)}
+.sx{border:1px solid var(--border);border-left:4px solid var(--muted);border-radius:14px;background:var(--card);margin-bottom:10px}
+.sx.benar{border-left-color:var(--benar)}.sx.salah{border-left-color:var(--salah)}
+.sx>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.sx>summary::-webkit-details-marker{display:none}
+.sx>summary::after{content:"\25B8";color:var(--muted);transition:transform .2s;flex-shrink:0}
+.sx[open]>summary::after{transform:rotate(90deg)}
+.sx-no{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;flex-shrink:0;background:var(--border);color:var(--muted)}
+.sx.benar .sx-no{background:var(--benar-soft);color:var(--benar)}.sx.salah .sx-no{background:var(--salah-soft);color:var(--salah)}
+.sx-prev{flex:1;min-width:0;font-size:.9rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sx-isi{padding:0 14px 14px}
+
 .rs-kontrol{display:flex;gap:8px;margin:10px 0 2px}
 .rs-kontrol select{flex:1;min-width:0}
 .rs-urut{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:0 12px;font:inherit;font-size:.85rem;font-weight:600;cursor:pointer;white-space:nowrap}
@@ -2466,28 +2527,62 @@ function analisisSesi(semua, peta, m) {
   });
   return hasil; // lama -> baru
 }
+function urutMapel(a) {
+  return Object.entries(a.st.mapel).sort((x, y) => y[1].n - x[1].n || String(x[0]).localeCompare(String(y[0]))).map(([m]) => m);
+}
 function judulSesi(a, m) {
-  const k = Object.keys(a.st.mapel);
+  const k = urutMapel(a);
   if (m) return namaMapel(m);
   if (!k.length) return 'Sesi';
   if (k.length === 1) return namaMapel(k[0]);
   if (k.length === 2) return k.map(namaMapel).join(' + ');
   return `Campuran (${k.length} mapel)`;
 }
-const tglSesi = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+const labelHari = (t) => {
+  const d = new Date(t), n = new Date();
+  const hari = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const sel = Math.round((hari(n) - hari(d)) / 864e5);
+  return sel === 0 ? 'Hari ini' : sel === 1 ? 'Kemarin' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+};
+const jamSesi = (t) => new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+const kelasSkor = (p) => (p >= 75 ? 't' : p >= 50 ? 's' : 'r');
+function ringSesi(p, u) {
+  const C = 2 * Math.PI * 22;
+  return `<span class="sx-ring ${kelasSkor(p)}" style="--u:${u}px"><svg viewBox="0 0 52 52" aria-hidden="true"><circle class="d" cx="26" cy="26" r="22"/><circle class="i" cx="26" cy="26" r="22" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p / 100)).toFixed(1)}" transform="rotate(-90 26 26)"/></svg><b>${p}<small>%</small></b></span>`;
+}
+// Item sesi (dibatasi satu mapel bila difilter) beserta statusnya
+function daftarItem(e, peta, m) {
+  return e.item.map((r, i) => ({ r, i, x: metaItem(r, peta) }))
+    .filter((o) => !m || o.x.m === m)
+    .map((o) => ({ ...o, s0: kosongJ(o.r.j) ? 'kosong' : o.r.b ? 'benar' : 'salah' }));
+}
+function tagMapel(a, maks) {
+  const k = urutMapel(a);
+  return k.slice(0, maks).map((m) => `<span class="sx-tag" title="${esc(namaMapel(m))}">${esc(m)}</span>`).join('') + (k.length > maks ? `<span class="sx-tag">+${k.length - maks}</span>` : '');
+}
+const IK_PANAH = SV('<path d="M9 6l6 6-6 6"/>');
 function daftarSesiHTML() {
   const peta = petaSoal();
   let A = analisisSesi(RiwayatSesi.ambil(), peta, filterSesiMapel);
   if (urutSesi === 'baru') A = A.slice().reverse();
   if (!A.length) return '<p class="muted">Tidak ada sesi untuk mata pelajaran ini.</p>';
+  let hariLalu = '';
   const kartu = A.slice(0, batasSesi).map((a) => {
     const { e, st } = a;
-    const waktu = !filterSesiMapel && e.mode === 'tryout' && e.d ? `${IK_RS.jam}${format(e.d)}` : `${st.n} soal`;
-    return `<div class="rs-kartu" data-sesi="${esc(e.id)}">
-      <span class="rs-mode ${e.mode === 'tryout' ? '' : 'latihan'}">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span>
-      <div class="rs-baris"><span class="rs-judul">${esc(judulSesi(a, filterSesiMapel))}</span><span class="muted rs-tgl">${tglSesi(e.t)}</span></div>
-      <div class="rs-baris"><div class="rs-chips"><span class="rs-chip waktu">${waktu}</span><span class="rs-chip ok">${IK_RS.ok}${st.b}</span><span class="rs-chip no">${IK_RS.no}${st.s}</span>${st.k ? `<span class="rs-chip">Kosong ${st.k}</span>` : ''}</div>${deltaHTML(a.d)}</div>
-      <button type="button" class="rs-lihat" data-buka="${esc(e.id)}">Lihat Pembahasan</button></div>`;
+    const hari = labelHari(e.t);
+    const kepala = hari !== hariLalu ? `<p class="sx-hari">${hari}</p>` : '';
+    hariLalu = hari;
+    const strip = daftarItem(e, peta, filterSesiMapel).map((o) => `<i class="${o.s0}"></i>`).join('');
+    const dur = !filterSesiMapel && e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : '';
+    return `${kepala}<button type="button" class="sx-kartu ${kelasSkor(st.p)}" data-sesi="${esc(e.id)}">
+      ${ringSesi(st.p, 54)}
+      <span class="sx-tengah">
+        <span class="sx-atas"><b>${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</b><span>${jamSesi(e.t)}</span></span>
+        <span class="sx-meta">${st.n} soal &middot; ${st.b} benar${st.k ? ' &middot; ' + st.k + ' kosong' : ''}${dur}</span>
+        <span class="sx-tags">${filterSesiMapel ? `<span class="sx-tag">${esc(filterSesiMapel)}</span>` : tagMapel(a, 3)}</span>
+        <span class="sx-strip" aria-hidden="true">${strip}</span>
+      </span>
+      <span class="sx-kanan">${deltaHTML(a.d)}${IK_PANAH}</span></button>`;
   }).join('');
   const lagi = A.length > batasSesi
     ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi-sesi="1">Tampilkan lebih banyak (${A.length - batasSesi} lagi)</button></div>` : '';
@@ -2504,16 +2599,15 @@ function riwayatSesiHTML() {
   const terbaik = A.length ? Math.max(...A.map((x) => x.st.p)) : 0;
   const mapelAda = [...new Set(semua.flatMap((e) => e.item.map((r) => metaItem(r, peta).m)).filter(Boolean))];
   if (filterSesiMapel && !mapelAda.includes(filterSesiMapel)) filterSesiMapel = '';
-  const opsi = ['<option value="">Semua Mata Pelajaran</option>'].concat(mapelAda.map((m) => `<option value="${esc(m)}"${m === filterSesiMapel ? ' selected' : ''}>${esc(namaMapel(m))}</option>`)).join('');
+  const fil = [['', 'Semua']].concat(mapelAda.map((m) => [m, m])).map(([v, l]) => `<button type="button" class="sx-f${v === filterSesiMapel ? ' on' : ''}" data-fm="${esc(v)}" title="${esc(v ? namaMapel(v) : 'Semua mata pelajaran')}">${esc(l)}</button>`).join('');
   return `<p class="label">Riwayat sesi</p>
-    <p class="gm-ringkas"><span><b>${semua.length}</b> sesi</span><span>rata-rata <b>${rata}%</b></span><span>terbaik <b>${terbaik}%</b></span></p>
-    <div class="rs-kontrol"><select class="input" id="rs-filter" aria-label="Filter mata pelajaran">${opsi}</select>
-      <button type="button" class="rs-urut" id="rs-urut" aria-label="Ubah urutan">${IK_RS.urut}${urutSesi === 'baru' ? 'Terbaru' : 'Terlama'}</button></div>
+    <div class="sx-ringkas"><div><small>Sesi</small><b>${semua.length}</b></div><div><small>Rata-rata</small><b>${rata}%</b></div><div><small>Terbaik</small><b>${terbaik}%</b></div></div>
+    <div class="sx-filter">${fil}<button type="button" class="sx-urut" id="rs-urut">${IK_RS.urut}${urutSesi === 'baru' ? 'Terbaru' : 'Terlama'}</button></div>
     <div id="rs-daftar">${daftarSesiHTML()}</div>`;
 }
 function bukaDetailSesi(id) {
   posisiStat = window.scrollY;
-  rdState = { id, m: filterSesiMapel, filter: 'semua', batas: 10 };
+  rdState = { id, m: filterSesiMapel, filter: 'semua', batas: 12 };
   renderDetailSesi();
   tampil('riwayatdetail');
 }
@@ -2525,53 +2619,54 @@ function renderDetailSesi() {
   if (!a) { $('rd-isi').innerHTML = kembali + '<p class="muted" style="margin-top:12px">Sesi tidak ditemukan.</p>'; return; }
   const { e, st } = a;
   const tglPenuh = new Date(e.t).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  // perubahan statistik
-  const baris = (t, lab) => `<div class="gm-tp"><span>${esc(lab(t.nm))}</span><span class="muted">${t.p0 === null ? t.p1 + '%' : t.p0 + '% &rarr; ' + t.p1 + '%'}</span>${deltaHTML(t.d)}</div>`;
-  const grup = (judul, kls, arr, lab) => (arr.length ? `<p class="rd-grup ${kls}">${judul} (${arr.length})</p>${arr.map((t) => baris(t, lab)).join('')}` : '');
-  const idt = (x) => x;
-  const perubahan = grup('Naik', 'naik', a.topik.filter((t) => t.d !== null && t.d > 0), idt)
-    + grup('Turun', 'turun', a.topik.filter((t) => t.d !== null && t.d < 0), idt)
-    + grup('Tetap', 'tetap', a.topik.filter((t) => t.d === 0), idt)
-    + grup('Topik baru', 'baru', a.topik.filter((t) => t.d === null), idt);
-  const perMapel = a.mapel.length > 1 ? grup('Per mata pelajaran', 'netral', a.mapel, namaMapel) : '';
-  // daftar soal
-  const daftar = e.item.map((r, i) => ({ r, i, x: metaItem(r, peta) }))
-    .filter((o) => !rdState.m || o.x.m === rdState.m)
-    .map((o) => ({ ...o, s0: kosongJ(o.r.j) ? 'kosong' : o.r.b ? 'benar' : 'salah' }));
+  // perubahan statistik: chip per topik, dikelompokkan naik / turun / tetap / baru
+  const chip = (t, lab) => `<span class="ubah ${t.d === null ? 'baru' : t.d > 0 ? 'naik' : t.d < 0 ? 'turun' : 'tetap'}"><b>${esc(lab(t.nm))}</b><span>${t.p0 === null ? t.p1 + '%' : t.p0 + '&rarr;' + t.p1 + '%'}</span>${t.d === null ? '' : `<i>${t.d > 0 ? '+' : ''}${t.d}</i>`}</span>`;
+  const blok = (judul, kls, arr, lab = (x) => x) => (arr.length ? `<div class="ub-grup ${kls}"><p>${judul}</p><div class="ub-chips">${arr.map((t) => chip(t, lab)).join('')}</div></div>` : '');
+  const perubahan = blok('Naik', 'naik', a.topik.filter((t) => t.d !== null && t.d > 0))
+    + blok('Turun', 'turun', a.topik.filter((t) => t.d !== null && t.d < 0))
+    + blok('Tetap', 'tetap', a.topik.filter((t) => t.d === 0))
+    + blok('Topik baru', 'baru', a.topik.filter((t) => t.d === null))
+    + (a.mapel.length > 1 ? blok('Per mata pelajaran', 'netral', a.mapel, namaMapel) : '');
+  const daftar = daftarItem(e, peta, rdState.m);
   const hitung = { semua: daftar.length, benar: 0, salah: 0, kosong: 0 };
   daftar.forEach((o) => hitung[o.s0]++);
   const label = { semua: 'Semua', benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
   const chips = Object.keys(label).map((k) => `<label class="chip"><input type="radio" name="filter-rd" value="${k}" ${k === rdState.filter ? 'checked' : ''}><span>${label[k]} (${hitung[k]})</span></label>`).join('');
+  const petak = daftar.map((o) => `<button type="button" class="petak ${o.s0}" data-no="${o.i}" aria-label="Soal ${o.i + 1}">${o.i + 1}</button>`).join('');
   const tampilDaftar = daftar.filter((o) => rdState.filter === 'semua' || o.s0 === rdState.filter);
   const kartuSoal = tampilDaftar.slice(0, rdState.batas).map((o) => {
     const { r, i, s0 } = o;
     const s = peta.get(r.id);
     const lb = { benar: 'Benar', salah: 'Salah', kosong: 'Kosong' }[s0];
-    if (!s) return `<div class="card rd-soal"><div class="rev-meta"><span class="no">Soal ${i + 1}</span><span class="badge ${s0}">${lb}</span></div><p class="muted" style="margin:0">Soal ini sudah dihapus dari bank, jadi pembahasannya tidak tersedia.</p></div>`;
-    return `<div class="card rd-soal">
-      <div class="rev-meta"><span class="no">Soal ${i + 1}</span><span class="badge ${s0}">${lb}</span><span class="pill-mapel" title="${esc(namaMapel(s.mataPelajaran))}">${esc(s.mataPelajaran)}</span></div>
-      <p class="rev-sub">Pertanyaan</p><div class="teks-soal" style="margin-top:0">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
-      ${s.topik ? `<span class="pill-topik">${esc(s.topik)}</span>` : ''}
-      <p class="rev-sub" style="margin-top:14px">Pilihan Jawaban</p>
-      <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
-      <p class="rev-ket" style="margin:12px 0"><span>Jawabanmu: <b>${teksJawabanmu(s, r.j)}</b></span><span>Kunci jawaban: <b>${esc(kunciHuruf(s))}</b></span></p>
-      <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div></div>`;
+    if (!s) return `<div class="sx ${s0}" id="sx-${i}"><div class="sx-isi" style="padding-top:12px"><span class="sx-no" style="display:inline-flex">${i + 1}</span> <span class="muted">Soal ini sudah dihapus dari bank, jadi pembahasannya tidak tersedia.</span></div></div>`;
+    return `<details class="sx ${s0}" id="sx-${i}"${s0 === 'benar' ? '' : ' open'}>
+      <summary><span class="sx-no">${i + 1}</span><span class="sx-prev">${esc(previewTeks(s.soal))}</span><span class="badge ${s0}" style="margin:0">${lb}</span></summary>
+      <div class="sx-isi">
+        <div class="teks-soal" style="margin-top:4px">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+        ${s.topik ? `<span class="pill-topik">${esc(s.topik)}</span>` : ''}
+        <p class="rev-sub" style="margin-top:14px">Pilihan jawaban</p>
+        <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
+        <p class="rev-ket" style="margin:12px 0"><span>Jawabanmu: <b>${teksJawabanmu(s, r.j)}</b></span><span>Kunci: <b>${esc(kunciHuruf(s))}</b></span></p>
+        <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+      </div></details>`;
   }).join('');
   const lagi = tampilDaftar.length > rdState.batas
     ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-rd="lagi">Tampilkan lebih banyak (${tampilDaftar.length - rdState.batas} lagi)</button></div>` : '';
+  const dur = !rdState.m && e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : '';
   $('rd-isi').innerHTML = `${kembali}
-    <div class="card rd-kepala" style="margin-top:12px">
-      <span class="rs-mode ${e.mode === 'tryout' ? '' : 'latihan'}">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span>
-      <h2>${esc(judulSesi(a, rdState.m))}</h2>
-      <p class="muted" style="margin:0">${tglPenuh}${!rdState.m && e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : ''}</p>
-      <div class="rd-skor"><b>${st.p}%</b><div class="rs-chips"><span class="rs-chip ok">${IK_RS.ok}${st.b} benar</span><span class="rs-chip no">${IK_RS.no}${st.s} salah</span>${st.k ? `<span class="rs-chip">${st.k} kosong</span>` : ''}</div></div>
+    <div class="card sx-hero ${kelasSkor(st.p)}" style="margin-top:12px">
+      <div class="sx-hero-atas">${ringSesi(st.p, 84)}
+        <div><span class="sx-mode">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span><h2>${tglPenuh}</h2><p class="muted" style="margin:2px 0 0">${st.n} soal${dur}</p></div></div>
+      <div class="sx-tags" style="margin-top:12px">${rdState.m ? `<span class="sx-tag">${esc(rdState.m)}</span>` : tagMapel(a, 6)}</div>
+      <div class="rs-chips" style="margin-top:10px"><span class="rs-chip ok">${IK_RS.ok}${st.b} benar</span><span class="rs-chip no">${IK_RS.no}${st.s} salah</span>${st.k ? `<span class="rs-chip">${st.k} kosong</span>` : ''}</div>
+      <p class="gm-judul" style="margin-top:14px">Peta soal (ketuk nomor untuk melompat)</p><div class="gm-petak">${petak}</div>
     </div>
     <div class="card">
       <h3 style="margin-top:0">Perubahan statistik</h3>
-      <p class="muted" style="margin:0 0 4px">${a.d === null ? 'Ini sesi pertama, belum ada pembanding.' : `Akurasi ${deltaHTML(a.d)} poin dibanding sesi sebelumnya.`}</p>
-      ${perubahan}${perMapel}
+      <p class="muted" style="margin:0">${a.d === null ? 'Ini sesi pertama, belum ada pembanding.' : `Akurasi ${deltaHTML(a.d)} poin dibanding sesi sebelumnya.`}</p>
+      ${perubahan}
     </div>
-    <div class="card" style="margin-bottom:12px"><p class="label" style="margin-top:0">Tampilkan soal</p><div class="pilihan">${chips}</div></div>
+    <div class="pilihan" style="margin-bottom:12px">${chips}</div>
     ${kartuSoal || '<p class="muted">Tidak ada soal di kategori ini.</p>'}${lagi}`;
   rumus($('riwayat-detail'));
 }
@@ -2724,11 +2819,12 @@ $('isi-statistik').addEventListener('change', (e) => {
 });
 
 
-// Riwayat sesi: buka pembahasan, urutan, filter, dan tombol "lebih banyak"
+// Riwayat sesi: buka pembahasan, urutan, filter mapel, dan tombol "lebih banyak"
 $('isi-statistik').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-buka]');
-  const kt = e.target.closest('.rs-kartu');
-  if (b || kt) { bukaDetailSesi((b || kt).dataset.buka || kt.dataset.sesi); return; }
+  const kt = e.target.closest('.sx-kartu');
+  if (kt) { bukaDetailSesi(kt.dataset.sesi); return; }
+  const fm = e.target.closest('[data-fm]');
+  if (fm) { filterSesiMapel = fm.dataset.fm; batasSesi = BATAS_SESI; $('riwayat-sesi').innerHTML = riwayatSesiHTML(); return; }
   if (e.target.closest('#rs-urut')) { urutSesi = urutSesi === 'baru' ? 'lama' : 'baru'; $('riwayat-sesi').innerHTML = riwayatSesiHTML(); return; }
   if (e.target.closest('button[data-lagi-sesi]')) { batasSesi += BATAS_SESI; $('rs-daftar').innerHTML = daftarSesiHTML(); return; }
   if (e.target.closest('button[data-lagi-jebakan]')) {
@@ -2737,20 +2833,22 @@ $('isi-statistik').addEventListener('click', (e) => {
     rumus($('analisis-wrap'));
   }
 });
-$('isi-statistik').addEventListener('change', (e) => {
-  if (e.target.id !== 'rs-filter') return;
-  filterSesiMapel = e.target.value; batasSesi = BATAS_SESI;
-  $('rs-daftar').innerHTML = daftarSesiHTML();
-});
 $('riwayat-detail').addEventListener('click', (e) => {
+  const pt = e.target.closest('.petak');
+  if (pt) {
+    let el = document.getElementById('sx-' + pt.dataset.no);
+    if (!el) { rdState.filter = 'semua'; rdState.batas = 1e9; renderDetailSesi(); el = document.getElementById('sx-' + pt.dataset.no); }
+    if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    return;
+  }
   const t = e.target.closest('[data-rd]');
   if (!t) return;
   if (t.dataset.rd === 'kembali') { tampil('statistik'); window.scrollTo(0, posisiStat); }
-  else if (t.dataset.rd === 'lagi') { rdState.batas += 10; renderDetailSesi(); }
+  else if (t.dataset.rd === 'lagi') { rdState.batas += 12; renderDetailSesi(); }
 });
 $('riwayat-detail').addEventListener('change', (e) => {
   if (e.target.name !== 'filter-rd') return;
-  rdState.filter = e.target.value; rdState.batas = 10; renderDetailSesi();
+  rdState.filter = e.target.value; rdState.batas = 12; renderDetailSesi();
 });
 
 // ---------- Riwayat pengerjaan per topik ----------
