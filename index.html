@@ -208,7 +208,17 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 /* Profil dan pengaturan di beranda */
 .profil-baris{display:flex;align-items:center;gap:14px}
 .profil-baris .muted{margin:0}
-.avatar{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;flex-shrink:0}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;overflow:hidden;flex-shrink:0}
+.avatar svg,.avatar img{width:100%;height:100%;display:block;object-fit:cover}
+.av-baris{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.av-baris .avatar{width:72px;height:72px;font-size:1.8rem}
+.pilih-avatar{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 4px}
+.pilih-av{width:52px;height:52px;padding:0;border:3px solid transparent;border-radius:50%;background:none;cursor:pointer;overflow:hidden}
+.pilih-av svg{width:100%;height:100%;display:block;border-radius:50%}
+.pilih-av.aktif{border-color:var(--primary)}
+.kotak-pratinjau{margin-top:16px;padding:16px;border:2px dashed var(--primary);border-radius:12px}
+.pratinjau-judul{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.pilih-av:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 #btn-ke-setup{margin-top:4px;padding:14px}
 
 /* Tombol profil (pojok kiri bawah) dan halaman profil */
@@ -565,10 +575,12 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <input type="file" id="file-gambar" accept="image/*" hidden>
 
       <div class="aksi">
+        <button class="btn btn-secondary" id="btn-pratinjau">Pratinjau</button>
         <button class="btn btn-secondary" id="btn-batal-edit" hidden>Batal edit</button>
         <button class="btn btn-primary" id="btn-simpan-soal">Simpan soal</button>
       </div>
       <p class="pesan" id="pesan-form"></p>
+      <div class="kotak-pratinjau" id="kotak-pratinjau" hidden></div>
     </div>
 
     <div class="card">
@@ -1073,7 +1085,96 @@ const SYNC = {
 const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat' };
 // Semua data milik akun yang tersimpan di browser ini. Harus dibersihkan saat keluar atau ganti akun,
 // kalau tidak, data akun sebelumnya tercampur ke akun berikutnya.
-const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil'];
+// ---------- Avatar profil ----------
+const AVATAR_DI_AKUN = false; // ubah ke true setelah kolom "avatar" ditambahkan di tabel profiles (lihat catatan)
+const AVATAR_PRESET = [
+  { id: 'a1', bg: '#dbeafe', kulit: '#f1c9a5', rambut: 'pendek', warnaRambut: '#1f2937', baju: '#2563eb' },
+  { id: 'a2', bg: '#fde68a', kulit: '#c68c63', rambut: 'keriting', warnaRambut: '#111827', baju: '#0f172a', aksesori: 'kacamata' },
+  { id: 'a3', bg: '#fbcfe8', kulit: '#f1c9a5', rambut: 'bob', warnaRambut: '#3b2a24', baju: '#be185d', aksesori: 'headphone' },
+  { id: 'a4', bg: '#bbf7d0', kulit: '#8d5a3c', rambut: 'pendek', warnaRambut: '#111827', baju: '#0f766e', aksesori: 'topi' },
+  { id: 'a5', bg: '#e9d5ff', kulit: '#f1c9a5', rambut: 'hijab', warnaRambut: '#7c3aed', baju: '#4c1d95' },
+  { id: 'a6', bg: '#fed7aa', kulit: '#d9a074', rambut: 'cepol', warnaRambut: '#1f2937', baju: '#9a3412', aksesori: 'kacamata' },
+  { id: 'a7', bg: '#c7d2fe', kulit: '#e6b894', rambut: 'beanie', warnaRambut: '#1e293b', baju: '#475569' },
+  { id: 'a8', bg: '#99f6e4', kulit: '#8d5a3c', rambut: 'hijab', warnaRambut: '#115e59', baju: '#134e4a', aksesori: 'kacamata' }
+];
+function svgAvatar(a) {
+  const k = a.kulit, r = a.warnaRambut, h = a.rambut;
+  let belakang = '', depan = '';
+  if (h === 'keriting') belakang = `<circle cx="50" cy="38" r="25" fill="${r}"/>`;
+  if (h === 'bob') belakang = `<path d="M30 48c-2-20 6-32 20-32s22 12 20 32c0 10-2 18-4 24H34c-2-6-4-14-4-24z" fill="${r}"/>`;
+  if (h === 'cepol') belakang = `<circle cx="50" cy="17" r="8" fill="${r}"/>`;
+  if (h === 'hijab') belakang = `<path d="M24 54c-2-26 10-38 26-38s28 12 26 38c0 12-4 20-8 26H32c-4-6-8-14-8-26z" fill="${r}"/>`;
+  if (h === 'pendek' || h === 'cepol') depan = `<path d="M33 44c-1-16 8-25 17-25s18 9 17 25c-3-7-8-11-17-11s-14 4-17 11z" fill="${r}"/>`;
+  if (h === 'keriting') depan = `<path d="M33 42c0-12 7-18 17-18s17 6 17 18c-4-6-9-9-17-9s-13 3-17 9z" fill="${r}"/>`;
+  if (h === 'bob') depan = `<path d="M33 42c4-8 10-11 17-11s13 3 17 11c-6-3-11-5-17-5s-11 2-17 5z" fill="${r}"/>`;
+  if (h === 'beanie') depan = `<path d="M33 44c0-4 1-6 3-8h28c2 2 3 4 3 8-4-3-9-4-17-4s-13 1-17 4z" fill="#3b2a24"/><path d="M33 38c0-14 8-21 17-21s17 7 17 21z" fill="${r}"/><rect x="31" y="35" width="38" height="7" rx="3.5" fill="#f8fafc"/>`;
+  const wajah = h === 'hijab'
+    ? `<ellipse cx="50" cy="49" rx="14" ry="16" fill="${k}"/>`
+    : `<rect x="44" y="60" width="12" height="14" rx="5" fill="${k}"/><ellipse cx="50" cy="46" rx="17" ry="19" fill="${k}"/>`;
+  const mata = `<circle cx="43.5" cy="48" r="1.9" fill="#1f2937"/><circle cx="56.5" cy="48" r="1.9" fill="#1f2937"/><path d="M45 56.5q5 4 10 0" fill="none" stroke="#1f2937" stroke-width="1.8" stroke-linecap="round"/>`;
+  let aks = '';
+  if (a.aksesori === 'kacamata') aks = `<g fill="none" stroke="#1f2937" stroke-width="1.8"><circle cx="43.5" cy="48" r="6.5"/><circle cx="56.5" cy="48" r="6.5"/><path d="M50 48h0"/></g>`;
+  if (a.aksesori === 'headphone') aks = `<path d="M31 46c0-18 8-26 19-26s19 8 19 26" fill="none" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/><rect x="27" y="43" width="7" height="14" rx="3.5" fill="#1f2937"/><rect x="66" y="43" width="7" height="14" rx="3.5" fill="#1f2937"/>`;
+  if (a.aksesori === 'topi') aks = `<path d="M32 40c0-13 8-20 18-20s18 7 18 20z" fill="#1f2937"/><path d="M30 40h40c0 2-3 3-6 3H36c-3 0-6-1-6-3z" fill="#334155"/>`;
+  const baju = h === 'hijab'
+    ? `<path d="M10 100c0-24 18-30 40-30s40 6 40 30z" fill="${a.baju}"/><path d="M22 100c0-14 10-22 28-22s28 8 28 22z" fill="${r}"/>`
+    : `<path d="M10 100c0-24 18-30 40-30s40 6 40 30z" fill="${a.baju}"/>`;
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="100" height="100" fill="${a.bg}"/>${belakang}${baju}${wajah}${mata}${depan}${aks}</svg>`;
+}
+
+function avatarTersimpan() {
+  try {
+    const a = JSON.parse(localStorage.getItem('utbk_avatar'));
+    if (a && a.tipe === 'preset' && AVATAR_PRESET.some((x) => x.id === a.id)) return a;
+    if (a && a.tipe === 'foto' && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a.data || '')) return a;
+  } catch (e) {}
+  return null;
+}
+function avatarIsi(nama) {
+  const a = avatarTersimpan();
+  if (a && a.tipe === 'preset') return svgAvatar(AVATAR_PRESET.find((x) => x.id === a.id));
+  if (a && a.tipe === 'foto') return `<img src="${a.data}" alt="">`;
+  return esc((nama || '?').charAt(0).toUpperCase());
+}
+async function simpanAvatar(a) {
+  try { if (a) localStorage.setItem('utbk_avatar', JSON.stringify(a)); else localStorage.removeItem('utbk_avatar'); }
+  catch (e) { return false; }
+  const prev = $('pf-av-prev');
+  if (prev) prev.innerHTML = avatarIsi($('pf-nama') ? $('pf-nama').value.trim() : '');
+  document.querySelectorAll('.pilih-av').forEach((b) => b.classList.toggle('aktif', !!a && a.tipe === 'preset' && b.dataset.av === a.id));
+  renderSalam();
+  if (AVATAR_DI_AKUN && AkunApp.sesi()) { try { await pushProfil(); } catch (e) {} }
+  return true;
+}
+function pilihanAvatarHTML() {
+  const a = avatarTersimpan();
+  return `<p class="label">Foto profil</p>
+    <div class="av-baris"><div class="avatar" id="pf-av-prev">${avatarIsi((ProfilApp.ambil() || {}).nama)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-kecil" type="button" data-av-galeri="1">Pilih dari galeri</button>
+        <button class="btn btn-secondary btn-kecil" type="button" data-av-hapus="1">Pakai inisial</button>
+      </div></div>
+    <div class="pilih-avatar">${AVATAR_PRESET.map((x) => `<button type="button" class="pilih-av${a && a.tipe === 'preset' && a.id === x.id ? ' aktif' : ''}" data-av="${x.id}" aria-label="Avatar ${x.id.slice(1)}">${svgAvatar(x)}</button>`).join('')}</div>
+    <input type="file" id="pf-foto" accept="image/*" hidden>
+    <p class="pesan" id="pesan-avatar"></p>`;
+}
+// Foto dari galeri dipotong persegi dan dikecilkan ke 256 px supaya ringan disimpan
+function ubahFotoJadiAvatar(file) {
+  return new Promise((ok, gagal) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const sisi = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement('canvas');
+      c.width = c.height = 256;
+      c.getContext('2d').drawImage(img, (img.naturalWidth - sisi) / 2, (img.naturalHeight - sisi) / 2, sisi, sisi, 0, 0, 256, 256);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); gagal(new Error('Format foto tidak didukung. Coba JPG atau PNG.')); };
+    img.src = url;
+  });
+}
+
+const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil', 'utbk_avatar'];
 function bersihkanDataAkunLokal() {
   KUNCI_DATA_AKUN.concat('utbk_pemilik').forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
   terakhirDikirim = {};
@@ -1140,6 +1241,7 @@ async function pullProfil() {
     tanggalUjian: r.tanggal_ujian || '', username: r.username || '', deskripsi: r.deskripsi || '',
     publik: !!r.publik, tampilkanStatistik: !!r.tampilkan_statistik
   });
+  if (AVATAR_DI_AKUN && r.avatar) { try { localStorage.setItem('utbk_avatar', r.avatar); } catch (e) {} }
   return true;
 }
 // Kirim profil ke akun
@@ -1156,6 +1258,7 @@ async function pushProfil() {
       sekolah: p.sekolah || null, jurusan: p.jurusan || null, target: p.target || null,
       kota: p.kota || null, tanggal_ujian: p.tanggalUjian || null, deskripsi: p.deskripsi || null,
       publik: !!p.publik, tampilkan_statistik: !!p.tampilkanStatistik,
+      ...(AVATAR_DI_AKUN ? { avatar: localStorage.getItem('utbk_avatar') } : {}),
       diperbarui_pada: new Date().toISOString()
     }
   });
@@ -2250,6 +2353,7 @@ function bacaForm() {
   };
 }
 function resetForm() {
+  if ($('kotak-pratinjau')) { $('kotak-pratinjau').hidden = true; $('btn-pratinjau').textContent = 'Pratinjau'; }
   $('f-topik').value = '';
   semuaArea().forEach((a) => (a.innerHTML = ''));
   pilihGambar(null);
@@ -2578,6 +2682,56 @@ $('btn-reset').addEventListener('click', () => {
 
 // Bank soal
 $('btn-simpan-soal').addEventListener('click', simpanSoal);
+// ---------- Pratinjau soal buatan sendiri (tampilan seperti saat latihan) ----------
+function dataPratinjau() {
+  const tipe = nilai('f-tipe'), baca = (k) => sanitize(getArea(k).innerHTML);
+  let jawaban;
+  if (tipe === 'isian') jawaban = $('f-isian').value.trim();
+  else if (tipe === 'kompleks') jawaban = [...document.querySelectorAll('input[name="f-jawaban-ganda"]:checked')].map((c) => Number(c.value)).sort();
+  else jawaban = Number(nilai('f-jawaban'));
+  return { tipe, jawaban, soal: baca('soal'), pembahasan: baca('pembahasan'),
+    opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => baca('opsi' + k)),
+    mapel: nilai('f-mapel'), topik: $('f-topik').value.trim(), level: nilai('f-level') };
+}
+function renderPratinjau() {
+  const kotak = $('kotak-pratinjau');
+  if (kosongEditor(getArea('soal'))) {
+    kotak.hidden = true;
+    $('btn-pratinjau').textContent = 'Pratinjau';
+    $('pesan-form').textContent = 'Tulis teks soal dulu untuk melihat pratinjau.';
+    $('pesan-form').className = 'pesan err';
+    return;
+  }
+  $('pesan-form').textContent = '';
+  const s = dataPratinjau(), isian = s.tipe === 'isian';
+  const nama = { pg: 'pilihan ganda', kompleks: 'centang semua yang benar', isian: 'isian bilangan cacah' }[s.tipe];
+  const kunci = isian ? esc(s.jawaban || '(belum diisi)') : kunciHuruf(s);
+  const badan = isian
+    ? `<div class="isian"><input class="input isian-input benar" disabled value="${esc(s.jawaban)}" placeholder="(kunci belum diisi)"></div>`
+    : `<div class="opsi-list">${s.opsi.map((o, k) => `<div class="opsi${kunciOpsi(s, k) ? ' benar' : ''}">${s.tipe === 'kompleks' ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`).join('')}</div>`;
+  const cek = bacaForm();
+  kotak.innerHTML = `<div class="pratinjau-judul"><strong>Pratinjau</strong><span class="muted">Seperti tampilan saat latihan. Kunci jawaban ditandai hijau.</span></div>
+    <p class="muted">${namaMapel(s.mapel)}, ${esc(s.topik || 'topik belum diisi')}, ${s.level}, ${nama}</p>
+    <div class="teks-soal">${konten(s.soal)}</div>${badan}
+    <div class="feedback"><strong>Kunci jawaban: ${kunci}</strong><div>${konten(s.pembahasan)}</div></div>
+    ${cek.error ? `<p class="muted" style="margin-top:10px">Sebelum disimpan: ${esc(cek.error)}</p>` : ''}`;
+  kotak.hidden = false;
+  $('btn-pratinjau').textContent = 'Sembunyikan pratinjau';
+  rumus(kotak);
+}
+$('btn-pratinjau').addEventListener('click', () => {
+  if (!$('kotak-pratinjau').hidden) { $('kotak-pratinjau').hidden = true; $('btn-pratinjau').textContent = 'Pratinjau'; return; }
+  renderPratinjau();
+  if (!$('kotak-pratinjau').hidden) $('kotak-pratinjau').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+// Selama pratinjau terbuka, ikut diperbarui saat soal diketik atau kunci diganti
+let timerPratinjau = null;
+['input', 'change'].forEach((ev) => $('bank').addEventListener(ev, (e) => {
+  if ($('kotak-pratinjau').hidden || $('kotak-pratinjau').contains(e.target)) return;
+  clearTimeout(timerPratinjau);
+  timerPratinjau = setTimeout(() => { if (!$('kotak-pratinjau').hidden) renderPratinjau(); }, 500);
+}));
+
 $('btn-batal-edit').addEventListener('click', () => { resetForm(); pesanForm('', false); });
 $('daftar-custom').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-aksi]');
@@ -2953,7 +3107,7 @@ async function hapusAkunDanData() {
     }
   }
   ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat', 'utbk_pemilik',
-    'utbk_pengaturan', 'utbk_profil', 'utbk_sesi'].forEach((k) => localStorage.removeItem(k));
+    'utbk_pengaturan', 'utbk_profil', 'utbk_avatar', 'utbk_sesi'].forEach((k) => localStorage.removeItem(k));
   alert('Akun dan data kamu sudah dihapus.');
   location.href = location.pathname;
 }
@@ -3001,6 +3155,26 @@ function akunHTML(sesi) {
     <p class="pesan" id="pesan-akun"></p>
   </div>`;
 }
+$('kartu-profil').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-av],[data-av-galeri],[data-av-hapus]');
+  if (!b) return;
+  if (b.dataset.av) simpanAvatar({ tipe: 'preset', id: b.dataset.av });
+  else if (b.dataset.avGaleri) $('pf-foto').click();
+  else simpanAvatar(null);
+});
+$('kartu-profil').addEventListener('change', async (e) => {
+  if (e.target.id !== 'pf-foto') return;
+  const f = e.target.files[0], pesan = $('pesan-avatar');
+  e.target.value = '';
+  if (!f) return;
+  pesan.className = 'pesan err';
+  if (!f.type.startsWith('image/') || f.size > 15 * 1024 * 1024) { pesan.textContent = 'Pilih file gambar (maksimal 15 MB).'; return; }
+  try {
+    const data = await ubahFotoJadiAvatar(f);
+    if (!(await simpanAvatar({ tipe: 'foto', data }))) throw new Error('Penyimpanan browser penuh.');
+    pesan.textContent = '';
+  } catch (er) { pesan.textContent = er.message; }
+});
 function renderProfil(mengedit = false) {
   const p = ProfilApp.ambil();
   const sesi = AkunApp.sesi();
@@ -3010,7 +3184,7 @@ function renderProfil(mengedit = false) {
     const tgl = p.tanggalLahir ? `${esc(formatTgl(p.tanggalLahir))} (${umurDari(p.tanggalLahir)} tahun)` : '-';
     kartu.innerHTML = `
       <div class="profil-header">
-        <div class="avatar">${esc(p.nama.charAt(0).toUpperCase())}</div>
+        <div class="avatar">${avatarIsi(p.nama)}</div>
         <div style="min-width:0">
           <h2 style="margin:0">${esc(p.nama)}</h2>
           <p class="muted" style="margin:0">${esc(p.username ? '@' + p.username : labelStatus(p.statusPendidikan))}</p>
@@ -3041,6 +3215,7 @@ function renderProfil(mengedit = false) {
   kartu.innerHTML = `
     <h2>${p ? 'Ubah profil' : 'Buat profil'}</h2>
     <p class="muted">Tanda * wajib diisi.</p>
+    ${pilihanAvatarHTML()}
     <p class="label">Nama lengkap *</p>
     <input class="input" id="pf-nama" maxlength="50" value="${v('nama')}">
     <p class="label">Username (untuk link profil publik)</p>
@@ -3193,7 +3368,7 @@ async function aksiAkun(aksi) {
 function renderSalam() {
   const p = ProfilApp.ambil();
   $('salam').textContent = p ? `Halo, ${p.nama}. Siap latihan hari ini?` : 'Halo! Lengkapi profil lewat ikon di pojok kiri bawah.';
-  $('avatar-atur').textContent = p ? p.nama.charAt(0).toUpperCase() : '?';
+  $('avatar-atur').innerHTML = avatarIsi(p ? p.nama : '?');
   renderBeranda();
 }
 // Pilihan waktu per soal hanya relevan untuk mode Try Out
