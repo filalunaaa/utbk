@@ -717,6 +717,7 @@ body #kuis{max-width:var(--w-soal,780px)}
 #pilih-topik{gap:6px}
 #pilih-topik .chip span{padding:5px 11px;font-size:.82rem;line-height:1.3}
 .tp-toggle{display:block;margin-top:6px}
+#kuis,#review{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}#kuis input,#review input,#kuis textarea{-webkit-user-select:text;user-select:text}#kuis img,#review img{-webkit-user-drag:none;user-drag:none}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -3469,6 +3470,15 @@ $('btn-keluar-ujian').addEventListener('click', () => {
   else konfirmUjian('Keluar dari latihan?', 'Soal yang sudah kamu jawab tetap tercatat di statistik. Soal yang belum dijawab tidak dihitung.', [{ label: 'Lanjut latihan', kelas: 'btn-primary' }, { label: 'Keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('modal-ex').hidden = true; });
+// Anti-salin: teks soal dan pilihan tidak bisa diblok, disalin, atau diseret saat mengerjakan/mereview
+(function () {
+  const di = (e) => e.target.closest && e.target.closest('#kuis, #review') && !e.target.closest('input, textarea');
+  ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart'].forEach((ev) =>
+    document.addEventListener(ev, (e) => { if (di(e)) e.preventDefault(); }));
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'a', 'u', 's', 'p'].includes(e.key.toLowerCase()) && !e.target.closest('input, textarea') && !$('kuis').hidden) e.preventDefault();
+  });
+})();
 window.addEventListener('beforeunload', (e) => { if (sesi && sesi.aktif && sesi.mode === 'tryout') { e.preventDefault(); e.returnValue = ''; } });
 $('btn-review').addEventListener('click', renderReview);
 $('btn-kembali-hasil').addEventListener('click', () => tampil('hasil'));
