@@ -436,6 +436,30 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 :root[data-theme="dark"]{--warning-soft:#3b2506;--warning:#fbbf24}
 @media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #cari-soal{grid-column:1/-1}.page-head .btn{width:100%}}
 @media(max-width:600px){.kartu-soal>summary{flex-wrap:wrap}.pratinjau-soal{flex-basis:100%}}
+
+/* Statistik v2 */
+.grafik-kepala{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 10px}
+.grafik-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.grafik-kartu{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--card);min-width:0}
+.grafik-kartu h3{font-size:.95rem;margin:0 0 10px}
+.grafik-svg{width:100%;height:auto;display:block}
+.grafik-svg text{font-size:11px;fill:var(--muted);font-family:inherit}
+.grafik-svg .grid{stroke:var(--border);stroke-width:1}
+.grafik-svg .garis{fill:none;stroke:var(--primary);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.grafik-svg .titik{fill:var(--card);stroke:var(--primary);stroke-width:2.5}
+.hbar{display:grid;grid-template-columns:minmax(70px,34%) minmax(0,1fr) auto;gap:10px;align-items:center;margin:9px 0;font-size:.88rem}
+.hbar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .tr{height:10px;background:var(--border);border-radius:999px;overflow:hidden}
+.hbar .fl{height:100%;border-radius:999px}
+.hbar .nilai{font-weight:700;white-space:nowrap}
+.lv-rendah{background:var(--salah)}.lv-sedang{background:var(--warning)}.lv-tinggi{background:var(--benar)}
+.bandingan{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bandingan .pct{font-size:1.9rem;font-weight:800;line-height:1.2}
+.bandingan .tr{height:10px;background:var(--border);border-radius:999px;overflow:hidden;margin:6px 0}
+.bandingan .fl{height:100%;border-radius:999px;background:var(--primary)}
+.legenda{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted);margin-top:8px}
+.legenda i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+@media(min-width:900px){.grafik-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grafik-grid .lebar{grid-column:1/-1}}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -1952,6 +1976,50 @@ function analisisHTML() {
 }
 
 // ---------- Statistik ----------
+// ---------- Grafik statistik (dari riwayat pengerjaan asli) ----------
+let periodeStat = '30';
+function garisHTML(data) {
+  const per = {};
+  data.forEach((r) => { const k = new Date(r.t).toLocaleDateString('sv-SE'); per[k] = per[k] || { n: 0, b: 0 }; per[k].n++; if (r.b) per[k].b++; });
+  const hari = Object.keys(per).sort();
+  const W = 600, H = 200, L = 36, R = 14, T = 12, B = 26;
+  const x = (i) => (hari.length === 1 ? L + (W - L - R) / 2 : L + (i * (W - L - R)) / (hari.length - 1));
+  const y = (v) => +(T + (H - T - B) * (1 - v / 100)).toFixed(1);
+  const pts = hari.map((k, i) => { const v = Math.round((per[k].b / per[k].n) * 100); return { k, v, n: per[k].n, X: +x(i).toFixed(1), Y: y(v) }; });
+  const tgl = (k) => new Date(k + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  const grid = [0, 50, 100].map((v) => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}%</text>`).join('');
+  const garis = pts.length > 1 ? `<polyline class="garis" points="${pts.map((q) => q.X + ',' + q.Y).join(' ')}"/>` : '';
+  const titik = pts.map((q) => `<circle class="titik" cx="${q.X}" cy="${q.Y}" r="4"><title>${tgl(q.k)}: ${q.v}% (${q.n} soal)</title></circle>`).join('');
+  const sumbu = `<text x="${pts[0].X}" y="${H - 6}" text-anchor="${pts.length > 1 ? 'start' : 'middle'}">${tgl(pts[0].k)}</text>` +
+    (pts.length > 1 ? `<text x="${pts[pts.length - 1].X}" y="${H - 6}" text-anchor="end">${tgl(pts[pts.length - 1].k)}</text>` : '');
+  return `<svg class="grafik-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik akurasi harian">${grid}${garis}${titik}${sumbu}</svg>` +
+    (pts.length === 1 ? '<p class="muted" style="margin:6px 0 0">Latihan di minimal 2 hari berbeda diperlukan untuk melihat tren.</p>' : '');
+}
+function grafikStatHTML() {
+  const batas = periodeStat === 'all' ? 0 : Date.now() - Number(periodeStat) * 864e5;
+  const data = Riwayat.ambil().filter((r) => r.t >= batas);
+  const chip = (v, l) => `<label class="chip"><input type="radio" name="periode-stat" value="${v}" ${periodeStat === v ? 'checked' : ''}><span>${l}</span></label>`;
+  const kepala = `<div class="grafik-kepala"><p class="label" style="margin:0">Perkembangan belajar</p><div class="pilihan">${chip('7', '7 hari')}${chip('30', '30 hari')}${chip('all', 'Semua')}</div></div>`;
+  if (!data.length) return kepala + '<div class="state-kosong"><strong>Belum ada data pada periode ini</strong><p class="muted">Kerjakan soal untuk melihat grafik perkembanganmu.</p></div>';
+  const kel = (kunci) => {
+    const o = {};
+    data.forEach((r) => { const k = r[kunci]; if (!k) return; o[k] = o[k] || { n: 0, b: 0 }; o[k].n++; if (r.b) o[k].b++; });
+    return o;
+  };
+  const pct = (x) => Math.round((x.b / x.n) * 100);
+  const topik = Object.entries(kel('topik')).map(([nm, x]) => ({ nm, ...x, p: pct(x) })).sort((a, b) => a.p - b.p || b.n - a.n).slice(0, 8);
+  const bar = topik.map((t) => `<div class="hbar"><span class="nm" title="${esc(t.nm)}">${esc(t.nm)}</span><div class="tr"><div class="fl ${t.p < 50 ? 'lv-rendah' : t.p < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, t.p)}%"></div></div><span class="nilai">${t.p}% <span class="muted">· ${t.n}</span></span></div>`).join('');
+  const mp = kel('mapel');
+  const banding = ['PK', 'PM'].map((m) => {
+    const x = mp[m];
+    return `<div><span class="muted">${esc(namaMapel(m))}</span><div class="pct">${x ? pct(x) + '%' : '-'}</div><div class="tr"><div class="fl" style="width:${x ? pct(x) : 0}%"></div></div><span class="muted">${x ? x.n + ' soal' : 'Belum dikerjakan'}</span></div>`;
+  }).join('');
+  return kepala + `<div class="grafik-grid">
+    <div class="grafik-kartu lebar"><h3>Akurasi harian</h3>${garisHTML(data)}</div>
+    <div class="grafik-kartu"><h3>Akurasi per topik (terlemah dulu)</h3>${bar}<div class="legenda"><span><i class="lv-rendah"></i>&lt; 50%</span><span><i class="lv-sedang"></i>50-74%</span><span><i class="lv-tinggi"></i>&ge; 75%</span></div></div>
+    <div class="grafik-kartu"><h3>Perbandingan PK dan PM</h3><div class="bandingan">${banding}</div></div>
+  </div><p class="muted" style="margin:10px 0 0">Grafik dihitung dari riwayat pengerjaan terbaru (maksimal 600 soal tersimpan).</p>`;
+}
 function renderStatistik() {
   const d = Penyimpanan.ambil();
   const baris = (nama, x) => {
@@ -2011,17 +2079,16 @@ function renderStatistik() {
       : baris2(n, x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   $('isi-statistik').innerHTML =
-    `<p class="label">Total soal dikerjakan</p>
-    <div class="ringkasan-baris">
-      <div><div class="skor">${d.total}</div><p class="muted" style="margin:0">soal dikerjakan</p></div>
-      <div><div class="skor" style="color:var(--benar)">${d.benar}</div><p class="muted" style="margin:0">jawaban benar</p></div>
-      <div><div class="skor" style="color:var(--salah)">${d.total - d.benar}</div><p class="muted" style="margin:0">jawaban salah</p></div>
-    </div>` +
-    `<p class="label">Akurasi keseluruhan</p>${baris('Semua soal', d)}` +
+    `<div class="ringkasan-bank">${[['Soal dikerjakan', d.total, ''], ['Benar', d.benar, 'benar'], ['Salah', d.total - d.benar, 'salah'], ['Akurasi', (d.total ? Math.round((d.benar / d.total) * 100) : 0) + '%', '']].map(([a, v, w]) => `<div class="stat-tile"><span>${a}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`).join('')}</div>` +
+    `<div id="grafik-stat">${grafikStatHTML()}</div>` +
     `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + analisisHTML();
   tampil('statistik');
   rumus($('isi-statistik'));
 }
+
+$('isi-statistik').addEventListener('change', (e) => {
+  if (e.target.name === 'periode-stat') { periodeStat = e.target.value; $('grafik-stat').innerHTML = grafikStatHTML(); }
+});
 
 // ---------- Riwayat pengerjaan per topik ----------
 const BATAS_RIWAYAT = 15;
