@@ -671,6 +671,26 @@ body #kuis{max-width:var(--w-soal,780px)}
 .timer.sembunyi{display:none!important}
 @media print{body.mencetak>*:not(#area-cetak){display:none!important}#area-cetak{display:block!important;color:#000}}
 #area-cetak{display:none;padding:24px;font-family:inherit}#area-cetak table{border-collapse:collapse;width:100%;margin:8px 0 18px}#area-cetak th,#area-cetak td{border:1px solid #999;padding:5px 8px;text-align:left;font-size:12px}
+.dash-aksi{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.dash-gear{width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,background .15s}
+.dash-gear:hover{border-color:var(--primary);background:var(--primary-soft)}
+.dash-gear:focus-visible{outline:3px solid rgba(37,99,235,.45);outline-offset:2px}
+.dash-gear svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Pemilih topik ringkas */
+.tp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;flex-wrap:wrap}
+.tp-hitung{font-weight:500;color:var(--muted);font-size:.8rem;margin-left:4px}
+.tp-aksi{display:flex;gap:12px}
+.tp-link{border:0;background:none;color:var(--accent);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;padding:4px 0}
+.tp-link:hover{text-decoration:underline}.tp-link:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+.tp-cari{margin:8px 0;padding:8px 12px;font-size:.9rem;min-height:40px}
+.tp-wadah{position:relative;max-height:128px;overflow:hidden}
+.tp-wadah::after{content:"";position:absolute;left:0;right:0;bottom:0;height:28px;background:linear-gradient(transparent,var(--card));pointer-events:none}
+.tp-wadah.luas{max-height:300px;overflow-y:auto}.tp-wadah.luas::after,.tp-wadah.pendek::after{display:none}
+.tp-wadah.pendek{max-height:none}
+#pilih-topik{gap:6px}
+#pilih-topik .chip span{padding:5px 11px;font-size:.82rem;line-height:1.3}
+.tp-toggle{display:block;margin-top:6px}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -706,7 +726,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   <section id="menu" class="halaman">
     <header class="dash-head">
       <div class="dash-teks"><h1 id="salam"></h1><p class="muted" id="salam-sub"></p><p class="muted dash-tgl" id="tgl-hari"></p></div>
-      <button type="button" class="avatar dash-avatar" id="dash-avatar" aria-label="Buka profil">?</button>
+      <div class="dash-aksi"><button type="button" class="dash-gear" id="dash-pengaturan" aria-label="Buka pengaturan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button><button type="button" class="avatar dash-avatar" id="dash-avatar" aria-label="Buka profil">?</button></div>
     </header>
     <div class="card hero" id="kartu-hitung"></div>
     <div class="sum-grid" id="kartu-ringkasan"></div>
@@ -744,8 +764,10 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
             <label class="chip"><input type="radio" name="mapel" value="PK"><span>Pengetahuan Kuantitatif</span></label>
             <label class="chip"><input type="radio" name="mapel" value="PM"><span>Penalaran Matematika</span></label>
           </div>
-          <p class="label">Topik</p>
-          <div class="pilihan" id="pilih-topik"></div>
+          <div class="tp-head"><p class="label" style="margin:0">Topik <span class="tp-hitung" id="tp-hitung"></span></p><div class="tp-aksi"><button type="button" class="tp-link" id="tp-semua">Pilih semua</button><button type="button" class="tp-link" id="tp-kosong">Kosongkan</button></div></div>
+          <input class="input tp-cari" id="tp-cari" type="search" placeholder="Cari topik..." autocomplete="off" aria-label="Cari topik">
+          <div class="tp-wadah" id="tp-wadah"><div class="pilihan" id="pilih-topik"></div><p class="muted" id="tp-nihil" hidden style="margin:6px 0 0">Tidak ada topik yang cocok.</p></div>
+          <button type="button" class="tp-link tp-toggle" id="tp-toggle" aria-expanded="false" hidden>Tampilkan semua topik</button>
         </div>
         <div class="card">
           <h3 class="kartu-judul"><span class="no">2</span>Mode dan waktu</h3>
@@ -4278,6 +4300,24 @@ $('set-pdf').addEventListener('click',function(){var d=Penyimpanan.ambil(),r=Riw
 // reset & hapus lokal (terpisah, masing-masing dengan konfirmasi)
 $('set-reset').addEventListener('click',function(){konfirmUjian('Reset statistik?','Yang dihapus: statistik total, akurasi per topik dan mapel, riwayat pengerjaan, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak terpengaruh. Tindakan ini tidak bisa dibatalkan.',[{label:'Batal',kelas:'btn-primary'},{label:'Ya, reset statistik',kelas:'btn-bahaya',fn:function(){Penyimpanan.reset();PilihanStat.reset();Riwayat.reset();toastNeon('Statistik direset.')}}])});
 $('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data lokal?',AkunApp.sesi()?'Data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan dihapus. Akunmu tetap ada dan datanya dapat terunduh lagi saat sinkronisasi.':'Kamu belum masuk akun, jadi data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan hilang permanen.',[{label:'Batal',kelas:'btn-primary'},{label:'Hapus data lokal',kelas:'btn-bahaya',fn:function(){['utbk_testing_stats','utbk_bank_custom','utbk_bank_folder','utbk_pilihan_stat','utbk_riwayat','utbk_profil','utbk_avatar','utbk_pengaturan','neon_sinkron_ok','neon_sinkron_gagal'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});location.reload()}}])});
+document.getElementById('dash-pengaturan').addEventListener('click',function(){document.querySelector('.side-nav [data-hal="pengaturan"]').click()});
+
+(function(){var box=$('pilih-topik'),wad=$('tp-wadah'),tg=$('tp-toggle'),cari=$('tp-cari');
+  function labels(){return [].slice.call(box.querySelectorAll('label'))}
+  function ukur(){var luas=wad.classList.contains('luas');wad.classList.remove('pendek');
+    var perlu=box.scrollHeight>132;if(!perlu&&!luas)wad.classList.add('pendek');tg.hidden=!perlu&&!luas;
+    tg.textContent=luas?'Ringkas daftar topik':'Tampilkan semua topik ('+labels().filter(function(l){return !l.hidden}).length+')';tg.setAttribute('aria-expanded',String(luas))}
+  function filter(){var q=cari.value.trim().toLowerCase(),n=0;labels().forEach(function(l){var ok=!q||l.textContent.toLowerCase().indexOf(q)>-1;l.hidden=!ok;if(ok)n++});$('tp-nihil').hidden=n>0||!labels().length;if(q)wad.classList.add('luas');ukur()}
+  function hitung(){var a=labels(),c=a.filter(function(l){return l.querySelector('input').checked}).length;$('tp-hitung').textContent=a.length?'· '+c+' dari '+a.length+' dipilih':''}
+  function semua(v){labels().forEach(function(l){if(!l.hidden)l.querySelector('input').checked=v});hitung();if(typeof hitungSoal==='function')hitungSoal();box.dispatchEvent(new Event('change',{bubbles:true}))}
+  $('tp-semua').addEventListener('click',function(){semua(true)});
+  $('tp-kosong').addEventListener('click',function(){semua(false)});
+  tg.addEventListener('click',function(){wad.classList.toggle('luas');ukur()});
+  cari.addEventListener('input',filter);
+  box.addEventListener('change',hitung);
+  new MutationObserver(function(){cari.value=cari.value;filter();hitung()}).observe(box,{childList:true});
+  filter();hitung();
+})();
 terapkanTampilan();
 </script>
 </body>
