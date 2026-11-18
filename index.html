@@ -626,6 +626,17 @@ body[data-mode="tryout"] #kuis .ex-detail summary{color:var(--text)}
 .modal-ex{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-box{background:var(--card);color:var(--text);border-radius:16px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35)}
 .mx-aksi{display:flex;flex-direction:column;gap:8px;margin-top:6px}.mx-aksi .btn{width:100%;min-height:46px}
+
+/* ===== Dropdown kustom NEON ===== */
+select.input{cursor:pointer}
+.dd-pop{position:fixed;z-index:200;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(15,23,42,.18);padding:6px;overflow-y:auto;overscroll-behavior:contain;animation:ddIn .12s ease-out}
+@keyframes ddIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.dd-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:42px;padding:9px 12px;border:0;border-radius:10px;background:transparent;color:inherit;font:inherit;font-size:.95rem;text-align:left;cursor:pointer}
+.dd-item:hover,.dd-item.aktif{background:var(--primary-soft);color:var(--accent)}
+.dd-item.dipilih{font-weight:700;color:var(--accent)}
+.dd-item.dipilih::after{content:"\2713";font-weight:800}
+.dd-item:disabled{opacity:.45;cursor:not-allowed}
+.dd-info{padding:10px 12px;font-size:.82rem;color:var(--muted)}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -894,7 +905,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       </div>
 
       <p class="label" for="f-topik">Topik</p>
-      <input class="input" id="f-topik" list="daftar-topik" placeholder="contoh: Aljabar" autocomplete="off">
+      <input class="input" id="f-topik" placeholder="contoh: Aljabar" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">
       <datalist id="daftar-topik"></datalist>
 
       <p class="label">Tingkat kesulitan</p>
@@ -4164,6 +4175,59 @@ cekHashPublik();
 window.addEventListener('hashchange', cekHashPublik);
 setInterval(() => { if (AkunApp.sesi()) sinkron().catch(() => {}); }, 30000);
 
+</script>
+<script>
+// Dropdown kustom: pengganti daftar native untuk <select class="input"> dan kolom topik
+(function(){
+  var pop=document.createElement('div');pop.className='dd-pop';pop.setAttribute('role','listbox');pop.hidden=true;document.body.appendChild(pop);
+  var ang=null,mode=null,idx=-1;
+  function esc2(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}
+  function tutup(){if(pop.hidden)return;pop.hidden=true;pop.innerHTML='';if(ang&&ang.getAttribute('role')==='combobox')ang.setAttribute('aria-expanded','false');ang=null;mode=null;idx=-1}
+  function posisi(){if(!ang)return;var r=ang.getBoundingClientRect(),vh=window.innerHeight,bawah=vh-r.bottom-12,atas=r.top-12;
+    pop.style.width=r.width+'px';pop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-r.width-8))+'px';
+    var h=Math.min(pop.scrollHeight+2,280);
+    if(bawah<Math.min(h,160)&&atas>bawah){pop.style.maxHeight=Math.min(280,atas)+'px';pop.style.top='auto';pop.style.bottom=(vh-r.top+6)+'px'}
+    else{pop.style.maxHeight=Math.min(280,Math.max(bawah,120))+'px';pop.style.bottom='auto';pop.style.top=(r.bottom+6)+'px'}}
+  function sorot(n){var b=pop.querySelectorAll('.dd-item:not(:disabled)');if(!b.length)return;idx=(n+b.length)%b.length;b.forEach(function(x,k){x.classList.toggle('aktif',k===idx)});b[idx].scrollIntoView({block:'nearest'})}
+  function pilih(el){if(!ang)return;var a=ang;a.value=el.dataset.v;a.dispatchEvent(new Event('input',{bubbles:true}));if(mode==='select')a.dispatchEvent(new Event('change',{bubbles:true}));tutup();a.focus()}
+  function isi(){
+    if(mode==='select'){pop.innerHTML=[].map.call(ang.options,function(o){return '<button type="button" role="option" class="dd-item'+(o.selected?' dipilih':'')+'" data-v="'+esc2(o.value)+'"'+(o.disabled?' disabled':'')+'><span>'+esc2(o.text)+'</span></button>'}).join('')}
+    else{var q=ang.value.trim().toLowerCase(),dl=document.getElementById('daftar-topik'),all=dl?[].map.call(dl.options,function(o){return o.value}):[];
+      var cocok=all.filter(function(t){return !q||t.toLowerCase().indexOf(q)>-1});
+      pop.innerHTML=cocok.map(function(t){return '<button type="button" role="option" class="dd-item'+(t.toLowerCase()===q?' dipilih':'')+'" data-v="'+esc2(t)+'"><span>'+esc2(t)+'</span></button>'}).join('')+
+        (q&&!cocok.length?'<div class="dd-info">Belum ada topik &ldquo;'+esc2(ang.value.trim())+'&rdquo;. Lanjutkan mengetik untuk membuat topik baru.</div>':'')+
+        (!all.length?'<div class="dd-info">Belum ada topik tersimpan. Ketik nama topik baru.</div>':'');
+      idx=-1}
+    posisi()}
+  function buka(el,m){tutup();ang=el;mode=m;pop.hidden=false;isi();
+    if(m==='select'){var b=pop.querySelectorAll('.dd-item:not(:disabled)');var k=[].findIndex.call(b,function(x){return x.classList.contains('dipilih')});sorot(k<0?0:k)}
+    else el.setAttribute('aria-expanded','true')}
+  pop.addEventListener('mousedown',function(e){e.preventDefault()});
+  pop.addEventListener('click',function(e){var b=e.target.closest('.dd-item');if(b&&!b.disabled)pilih(b)});
+  document.addEventListener('mousedown',function(e){var sel=e.target.closest&&e.target.closest('select.input');
+    if(sel&&!sel.disabled){e.preventDefault();sel.focus();if(ang===sel&&!pop.hidden)tutup();else buka(sel,'select');return}
+    if(!pop.hidden&&!e.target.closest('.dd-pop')&&e.target!==ang)tutup()},true);
+  document.addEventListener('keydown',function(e){var t=e.target;
+    if(t.matches&&t.matches('select.input')){
+      if(pop.hidden&&(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();buka(t,'select');return}
+      if(!pop.hidden&&ang===t){
+        if(e.key==='ArrowDown'){e.preventDefault();sorot(idx+1)}else if(e.key==='ArrowUp'){e.preventDefault();sorot(idx-1)}
+        else if(e.key==='Enter'||e.key===' '){e.preventDefault();var b=pop.querySelectorAll('.dd-item:not(:disabled)')[idx];if(b)pilih(b)}
+        else if(e.key==='Escape'||e.key==='Tab'){tutup()}}
+      return}
+    if(t.id==='f-topik'){
+      if(e.key==='ArrowDown'){e.preventDefault();if(pop.hidden)buka(t,'topik');sorot(idx+1)}
+      else if(e.key==='ArrowUp'&&!pop.hidden){e.preventDefault();sorot(idx-1)}
+      else if(e.key==='Enter'&&!pop.hidden&&idx>-1){e.preventDefault();var b2=pop.querySelectorAll('.dd-item:not(:disabled)')[idx];if(b2)pilih(b2)}
+      else if(e.key==='Escape'||e.key==='Tab'){tutup()}}
+  },true);
+  var ft=document.getElementById('f-topik');
+  ft.addEventListener('focus',function(){buka(ft,'topik')});
+  ft.addEventListener('click',function(){if(pop.hidden)buka(ft,'topik')});
+  ft.addEventListener('input',function(){if(pop.hidden)buka(ft,'topik');else isi()});
+  window.addEventListener('resize',tutup);
+  window.addEventListener('scroll',function(e){if(!(e.target.closest&&e.target.closest('.dd-pop')))posisi()},true);
+})();
 </script>
 </body>
 </html>
