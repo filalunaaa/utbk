@@ -1030,6 +1030,14 @@ const SYNC = {
 };
 // Riwayat dikirim terpisah: kalau server menolaknya, data lain tetap tersinkron
 const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat' };
+// Semua data milik akun yang tersimpan di browser ini. Harus dibersihkan saat keluar atau ganti akun,
+// kalau tidak, data akun sebelumnya tercampur ke akun berikutnya.
+const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil'];
+function bersihkanDataAkunLokal() {
+  KUNCI_DATA_AKUN.concat('utbk_pemilik').forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
+  terakhirDikirim = {};
+  DETIK_PER_SOAL = PengaturanApp.ambil().waktuPerSoal;
+}
 let terakhirDikirim = {}; // isi terakhir yang sudah dikirim, supaya tidak mengirim ulang yang sama
 const AkunApp = {
   KEY: 'utbk_sesi',
@@ -1176,6 +1184,11 @@ async function sinkron() {
 // Dipanggil setelah masuk atau saat aplikasi dibuka dalam keadaan sudah masuk
 async function mulaiSesi() {
   if (!AkunApp.sesi()) return;
+  // Kalau data di browser ini milik akun lain, bersihkan dulu sebelum mengambil data akun yang baru masuk
+  const uid = AkunApp.sesi().user_id;
+  const pemilik = localStorage.getItem('utbk_pemilik');
+  if (pemilik && pemilik !== uid) bersihkanDataAkunLokal();
+  try { localStorage.setItem('utbk_pemilik', uid); } catch (e) {}
   try {
     await pullData();
     const adaProfil = await pullProfil();
@@ -2828,7 +2841,7 @@ async function hapusAkunDanData() {
       return;
     }
   }
-  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat',
+  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat', 'utbk_pemilik',
     'utbk_pengaturan', 'utbk_profil', 'utbk_sesi'].forEach((k) => localStorage.removeItem(k));
   alert('Akun dan data kamu sudah dihapus.');
   location.href = location.pathname;
@@ -3030,12 +3043,16 @@ async function aksiAkun(aksi) {
   if (aksi === 'google') return masukGoogle();
   if (aksi === 'keluar') {
     const s = AkunApp.sesi();
+    // kirim dulu perubahan yang belum tersimpan ke akun, supaya tidak hilang saat data lokal dibersihkan
+    try { if (s) { await sinkron(); await pushProfil(); } } catch (e) {}
     try { if (s) await authReq('logout', {}, s.access_token); } catch (e) {}
     AkunApp.hapus();
-    terakhirDikirim = {};
     ADMIN = false;
+    bersihkanDataAkunLokal();
     keluarModeAdmin();
-    renderProfil(false);
+    renderSemuaBank();
+    renderBeranda();
+    renderProfil(!ProfilApp.ambil());
     renderSalam();
     return;
   }
