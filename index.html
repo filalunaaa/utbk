@@ -231,6 +231,32 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 
 /* Analisis pilihan jawaban */
 /* Riwayat sesi & pivot analisis pilihan */
+/* Riwayat sesi ala history game */
+.gm-ringkas{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin:2px 0 0}
+.gm-ringkas b{color:var(--text)}
+.gm-sesi{border:1px solid var(--border);border-left:5px solid var(--muted);border-radius:12px;background:var(--card);margin-top:8px;overflow:hidden}
+.gm-sesi.tinggi{border-left-color:var(--benar)}.gm-sesi.sedang{border-left-color:var(--warning)}.gm-sesi.rendah{border-left-color:var(--salah)}
+.gm-sesi>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;padding:10px 12px}
+.gm-sesi>summary::-webkit-details-marker{display:none}
+.gm-skor{font-size:1.35rem;font-weight:800;min-width:56px}
+.gm-sesi.tinggi .gm-skor{color:var(--benar)}.gm-sesi.sedang .gm-skor{color:var(--warning)}.gm-sesi.rendah .gm-skor{color:var(--salah)}
+.gm-info{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.gm-info small{color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-isi{padding:2px 12px 12px;border-top:1px solid var(--border)}
+.gm-judul{font-size:.8rem;font-weight:700;color:var(--muted);margin:10px 0 6px}
+.gm-petak{display:flex;flex-wrap:wrap;gap:5px}
+.petak{width:32px;height:32px;border-radius:8px;border:2px solid transparent;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.petak.benar{background:var(--benar-soft);color:var(--benar)}.petak.salah{background:var(--salah-soft);color:var(--salah)}.petak.kosong{background:var(--border);color:var(--muted)}
+.petak.aktif{border-color:var(--primary)}
+.gm-soal{margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:10px}
+.gm-tp{display:flex;align-items:center;gap:8px;font-size:.88rem;padding:4px 0}
+.gm-tp span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm-tp .muted{font-size:.82rem;white-space:nowrap}
+.jb-baris{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--border)}
+.jb-pil{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--salah-soft);color:var(--salah);font-weight:800;display:flex;align-items:center;justify-content:center}
+.jb-soal{font-size:.9rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.jb-baris small{color:var(--muted);font-size:.78rem}
+
 .sesi-tren{display:flex;align-items:flex-end;gap:3px;height:44px;margin:8px 0 4px}
 .sesi-tren i{flex:1;min-width:4px;max-width:22px;border-radius:3px 3px 0 0;background:var(--primary);opacity:.75;display:block}
 .sesi-tren i:last-child{opacity:1}
@@ -1684,7 +1710,7 @@ function ubahFotoJadiAvatar(file) {
   });
 }
 
-const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil', 'utbk_avatar'];
+const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil', 'utbk_avatar', 'utbk_sesi_dimigrasi'];
 function bersihkanDataAkunLokal() {
   KUNCI_DATA_AKUN.concat('utbk_pemilik').forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
   terakhirDikirim = {};
@@ -2081,6 +2107,7 @@ function hitungSoal() {
 
 // ---------- Sesi soal ----------
 function mulai() {
+  migrasiSesiLama();
   const soal = acak(soalTerfilter()).slice(0, jumlahDipilih(Infinity));
   sesi = {
     mode: nilai('mode'), soal, aktif: true, i: 0, mulai: Date.now(), timer: null,
@@ -2321,7 +2348,7 @@ function renderReview() {
   perbaruiInfoReview();
 }
 
-// ---------- Riwayat sesi (history latihan / try out) ----------
+// ---------- Riwayat sesi (seperti history pertandingan game) ----------
 const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.length);
 function catatSesi(mode, soal, jawab, durasi, benar) {
   if (!soal.some((s, k) => !kosongJ(jawab[k]))) return; // tidak ada satu pun soal dijawab: tidak dicatat
@@ -2337,14 +2364,41 @@ function catatSesi(mode, soal, jawab, durasi, benar) {
   });
   RiwayatSesi.catat({ id: 's' + Date.now(), t: Date.now(), mode, d: durasi, n: soal.length, b: benar, mapel, topik, item });
 }
-const BATAS_SESI = 5;
+// Data try out lama (Riwayat per soal) dijadikan sesi sekali saja: soal yang dicatat berdekatan (< 5 menit) dianggap satu sesi
+function migrasiSesiLama() {
+  try {
+    if (localStorage.getItem('utbk_sesi_dimigrasi')) return;
+    localStorage.setItem('utbk_sesi_dimigrasi', '1');
+    if (RiwayatSesi.ambil().length) return;
+    const lama = Riwayat.ambil().slice().sort((a, b) => a.t - b.t);
+    if (!lama.length) return;
+    const grup = [];
+    lama.forEach((r) => {
+      const g = grup[grup.length - 1];
+      if (g && r.t - g[g.length - 1].t < 5 * 60 * 1000) g.push(r); else grup.push([r]);
+    });
+    const sesiLama = grup.map((g) => {
+      const mapel = {}, topik = {};
+      g.forEach((r) => [[mapel, r.mapel], [topik, r.topik]].forEach(([o, nm]) => {
+        if (!nm) return;
+        o[nm] = o[nm] || { n: 0, b: 0 };
+        o[nm].n++; if (r.b) o[nm].b++;
+      }));
+      return { id: 'l' + g[0].t, t: g[0].t, mode: 'tryout', d: 0, n: g.length, b: g.filter((r) => r.b).length, mapel, topik,
+        item: g.map((r) => ({ id: String(r.id), j: kosongJ(r.j) ? null : r.j, b: !!r.b })) };
+    });
+    RiwayatSesi.simpan(sesiLama.slice(-RiwayatSesi.MAKS));
+  } catch (e) {}
+}
+const BATAS_SESI = 8;
 let batasSesi = BATAS_SESI;
 function riwayatSesiHTML() {
   const semua = RiwayatSesi.ambil(); // lama -> baru
   if (!semua.length) {
-    return '<p class="label">Riwayat sesi</p><p class="muted">Belum ada sesi tercatat. Setiap latihan atau try out yang selesai akan muncul di sini, lengkap dengan perubahan akurasinya.</p>';
+    return '<p class="label">Riwayat sesi</p><p class="muted">Belum ada sesi. Selesaikan satu latihan atau try out, hasilnya muncul di sini seperti riwayat pertandingan.</p>';
   }
   const pct = (x) => Math.round((x.b / x.n) * 100);
+  const tier = (p) => (p >= 75 ? ['tinggi', 'Mantap'] : p >= 50 ? ['sedang', 'Cukup'] : ['rendah', 'Perlu diulang']);
   const info = semua.map((e, i) => {
     const sblm = semua[i - 1];
     const p = pct(e);
@@ -2352,70 +2406,62 @@ function riwayatSesiHTML() {
       let p0 = null;
       for (let j = i - 1; j >= 0; j--) { const y = semua[j].topik && semua[j].topik[nm]; if (y) { p0 = pct(y); break; } }
       const p1 = pct(x);
-      return { nm, n: x.n, b: x.b, p0, p1, d: p0 === null ? null : p1 - p0 };
+      return { nm, p0, p1, d: p0 === null ? null : p1 - p0 };
     }).sort((a, b) => (b.d ?? -999) - (a.d ?? -999));
     return { e, p, d: sblm ? p - pct(sblm) : null, topik };
   });
   const tglPendek = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-  const terbaru = info[info.length - 1];
+  const jam = (t) => new Date(t).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  const rata = Math.round(info.reduce((a, x) => a + x.p, 0) / info.length);
+  const terbaik = Math.max(...info.map((x) => x.p));
   const tren = info.slice(-12).map((x) => `<i style="height:${Math.max(4, x.p)}%" title="${tglPendek(x.e.t)}: ${x.p}%"></i>`).join('');
   const kepala = `<p class="label">Riwayat sesi</p>
-    <p class="muted" style="margin-bottom:0">${semua.length} sesi tercatat. Sesi terakhir ${terbaru.p}% ${badgeUbah(terbaru.d)} dibanding sesi sebelumnya.</p>
-    <div class="sesi-tren" role="img" aria-label="Akurasi per sesi, ${info.slice(-12).map((x) => x.p + '%').join(', ')}">${tren}</div>`;
+    <p class="gm-ringkas"><span><b>${semua.length}</b> sesi</span><span>rata-rata <b>${rata}%</b></span><span>terbaik <b>${terbaik}%</b></span></p>
+    <div class="sesi-tren" role="img" aria-label="Akurasi 12 sesi terakhir">${tren}</div>`;
   const kartu = info.slice().reverse().slice(0, batasSesi).map(({ e, p, d, topik }) => {
+    const [kls, nama] = tier(p);
     const kosong = e.item.filter((r) => kosongJ(r.j)).length;
-    const salah = e.n - e.b - kosong;
-    const tglPenuh = new Date(e.t).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const petak = e.item.map((r, i) => `<button type="button" class="petak ${kosongJ(r.j) ? 'kosong' : r.b ? 'benar' : 'salah'}" data-no="${i}" aria-label="Soal ${i + 1}">${i + 1}</button>`).join('');
     const naik = topik.filter((t) => t.d !== null && t.d > 0).map((t) => `${esc(t.nm)} (+${t.d})`);
     const turun = topik.filter((t) => t.d !== null && t.d < 0).map((t) => `${esc(t.nm)} (${t.d})`);
-    const baru = topik.filter((t) => t.d === null).map((t) => esc(t.nm));
     const ringkasan = [
-      naik.length ? `<p><strong>Meningkat:</strong> ${naik.join(', ')}.</p>` : '',
-      turun.length ? `<p><strong>Menurun:</strong> ${turun.join(', ')}. Baca ulang pembahasannya, lalu coba lagi.</p>` : '',
-      baru.length ? `<p><strong>Topik baru:</strong> ${baru.join(', ')}.</p>` : '',
-      !naik.length && !turun.length && !baru.length ? '<p>Akurasi di topik yang dikerjakan sama seperti sesi sebelumnya.</p>' : ''
+      naik.length ? `<p><strong>Naik:</strong> ${naik.join(', ')}</p>` : '',
+      turun.length ? `<p><strong>Turun:</strong> ${turun.join(', ')}</p>` : '',
+      !naik.length && !turun.length ? '<p>Belum ada topik yang berubah dibanding sesi sebelumnya.</p>' : ''
     ].join('');
-    const barisTopik = topik.map((t) => `<div class="lap-baris">
-      <div class="stat-judul"><span>${esc(t.nm)}</span><span>${t.b} dari ${t.n} benar</span></div>
-      <div class="progress"><div class="progress-bar gradasi" style="width:${t.p1}%;--p:${Math.max(1, t.p1)}"></div></div>
-      <div class="lap-ubah"><span>${t.p0 === null ? `Pertama kali: ${t.p1}%` : `${t.p0}% &rarr; ${t.p1}%`}</span>${badgeUbah(t.d)}</div></div>`).join('');
-    const barisMapel = Object.entries(e.mapel || {}).map(([m, x]) => { const q = pct(x); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">&middot; ${x.b}/${x.n}</span></span></div>`; }).join('');
-    return `<details class="kartu-soal sesi-kartu">
-      <summary><span class="badge ${e.mode === 'tryout' ? 'tk-sedang' : 'kosong'}">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span>
-        <span class="pratinjau-soal">${tglPendek(e.t)} &middot; ${e.n} soal</span>
-        <span class="sesi-skor">${p}%</span>${badgeUbah(d)}</summary>
-      <div class="isi-kartu">
-        <p class="muted" style="margin-top:8px">${tglPenuh}${e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : ''} &middot; ${e.b} benar, ${salah} salah, ${kosong} kosong</p>
-        <div class="lap-ringkasan">${ringkasan}</div>
-        <p class="sesi-sub">Per topik (dibanding sesi sebelumnya yang memuat topik ini)</p>${barisTopik}
-        <p class="sesi-sub">Per mata pelajaran</p>${barisMapel}
-        <details class="kartu-soal sesi-soal" data-sesi="${esc(e.id)}"><summary><span class="pratinjau-soal">Lihat jawaban per soal</span></summary><div class="isi-kartu"></div></details>
+    const baris = topik.map((t) => `<div class="gm-tp"><span>${esc(t.nm)}</span><span class="muted">${t.p0 === null ? t.p1 + '%' : t.p0 + '% &rarr; ' + t.p1 + '%'}</span>${badgeUbah(t.d)}</div>`).join('');
+    return `<details class="gm-sesi ${kls}" data-sesi="${esc(e.id)}">
+      <summary><span class="gm-skor">${p}%</span>
+        <span class="gm-info"><b>${e.mode === 'tryout' ? 'Try Out' : 'Latihan'} &middot; ${nama}</b><small>${tglPendek(e.t)}, ${jam(e.t)} &middot; ${e.b}/${e.n} benar${kosong ? ' &middot; ' + kosong + ' kosong' : ''}${e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : ''}</small></span>${badgeUbah(d)}</summary>
+      <div class="gm-isi">
+        <p class="gm-judul">Soal (ketuk nomor untuk melihat jawaban dan pembahasan)</p>
+        <div class="gm-petak">${petak}</div><div class="gm-soal" hidden></div>
+        <p class="gm-judul">Dibanding sesi sebelumnya</p>
+        <div class="lap-ringkasan" style="margin-top:0">${ringkasan}</div>
+        <p class="gm-judul">Per topik</p>${baris}
       </div></details>`;
   }).join('');
   const lagi = semua.length > batasSesi
     ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi-sesi="1">Tampilkan lebih banyak (${semua.length - batasSesi} lagi)</button></div>` : '';
   return kepala + kartu + lagi;
 }
-function soalSesiHTML(e) {
-  const peta = new Map([...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())].map((s) => [String(s.id), s]));
+function itemSesiHTML(e, i) {
+  const r = e.item[i];
+  const st = kosongJ(r.j) ? 'kosong' : r.b ? 'benar' : 'salah';
   const label = { benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
-  return e.item.map((r, i) => {
-    const st = kosongJ(r.j) ? 'kosong' : r.b ? 'benar' : 'salah';
-    const s = peta.get(r.id);
-    if (!s) return `<div class="kartu-soal" style="padding:10px 12px;display:flex;gap:8px;align-items:center"><span class="badge ${st}">${label[st]}</span><span class="muted">Soal ${i + 1} sudah dihapus dari bank</span></div>`;
-    return `<details class="kartu-soal">
-      <summary><span class="badge ${st}">${label[st]}</span><span class="pratinjau-soal">${i + 1}. ${esc(previewTeks(s.soal))}</span></summary>
-      <div class="isi-kartu">
-        <p class="muted" style="margin-top:8px">Jawaban Anda: <strong>${teksJawabanmu(s, r.j)}</strong> &middot; Kunci: <strong>${kunciHuruf(s)}</strong></p>
-        <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
-        <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
-        <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
-      </div></details>`;
-  }).join('');
+  const s = [...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())].find((x) => String(x.id) === r.id);
+  if (!s) return `<span class="badge ${st}">${label[st]}</span> <span class="muted">Soal ${i + 1} sudah dihapus dari bank.</span>`;
+  return `<p style="margin:0 0 6px"><span class="badge ${st}">Soal ${i + 1}: ${label[st]}</span></p>
+    <p class="muted" style="margin:0 0 8px">Jawaban Anda: <strong>${teksJawabanmu(s, r.j)}</strong> &middot; Kunci: <strong>${kunciHuruf(s)}</strong></p>
+    <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+    <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
+    <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>`;
 }
 
-// ---------- Analisis pilihan jawaban (pivot: mapel > topik > soal x pilihan) ----------
-function analisisHTML() {
+// ---------- Analisis pilihan jawaban: hanya soal dengan pengecoh yang menjebak ----------
+const BATAS_JEBAKAN = 5;
+let batasJebakan = BATAS_JEBAKAN;
+function analisisHTML(buka) {
   const data = PilihanStat.ambil();
   const peta = new Map([...SOAL, ...BankSoal.ambil()].map((s) => [String(s.id), s]));
   const daftar = Object.entries(data)
@@ -2424,41 +2470,21 @@ function analisisHTML() {
       const s = peta.get(k);
       const salah = [0, 1, 2, 3, 4].filter((i) => !kunciOpsi(s, i) && i < s.opsi.length);
       const kuat = salah.reduce((a, b) => (v.pilih[b] > v.pilih[a] ? b : a), salah[0]);
-      const pctOpsi = [0, 1, 2, 3, 4].map((i) => (i < s.opsi.length ? Math.round((v.pilih[i] / v.total) * 100) : null));
-      return { s, v, kuat, pctKuat: kuat === undefined ? 0 : pctOpsi[kuat], pctOpsi };
+      return { s, v, kuat, pctKuat: kuat === undefined ? 0 : Math.round((v.pilih[kuat] / v.total) * 100) };
     });
   if (!daftar.length) {
     return '<p class="label">Analisis pilihan jawaban</p><p class="muted">Belum ada data. Analisis muncul setelah ada soal yang dijawab.</p>';
   }
-  const AMBANG = 30; // pengecoh yang dipilih >= 30% murid ditandai merah
-  const grup = {};
-  daftar.forEach((d) => {
-    const m = d.s.mataPelajaran || '-', t = d.s.topik || 'Tanpa topik';
-    ((grup[m] = grup[m] || {})[t] = grup[m][t] || []).push(d);
-  });
-  const jumlahKuat = daftar.filter((d) => d.pctKuat >= AMBANG).length;
-  const tabel = (list) => {
-    const baris = list.slice().sort((a, b) => b.pctKuat - a.pctKuat || b.v.total - a.v.total).map((d, i) => {
-      const sel = d.pctOpsi.map((p, k) => {
-        if (p === null) return '<td class="nol">-</td>';
-        const kls = kunciOpsi(d.s, k) ? 'kunci' : (k === d.kuat && p >= AMBANG) ? 'kuat' : p === 0 ? 'nol' : '';
-        return `<td class="${kls}">${p}%</td>`;
-      }).join('');
-      return `<tr><td class="ps"><div>${esc(previewTeks(d.s.soal))}</div></td>${sel}<td class="nol">${d.v.total}</td></tr>`;
-    }).join('');
-    return `<div class="pv-wadah"><table class="pivot"><thead><tr><th>Soal</th>${HURUF.map((x) => `<th>${x}</th>`).join('')}<th>n</th></tr></thead><tbody>${baris}</tbody></table></div>`;
-  };
-  const bagianMapel = Object.entries(grup).map(([m, tp]) => {
-    const jml = Object.values(tp).reduce((a, l) => a + l.length, 0);
-    const isi = Object.entries(tp).map(([t, l]) => `<p class="pv-topik">${esc(t)}</p>${tabel(l)}`).join('');
-    return `<details class="pv-grup"><summary><span>${esc(namaMapel(m))}</span><span class="muted">${jml} soal</span></summary>${isi}</details>`;
-  }).join('');
-  return `<details class="kartu-soal" id="analisis-pilihan">
-    <summary><strong>Analisis pilihan jawaban</strong><span class="muted" style="margin-left:auto">${daftar.length} soal${jumlahKuat ? ' &middot; ' + jumlahKuat + ' pengecoh kuat' : ''}</span></summary>
+  const jebakan = daftar.filter((d) => d.pctKuat >= 30).sort((a, b) => b.pctKuat - a.pctKuat || b.v.total - a.v.total);
+  const baris = jebakan.slice(0, batasJebakan).map((d) => `<div class="jb-baris"><span class="jb-pil">${HURUF[d.kuat]}</span>
+      <div><div class="jb-soal">${esc(previewTeks(d.s.soal))}</div><small>${d.pctKuat}% memilih ${HURUF[d.kuat]} &middot; kunci ${esc(kunciHuruf(d.s))} &middot; ${d.v.total} jawaban</small></div></div>`).join('');
+  const lagi = jebakan.length > batasJebakan
+    ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi-jebakan="1">Tampilkan lebih banyak (${jebakan.length - batasJebakan} lagi)</button></div>` : '';
+  return `<details class="kartu-soal" id="analisis-pilihan"${buka ? ' open' : ''}>
+    <summary><strong>Analisis pilihan jawaban</strong><span class="muted" style="margin-left:auto">${jebakan.length} jebakan &middot; ${daftar.length} soal</span></summary>
     <div class="isi-kartu">
-      <p class="muted" style="margin:8px 0 0">Persentase murid yang memilih tiap opsi, dikelompokkan per mata pelajaran dan topik. Soal dengan pengecoh terkuat ada di atas.</p>
-      <div class="pv-legenda"><span><i style="background:var(--benar-soft);border:1px solid var(--benar)"></i>Kunci jawaban</span><span><i style="background:var(--salah-soft);border:1px solid var(--salah)"></i>Pengecoh dipilih &ge; ${AMBANG}%</span><span>n = jumlah jawaban</span></div>
-      ${bagianMapel}
+      <p class="muted" style="margin:8px 0 4px">Soal yang satu opsi salahnya dipilih banyak orang (&ge; 30%). Yang paling menjebak di atas.</p>
+      ${baris || '<p class="muted">Belum ada pengecoh yang menonjol.</p>'}${lagi}
     </div></details>`;
 }
 
@@ -2530,7 +2556,8 @@ function renderStatistik() {
     ? Object.entries(obj).map(([n, x]) => baris2(lab(n), x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   // Topik yang sudah dikerjakan bisa dibuka untuk melihat riwayat dan pembahasannya
-  batasRiwayat = {}; batasSesi = BATAS_SESI;
+  batasRiwayat = {}; batasSesi = BATAS_SESI; batasJebakan = BATAS_JEBAKAN;
+  migrasiSesiLama();
   // Susun topik di bawah mata pelajarannya (topik ikut mapel yang paling banyak memuatnya di bank soal)
   const pivotMapel = () => {
     const topikLengkap = lengkap(d.topik, 'topik');
@@ -2567,9 +2594,9 @@ function renderStatistik() {
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   $('isi-statistik').innerHTML =
     `<div class="ringkasan-bank">${[['Soal dikerjakan', d.total, ''], ['Benar', d.benar, 'benar'], ['Salah', d.total - d.benar, 'salah'], ['Akurasi', (d.total ? Math.round((d.benar / d.total) * 100) : 0) + '%', '']].map(([a, v, w]) => `<div class="stat-tile"><span>${a}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`).join('')}</div>` +
-    `<div id="grafik-stat">${grafikStatHTML()}</div>` +
     `<div id="riwayat-sesi">${riwayatSesiHTML()}</div>` +
-    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + analisisHTML();
+    `<div id="grafik-stat">${grafikStatHTML()}</div>` +
+    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + `<div id="analisis-wrap" style="margin-top:14px">${analisisHTML()}</div>`;
   tampil('statistik');
   rumus($('isi-statistik'));
 }
@@ -2579,21 +2606,32 @@ $('isi-statistik').addEventListener('change', (e) => {
 });
 
 
-// Daftar jawaban per soal di riwayat sesi diisi saat dibuka (supaya halaman tetap ringan)
-$('isi-statistik').addEventListener('toggle', (e) => {
-  const d = e.target;
-  if (!d.matches || !d.matches('details.sesi-soal') || !d.open) return;
-  const isi = d.querySelector('.isi-kartu');
-  if (isi.dataset.terisi) return;
-  const ent = RiwayatSesi.ambil().find((x) => x.id === d.dataset.sesi);
-  isi.innerHTML = ent ? soalSesiHTML(ent) : '<p class="muted">Data sesi tidak ditemukan.</p>';
-  isi.dataset.terisi = '1';
-  rumus(isi);
-}, true);
+// Riwayat sesi: ketuk nomor soal untuk melihat jawaban dan pembahasannya
 $('isi-statistik').addEventListener('click', (e) => {
-  if (!e.target.closest('button[data-lagi-sesi]')) return;
-  batasSesi += BATAS_SESI;
-  $('riwayat-sesi').innerHTML = riwayatSesiHTML();
+  const pt = e.target.closest('.petak');
+  if (pt) {
+    const d = pt.closest('details.gm-sesi');
+    const ent = RiwayatSesi.ambil().find((x) => x.id === d.dataset.sesi);
+    const panel = d.querySelector('.gm-soal');
+    const sama = pt.classList.contains('aktif');
+    d.querySelectorAll('.petak.aktif').forEach((x) => x.classList.remove('aktif'));
+    if (sama || !ent) { panel.hidden = true; return; }
+    pt.classList.add('aktif');
+    panel.innerHTML = itemSesiHTML(ent, Number(pt.dataset.no));
+    panel.hidden = false;
+    rumus(panel);
+    return;
+  }
+  if (e.target.closest('button[data-lagi-sesi]')) {
+    batasSesi += BATAS_SESI;
+    $('riwayat-sesi').innerHTML = riwayatSesiHTML();
+    return;
+  }
+  if (e.target.closest('button[data-lagi-jebakan]')) {
+    batasJebakan += BATAS_JEBAKAN;
+    $('analisis-wrap').innerHTML = analisisHTML(true);
+    rumus($('analisis-wrap'));
+  }
 });
 
 // ---------- Riwayat pengerjaan per topik ----------
@@ -4366,7 +4404,7 @@ async function hapusAkunDanData() {
       return;
     }
   }
-  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat', 'utbk_riwayat_sesi', 'utbk_pemilik',
+  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat', 'utbk_riwayat_sesi', 'utbk_sesi_dimigrasi', 'utbk_pemilik',
     'utbk_pengaturan', 'utbk_profil', 'utbk_avatar', 'utbk_sesi'].forEach((k) => localStorage.removeItem(k));
   alert('Akun dan data kamu sudah dihapus.');
   location.href = location.pathname;
@@ -4830,7 +4868,7 @@ $('set-pdf').addEventListener('click',function(){var d=Penyimpanan.ambil(),r=Riw
   m.textContent='Pada dialog cetak, pilih "Simpan sebagai PDF".';window.print()});
 // reset & hapus lokal (terpisah, masing-masing dengan konfirmasi)
 $('set-reset').addEventListener('click',function(){konfirmUjian('Reset statistik?','Yang dihapus: statistik total, akurasi per topik dan mapel, riwayat pengerjaan, riwayat sesi, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak terpengaruh. Tindakan ini tidak bisa dibatalkan.',[{label:'Batal',kelas:'btn-primary'},{label:'Ya, reset statistik',kelas:'btn-bahaya',fn:function(){Penyimpanan.reset();PilihanStat.reset();Riwayat.reset();RiwayatSesi.reset();toastNeon('Statistik direset.')}}])});
-$('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data lokal?',AkunApp.sesi()?'Data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan dihapus. Akunmu tetap ada dan datanya dapat terunduh lagi saat sinkronisasi.':'Kamu belum masuk akun, jadi data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan hilang permanen.',[{label:'Batal',kelas:'btn-primary'},{label:'Hapus data lokal',kelas:'btn-bahaya',fn:function(){['utbk_testing_stats','utbk_bank_custom','utbk_bank_folder','utbk_pilihan_stat','utbk_riwayat','utbk_riwayat_sesi','utbk_profil','utbk_avatar','utbk_pengaturan','neon_sinkron_ok','neon_sinkron_gagal'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});location.reload()}}])});
+$('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data lokal?',AkunApp.sesi()?'Data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan dihapus. Akunmu tetap ada dan datanya dapat terunduh lagi saat sinkronisasi.':'Kamu belum masuk akun, jadi data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan hilang permanen.',[{label:'Batal',kelas:'btn-primary'},{label:'Hapus data lokal',kelas:'btn-bahaya',fn:function(){['utbk_testing_stats','utbk_bank_custom','utbk_bank_folder','utbk_pilihan_stat','utbk_riwayat','utbk_riwayat_sesi','utbk_sesi_dimigrasi','utbk_profil','utbk_avatar','utbk_pengaturan','neon_sinkron_ok','neon_sinkron_gagal'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});location.reload()}}])});
 document.getElementById('dash-pengaturan').addEventListener('click',function(){document.querySelector('.side-nav [data-hal="pengaturan"]').click()});
 
 (function(){var box=$('pilih-topik'),wad=$('tp-wadah'),tg=$('tp-toggle'),cari=$('tp-cari');
