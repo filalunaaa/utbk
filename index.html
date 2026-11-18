@@ -637,6 +637,40 @@ select.input{cursor:pointer}
 .dd-item.dipilih::after{content:"\2713";font-weight:800}
 .dd-item:disabled{opacity:.45;cursor:not-allowed}
 .dd-info{padding:10px 12px;font-size:.82rem;color:var(--muted)}
+
+/* ===== Pusat Pengaturan ===== */
+.set-list{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+.set-kat{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);font:inherit;color:var(--text);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.set-kat:hover{border-color:var(--primary);background:var(--primary-soft)}
+.set-kat:focus-visible,.set-balik:focus-visible,.sw:focus-visible{outline:3px solid rgba(37,99,235,.45);outline-offset:2px}
+.set-ik{display:inline-flex;flex-shrink:0;width:42px;height:42px;border-radius:12px;background:var(--primary-soft);color:var(--accent);align-items:center;justify-content:center}
+.set-ik svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.set-tx{flex:1;min-width:0}.set-tx b{display:block}.set-tx small{display:block;color:var(--muted);font-size:.82rem}
+.set-pn{font-size:1.5rem;color:var(--muted)}
+.set-balik{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;padding:6px 0;margin-bottom:4px;cursor:pointer}
+.set-jdl{margin:0 0 12px}
+.set-panel .card{margin-bottom:14px}
+.akun-ringkas{display:flex;align-items:center;gap:14px;margin-bottom:10px}.akun-ringkas small{display:block}.akun-ringkas .avatar,.akun-ringkas .brand-mark{width:52px;height:52px;flex-shrink:0}
+.sw-baris{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--border);cursor:pointer}
+.sw-baris:first-child{border-top:0}.sw-baris span{min-width:0}.sw-baris small{display:block;color:var(--muted);font-size:.82rem;font-weight:400}
+.sw{appearance:none;-webkit-appearance:none;flex-shrink:0;width:48px;height:28px;border-radius:999px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;border:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.sw:checked{background:var(--primary)}.sw:checked::after{transform:translateX(20px)}
+.set-info{padding-left:18px;margin:6px 0}.set-info li{margin-bottom:6px}
+.set-pratinjau{margin:14px 0 0;padding:12px;border:1px dashed var(--border);border-radius:10px}
+.set-det{border-top:1px solid var(--border);padding:10px 0}.set-det:first-child{border-top:0}.set-det summary{cursor:pointer;font-weight:600}.set-det p{margin:8px 0 0}
+.toast-neon{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:300;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px)}
+.toast-neon.err{background:var(--salah);color:#fff}
+@media(min-width:900px){.set-list{grid-template-columns:repeat(2,minmax(0,1fr))}.toast-neon{bottom:24px}#pengaturan{max-width:900px}.set-panel{max-width:680px}}
+/* tampilan personal */
+html[data-teks="kecil"]{font-size:14.5px}html[data-teks="besar"]{font-size:17.5px}
+html[data-anim="kurang"] *,html[data-anim="kurang"] *::before,html[data-anim="kurang"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important}}
+.teks-soal{font-size:var(--fs-soal,1.08rem)!important;line-height:var(--lh-soal,1.75)!important}
+body #kuis{max-width:var(--w-soal,780px)}
+.timer.sembunyi{display:none!important}
+@media print{body.mencetak>*:not(#area-cetak){display:none!important}#area-cetak{display:block!important;color:#000}}
+#area-cetak{display:none;padding:24px;font-family:inherit}#area-cetak table{border-collapse:collapse;width:100%;margin:8px 0 18px}#area-cetak th,#area-cetak td{border:1px solid #999;padding:5px 8px;text-align:left;font-size:12px}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -758,75 +792,17 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </section>
 
   <section id="pengaturan" class="halaman" hidden>
-    <div class="page-head"><div><h2>Pengaturan</h2><p class="muted">Atur akun, privasi, dan preferensi belajarmu.</p></div></div>
-
-    <div class="card">
-      <h3 class="kartu-judul">Akun dan profil</h3>
-      <p class="muted">Kelola identitas, informasi akademik, dan akun masuk.</p>
-      <button class="btn-profil-baris" id="btn-profil">
-        <span class="avatar" id="avatar-atur">?</span>
-        <span>Profil dan akun</span>
-        <span class="panah-profil" aria-hidden="true">&rsaquo;</span>
-      </button>
-    </div>
-
-    <div class="card">
-      <h3 class="kartu-judul">Privasi</h3>
-      <p class="muted">Orang lain bisa melihat profilmu lewat link. Username wajib diisi di halaman profil.</p>
-      <div class="pilihan">
-        <label class="chip"><input type="checkbox" id="pubatur-publik"><span>Tampilkan profil</span></label>
-        <label class="chip"><input type="checkbox" id="pubatur-statistik"><span>Tampilkan statistik</span></label>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3 class="kartu-judul">Preferensi latihan</h3>
-      <p class="label">Mode</p>
-      <div class="pilihan">
-        <label class="chip"><input type="radio" name="def-mode" value="latihan" checked><span>Latihan</span></label>
-        <label class="chip"><input type="radio" name="def-mode" value="tryout"><span>Try Out</span></label>
-      </div>
-      <p class="label">Jumlah soal</p>
-      <div class="pilihan">
-        <label class="chip"><input type="radio" name="def-jumlah" value="5" checked><span>5</span></label>
-        <label class="chip"><input type="radio" name="def-jumlah" value="10"><span>10</span></label>
-        <label class="chip"><input type="radio" name="def-jumlah" value="15"><span>15</span></label>
-        <label class="chip"><input type="radio" name="def-jumlah" value="20"><span>20</span></label>
-        <label class="chip"><input type="radio" name="def-jumlah" value="semua"><span>Semua</span></label>
-      </div>
-      <p class="muted" style="margin-top:8px">Pilihan ini otomatis dipakai saat membuka halaman Atur latihan.</p>
-    </div>
-
-    <div class="card">
-      <h3 class="kartu-judul">Waktu Try Out</h3>
-      <p class="muted">Batas waktu per soal saat mode Try Out.</p>
-      <div class="pilihan" id="pilih-waktu-set"></div>
-    </div>
-
-    <div class="card">
-      <h3 class="kartu-judul">Tampilan</h3>
-      <p class="muted">Pilih tema warna aplikasi.</p>
-      <div class="pilihan">
-        <label class="chip"><input type="radio" name="tema" value="sistem" checked><span>Ikuti perangkat</span></label>
-        <label class="chip"><input type="radio" name="tema" value="terang"><span>Terang</span></label>
-        <label class="chip"><input type="radio" name="tema" value="gelap"><span>Gelap</span></label>
-      </div>
-    </div>
-
-    <div class="card zona-bahaya">
-      <h3 class="kartu-judul">Zona berbahaya: hapus akun dan data</h3>
-      <p class="muted" id="teks-hapus"></p>
-      <button class="btn btn-bahaya btn-kecil" id="btn-hapus-buka">Hapus akun dan data</button>
-      <div id="blok-hapus" hidden>
-        <p class="label">Ketik HAPUS untuk konfirmasi</p>
-        <input class="input" id="hapus-konfirmasi" placeholder="HAPUS" autocomplete="off">
-        <div class="aksi aksi-kiri">
-          <button class="btn btn-bahaya btn-kecil" id="btn-hapus-final" disabled>Hapus permanen</button>
-        </div>
-        <p class="pesan" id="pesan-hapus"></p>
-      </div>
-    </div>
-  </section>
+<div id="set-hub"><div class="page-head"><div><h2>Pengaturan</h2><p class="muted">Sesuaikan pengalaman belajar sesuai preferensimu.</p></div></div><div class="set-list"><button type="button" class="set-kat" data-panel="akun"><span class="set-ik"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span><span class="set-tx"><b>Akun dan Profil</b><small>Profil, username, dan akun masukmu.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button><button type="button" class="set-kat" data-panel="belajar"><span class="set-ik"><svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg></span><span class="set-tx"><b>Preferensi Belajar</b><small>Mode, jumlah soal, dan mapel default.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button><button type="button" class="set-kat" data-panel="tryout"><span class="set-ik"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span><span class="set-tx"><b>Pengaturan Try Out</b><small>Waktu, peringatan, dan timer.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button><button type="button" class="set-kat" data-panel="tampilan"><span class="set-ik"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg></span><span class="set-tx"><b>Tampilan dan Aksesibilitas</b><small>Tema, ukuran teks, dan animasi.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button><button type="button" class="set-kat" data-panel="privasi"><span class="set-ik"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span><span class="set-tx"><b>Privasi</b><small>Atur apa yang bisa dilihat orang lain.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button><button type="button" class="set-kat" data-panel="data"><span class="set-ik"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span><span class="set-tx"><b>Data dan Penyimpanan</b><small>Sinkronisasi, ekspor, reset, dan hapus akun.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button><button type="button" class="set-kat" data-panel="tentang"><span class="set-ik"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span><span class="set-tx"><b>Tentang Aplikasi</b><small>Versi, changelog, dan bantuan.</small></span><span class="set-pn" aria-hidden="true">&rsaquo;</span></button></div></div><div class="set-panel" data-isi="akun" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Akun dan Profil</h2><div class="card"><div class="akun-ringkas"><span class="avatar" id="avatar-atur">?</span><div><b id="set-nama">–</b><small class="muted" id="set-user"></small><small class="muted" id="set-status"></small></div></div>
+<button class="btn-profil-baris" id="btn-profil"><span class="avatar" aria-hidden="true">&#9998;</span><span>Lihat, ubah profil, dan kelola akun</span><span class="panah-profil" aria-hidden="true">&rsaquo;</span></button>
+<div class="aksi aksi-kiri" id="set-akun-aksi"></div></div></div><div class="set-panel" data-isi="belajar" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Preferensi Belajar</h2><div class="card"><p class="label" style="margin-top:0">Mode latihan default</p><div class="pilihan"><label class="chip"><input type="radio" name="def-mode" value="latihan" checked><span>Latihan</span></label><label class="chip"><input type="radio" name="def-mode" value="tryout"><span>Try Out</span></label></div><p class="label">Jumlah soal default</p><div class="pilihan"><label class="chip"><input type="radio" name="def-jumlah" value="5"><span>5 soal</span></label><label class="chip"><input type="radio" name="def-jumlah" value="10"><span>10 soal</span></label><label class="chip"><input type="radio" name="def-jumlah" value="15"><span>15 soal</span></label><label class="chip"><input type="radio" name="def-jumlah" value="20"><span>20 soal</span></label><label class="chip"><input type="radio" name="def-jumlah" value="semua"><span>Semua soal</span></label></div><p class="label">Mata pelajaran default</p><div class="pilihan"><label class="chip"><input type="radio" name="s-mapelDefault" data-set="mapelDefault" value="semua"><span>Semua</span></label><label class="chip"><input type="radio" name="s-mapelDefault" data-set="mapelDefault" value="PK"><span>PK</span></label><label class="chip"><input type="radio" name="s-mapelDefault" data-set="mapelDefault" value="PM"><span>PM</span></label></div><div style="margin-top:14px"><label class="sw-baris"><span><b>Gunakan konfigurasi latihan terakhir</b><small>Saat aktif, Atur Latihan memulihkan mode, jumlah, dan mapel dari sesi terakhir, bukan nilai default di atas.</small></span><input type="checkbox" class="sw" role="switch" data-set="ingatTerakhir"></label></div><p class="muted" style="margin-top:8px">Pilihan ini diterapkan otomatis saat Atur Latihan dibuka. Kamu tetap bisa mengubahnya manual sebelum memulai.</p></div></div><div class="set-panel" data-isi="tryout" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Pengaturan Try Out</h2><div class="card"><p class="label" style="margin-top:0">Waktu per soal</p><div class="pilihan" id="pilih-waktu-set"></div><div style="margin-top:14px"><label class="sw-baris"><span><b>Peringatan waktu</b><small>Warna penanda dan bunyi singkat saat 30 detik terakhir.</small></span><input type="checkbox" class="sw" role="switch" data-set="peringatanWaktu"></label><label class="sw-baris"><span><b>Konfirmasi mengakhiri ujian</b><small>Tanya dulu sebelum mengakhiri atau keluar dari Try Out. Jika nonaktif, Keluar langsung mengakhiri sesi dan menampilkan hasil.</small></span><input type="checkbox" class="sw" role="switch" data-set="konfirmAkhiri"></label><label class="sw-baris"><span><b>Tampilkan timer</b><small>Jika disembunyikan, timer tetap berjalan di belakang dan sesi tetap berakhir saat waktu habis.</small></span><input type="checkbox" class="sw" role="switch" data-set="tampilTimer"></label></div><p class="muted" style="margin-top:10px">Try Out selalu selesai otomatis ketika waktu habis. Batas waktu tidak bisa dinonaktifkan.</p></div></div><div class="set-panel" data-isi="tampilan" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Tampilan dan Aksesibilitas</h2><div class="card"><p class="label" style="margin-top:0">Tema</p><div class="pilihan"><label class="chip"><input type="radio" name="tema" value="terang"><span>Terang</span></label><label class="chip"><input type="radio" name="tema" value="gelap"><span>Gelap</span></label><label class="chip"><input type="radio" name="tema" value="sistem" checked><span>Ikuti perangkat</span></label></div><p class="label">Ukuran teks</p><div class="pilihan"><label class="chip"><input type="radio" name="s-ukuranTeks" data-set="ukuranTeks" value="kecil"><span>Kecil</span></label><label class="chip"><input type="radio" name="s-ukuranTeks" data-set="ukuranTeks" value="normal"><span>Normal</span></label><label class="chip"><input type="radio" name="s-ukuranTeks" data-set="ukuranTeks" value="besar"><span>Besar</span></label></div><p class="label">Animasi</p><div class="pilihan"><label class="chip"><input type="radio" name="s-animasi" data-set="animasi" value="normal"><span>Normal</span></label><label class="chip"><input type="radio" name="s-animasi" data-set="animasi" value="kurang"><span>Kurangi animasi</span></label></div><p class="muted" style="margin-top:6px">Pengaturan perangkat &ldquo;kurangi gerakan&rdquo; tetap dihormati.</p></div><div class="card"><h3 class="kartu-judul">Tampilan soal</h3><p class="label" style="margin-top:0">Ukuran teks soal</p><div class="pilihan"><label class="chip"><input type="radio" name="s-ukuranSoal" data-set="ukuranSoal" value="kecil"><span>Kecil</span></label><label class="chip"><input type="radio" name="s-ukuranSoal" data-set="ukuranSoal" value="normal"><span>Normal</span></label><label class="chip"><input type="radio" name="s-ukuranSoal" data-set="ukuranSoal" value="besar"><span>Besar</span></label></div><p class="label">Jarak antarbaris</p><div class="pilihan"><label class="chip"><input type="radio" name="s-jarakBaris" data-set="jarakBaris" value="rapat"><span>Rapat</span></label><label class="chip"><input type="radio" name="s-jarakBaris" data-set="jarakBaris" value="normal"><span>Normal</span></label><label class="chip"><input type="radio" name="s-jarakBaris" data-set="jarakBaris" value="lega"><span>Lega</span></label></div><p class="label">Lebar area baca</p><div class="pilihan"><label class="chip"><input type="radio" name="s-lebarSoal" data-set="lebarSoal" value="sempit"><span>Sempit</span></label><label class="chip"><input type="radio" name="s-lebarSoal" data-set="lebarSoal" value="normal"><span>Normal</span></label><label class="chip"><input type="radio" name="s-lebarSoal" data-set="lebarSoal" value="lebar"><span>Lebar</span></label></div><div class="set-pratinjau teks-soal">Pratinjau: Jika $x+2=5$, maka nilai $x$ adalah 3.</div></div></div><div class="set-panel" data-isi="privasi" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Privasi</h2><div class="card"><h3 class="kartu-judul">Profil publik</h3><p class="muted">Orang lain bisa melihat profilmu lewat link. Username wajib diisi di halaman profil.</p><div class="pilihan"><label class="chip"><input type="checkbox" id="pubatur-publik"><span>Tampilkan profil</span></label><label class="chip"><input type="checkbox" id="pubatur-statistik"><span>Tampilkan statistik</span></label></div></div><div class="card"><h3 class="kartu-judul">Apa yang dilihat orang lain?</h3><ul class="set-info"><li><b>Terlihat:</b> nama, username, avatar, dan statistik hanya jika kamu mengaktifkannya.</li><li><b>Tidak pernah ditampilkan:</b> tanggal lahir, sekolah atau kampus, kota, email, dan data akun.</li></ul><p class="muted">Pembatasan ini dijaga di server lewat fungsi profil publik, bukan hanya disembunyikan di tampilan.</p></div></div><div class="set-panel" data-isi="data" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Data dan Penyimpanan</h2><div class="card"><h3 class="kartu-judul">Status sinkronisasi</h3><p id="set-sinkron" class="muted"></p><button class="btn btn-secondary btn-kecil" id="set-sinkron-btn">Sinkronkan sekarang</button></div>
+<div class="card"><h3 class="kartu-judul">Ekspor data</h3><p class="muted">Berisi riwayat pengerjaanmu: tanggal, topik, mapel, status, dan jawaban. Tidak memuat email atau data profil.</p><div class="aksi aksi-kiri"><button class="btn btn-secondary btn-kecil" id="set-csv">Ekspor CSV</button><button class="btn btn-secondary btn-kecil" id="set-pdf">Laporan PDF</button></div><p class="muted" id="set-ekspor-msg" style="margin-top:8px"></p></div>
+<div class="card"><h3 class="kartu-judul">Reset statistik</h3><p class="muted">Menghapus statistik, riwayat, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak dihapus.</p><button class="btn btn-secondary btn-kecil" id="set-reset">Reset statistik</button></div>
+<div class="card"><h3 class="kartu-judul">Hapus data lokal</h3><p class="muted">Menghapus data yang tersimpan di perangkat ini: statistik, riwayat, bank soal, profil, dan pengaturan. Akunmu tidak dihapus, dan jika masuk dengan akun, data bisa diunduh lagi dari server saat sinkronisasi.</p><button class="btn btn-secondary btn-kecil" id="set-lokal">Hapus data lokal</button></div>
+<div class="card zona-bahaya"><h3 class="kartu-judul">Zona berbahaya: hapus akun dan data</h3><p class="muted" id="teks-hapus"></p><button class="btn btn-bahaya btn-kecil" id="btn-hapus-buka">Hapus akun dan data</button><div id="blok-hapus" hidden><p class="label">Ketik HAPUS untuk konfirmasi</p><input class="input" id="hapus-konfirmasi" placeholder="HAPUS" autocomplete="off"><div class="aksi aksi-kiri"><button class="btn btn-bahaya btn-kecil" id="btn-hapus-final" disabled>Hapus permanen</button></div><p class="pesan" id="pesan-hapus"></p></div></div></div><div class="set-panel" data-isi="tentang" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Tentang Aplikasi</h2><div class="card"><div class="akun-ringkas"><span class="brand-mark" aria-hidden="true">N</span><div><b>NEON UTBK</b><small class="muted">Learn. Practice. Improve.</small><small class="muted" id="set-versi"></small></div></div><p style="margin-top:10px">Aplikasi latihan soal UTBK dengan statistik belajar, Try Out, dan bank soal.</p></div>
+<div class="card"><details class="set-det" open><summary>Changelog</summary><ul class="set-info"><li><b>18 Nov 2026:</b> Pusat Pengaturan baru: preferensi belajar, Try Out, tampilan, ekspor data.</li><li>Beranda dashboard dengan grafik perkembangan, akses cepat, dan rekomendasi topik.</li><li>Mode ujian bebas gangguan dengan panel nomor soal dan konfirmasi keluar.</li><li>Dropdown dengan desain NEON.</li></ul></details>
+<details class="set-det"><summary>Kebijakan privasi</summary><p class="muted">Statistik, riwayat, dan bank soal disimpan di browser perangkatmu. Jika kamu masuk dengan akun, data disinkronkan ke server. Profil publik hanya menampilkan nama, username, avatar, dan statistik bila kamu mengaktifkannya. Kamu bisa menghapus data lokal atau akunmu kapan saja di Data dan Penyimpanan.</p></details>
+<details class="set-det"><summary>Ketentuan penggunaan</summary><p class="muted">Gunakan NEON UTBK untuk belajar. Jangan membagikan akunmu, dan jangan mengunggah soal atau gambar yang melanggar hak cipta. Berita yang ditampilkan berasal dari media dan bukan pengumuman resmi; info resmi ada di portal SNPMB.</p></details>
+<details class="set-det"><summary>Bantuan dan laporan bug</summary><p class="muted" id="set-kontak"></p></details></div></div></section>
 
   <section id="rekomendasi" class="halaman" hidden>
     <div class="card">
@@ -1993,11 +1969,14 @@ function mulai() {
     sisa: soal.length * DETIK_PER_SOAL
   };
   $('timer').hidden = sesi.mode !== 'tryout';
+  rekamKonfigTerakhir();
   if (sesi.mode === 'tryout') {
     const tik = () => {
       $('timer').textContent = 'Sisa ' + format(sesi.sisa);
-      $('timer').classList.toggle('habis', sesi.sisa <= 30);
-      $('timer').classList.toggle('hampir', sesi.sisa > 30 && sesi.sisa <= 120);
+      const pw = PengaturanApp.ambil().peringatanWaktu !== false;
+      $('timer').classList.toggle('habis', pw && sesi.sisa <= 30);
+      $('timer').classList.toggle('hampir', pw && sesi.sisa > 30 && sesi.sisa <= 120);
+      if (pw && sesi.sisa === 30) peringatanWaktu30();
     };
     tik();
     sesi.timer = setInterval(() => {
@@ -3195,6 +3174,7 @@ $('btn-prev').addEventListener('click', () => { sesi.i--; renderSoal(); });
 function renderUjianUI() {
   const { soal, jawab, kunci, i, mode } = sesi, n = soal.length;
   document.body.dataset.mode = mode;
+  $('timer').classList.toggle('sembunyi', PengaturanApp.ambil().tampilTimer === false);
   $('ex-mode').textContent = mode === 'tryout' ? 'TRY OUT' : 'LATIHAN';
   $('ex-prog').textContent = `SOAL ${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
   $('ex-pct').textContent = Math.round(((i + 1) / n) * 100) + '%';
@@ -3225,7 +3205,7 @@ function konfirmUjian(judul, teks, aksi) {
 }
 function batalSesi() { if (sesi) { clearInterval(sesi.timer); sesi.timer = null; sesi.aktif = false; } tampil('menu'); }
 function akhiriDenganKonfirmasi() {
-  if (sesi.mode === 'tryout') {
+  if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri !== false) {
     const k = sesi.jawab.filter((j) => j === null || j === undefined).length;
     if (k) return konfirmUjian('Akhiri Try Out?', `Masih ada ${k} soal yang belum dijawab. Soal kosong tidak dihitung benar.`, [{ label: 'Kembali mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri sekarang', fn: selesai }]);
   }
@@ -3233,6 +3213,7 @@ function akhiriDenganKonfirmasi() {
 }
 $('btn-keluar-ujian').addEventListener('click', () => {
   if (!sesi || !sesi.aktif) return tampil('menu');
+  if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri === false) return selesai();
   if (sesi.mode === 'tryout') konfirmUjian('Keluar dari Try Out?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri & lihat hasil', fn: selesai }, { label: 'Keluar tanpa menyimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
   else konfirmUjian('Keluar dari latihan?', 'Soal yang sudah kamu jawab tetap tercatat di statistik. Soal yang belum dijawab tidak dihitung.', [{ label: 'Lanjut latihan', kelas: 'btn-primary' }, { label: 'Keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
 });
@@ -3599,7 +3580,7 @@ function latihanTopik(nama) {
   buatTopik();
   document.querySelectorAll('#pilih-topik input').forEach((i) => (i.checked = i.value === nama));
   hitungSoal();
-  if (soalTerfilter().length) mulai();
+  if (soalTerfilter().length) { window._tanpaRekam = true; mulai(); }
   else tampil('setup');
 }
 $('kartu-perkuat').addEventListener('click', (e) => {
@@ -3782,8 +3763,11 @@ $('btn-kembali-publik').addEventListener('click', () => {
 // ---------- Pengaturan: latihan default, profil publik, hapus akun ----------
 function terapkanDefaultSetup() {
   const p = PengaturanApp.ambil();
-  document.querySelectorAll('input[name="mode"]').forEach((i) => (i.checked = i.value === (p.modeDefault || 'latihan')));
-  document.querySelectorAll('input[name="jumlah"]').forEach((i) => (i.checked = i.value === String(p.jumlahDefault || '5')));
+  const t = p.ingatTerakhir && p.konfigTerakhir ? p.konfigTerakhir : null;
+  const mode = t ? t.mode : (p.modeDefault || 'latihan'), jml = t ? t.jumlah : String(p.jumlahDefault || '5'), mp = t ? t.mapel : (p.mapelDefault || 'semua');
+  document.querySelectorAll('input[name="mode"]').forEach((i) => (i.checked = i.value === mode));
+  document.querySelectorAll('input[name="jumlah"]').forEach((i) => (i.checked = i.value === jml));
+  document.querySelectorAll('input[name="mapel"]').forEach((i) => (i.checked = i.value === mp));
 }
 $('pengaturan').addEventListener('change', (e) => {
   const t = e.target;
@@ -4228,6 +4212,73 @@ setInterval(() => { if (AkunApp.sesi()) sinkron().catch(() => {}); }, 30000);
   window.addEventListener('resize',tutup);
   window.addEventListener('scroll',function(e){if(!(e.target.closest&&e.target.closest('.dd-pop')))posisi()},true);
 })();
+</script>
+<script>
+// ===== Pusat Pengaturan: data, tampilan, ekspor, manajemen data =====
+var PENG_DEF={peringatanWaktu:true,konfirmAkhiri:true,tampilTimer:true,ukuranTeks:'normal',animasi:'normal',ukuranSoal:'normal',jarakBaris:'normal',lebarSoal:'normal',mapelDefault:'semua',ingatTerakhir:false};
+var PENG_OK={ukuranTeks:['kecil','normal','besar'],animasi:['normal','kurang'],ukuranSoal:['kecil','normal','besar'],jarakBaris:['rapat','normal','lega'],lebarSoal:['sempit','normal','lebar'],mapelDefault:['semua','PK','PM']};
+var KONTAK_BANTUAN='';var VERSI_APP='';
+function toastNeon(msg,err){var t=document.createElement('div');t.className='toast-neon'+(err?' err':'');t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2400)}
+function pengaturan(){return Object.assign({},PENG_DEF,PengaturanApp.ambil())}
+function simpanPeng(patch){
+  var k={};Object.keys(patch).forEach(function(a){var v=patch[a];if(!(a in PENG_DEF))return;if(typeof PENG_DEF[a]==='boolean')v=!!v;else if(PENG_OK[a]&&PENG_OK[a].indexOf(v)<0)return;k[a]=v});
+  var baru=Object.assign({},PengaturanApp.ambil(),k);
+  try{localStorage.setItem(PengaturanApp.KEY,JSON.stringify(baru));var cek=JSON.parse(localStorage.getItem(PengaturanApp.KEY));
+    if(Object.keys(k).some(function(a){return cek[a]!==k[a]}))throw 0;return true}catch(e){return false}}
+function terapkanTampilan(){var p=pengaturan(),h=document.documentElement;
+  h.dataset.teks=p.ukuranTeks;h.dataset.anim=p.animasi;
+  h.style.setProperty('--fs-soal',{kecil:'.95rem',normal:'1.08rem',besar:'1.3rem'}[p.ukuranSoal]);
+  h.style.setProperty('--lh-soal',{rapat:'1.5',normal:'1.75',lega:'2.05'}[p.jarakBaris]);
+  h.style.setProperty('--w-soal',{sempit:'640px',normal:'780px',lebar:'980px'}[p.lebarSoal])}
+function peringatanWaktu30(){toastNeon('Sisa waktu 30 detik');
+  try{var C=window.AudioContext||window.webkitAudioContext,c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=660;g.gain.value=.04;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.18)}catch(e){}}
+function rekamKonfigTerakhir(){if(window._tanpaRekam){window._tanpaRekam=false;return}
+  var p=PengaturanApp.ambil();if(!p.ingatTerakhir)return;
+  try{localStorage.setItem(PengaturanApp.KEY,JSON.stringify(Object.assign({},p,{konfigTerakhir:{mode:nilai('mode'),jumlah:nilai('jumlah'),mapel:nilai('mapel')}})))}catch(e){}}
+function bukaPanel(k){document.querySelectorAll('#pengaturan .set-panel').forEach(function(x){x.hidden=x.dataset.isi!==k});$('set-hub').hidden=!!k;window.scrollTo(0,0);if(k){isiPanelBaru();var m=document.querySelector('#pengaturan [data-isi="'+k+'"] .set-jdl');if(m){m.tabIndex=-1;m.focus({preventScroll:true})}if(k==='tampilan'&&window.MathJax&&MathJax.typesetPromise)try{MathJax.typesetPromise([document.querySelector('.set-pratinjau')])}catch(e){}}}
+function statusSinkron(){var s=AkunApp.sesi(),t=+localStorage.getItem('neon_sinkron_ok')||0,g=localStorage.getItem('neon_sinkron_gagal');
+  if(!s)return 'Belum masuk akun: data hanya tersimpan di perangkat ini.';
+  return 'Akun: '+(s.email||'masuk')+'. '+(g?'Sinkronisasi terakhir gagal ('+new Date(+g).toLocaleString('id-ID')+').':t?'Sinkron terakhir: '+new Date(t).toLocaleString('id-ID')+'.':'Belum ada sinkronisasi yang tercatat di sesi ini.')}
+function isiPanelBaru(){var p=pengaturan();
+  document.querySelectorAll('#pengaturan [data-set]').forEach(function(el){var v=p[el.dataset.set];if(el.type==='checkbox')el.checked=!!v;else el.checked=el.value===String(v)});
+  var pr=ProfilApp.ambil()||{},s=AkunApp.sesi();
+  $('set-nama').textContent=pr.nama||'Belum mengisi profil';$('set-user').textContent=pr.username?'@'+pr.username:'Username belum diatur';
+  $('set-status').textContent=s?'Akun masuk'+(s.email?' · '+s.email:''):'Mode lokal (belum masuk)';
+  $('set-akun-aksi').innerHTML=s?'<button class="btn btn-secondary btn-kecil" data-akun="keluar">Keluar dari akun</button>':'';
+  $('set-sinkron').textContent=statusSinkron();
+  $('set-versi').textContent=VERSI_APP?'Versi '+VERSI_APP:'Nomor versi belum ditetapkan di proyek';
+  $('set-kontak').innerHTML=KONTAK_BANTUAN?'Laporkan masalah ke <a href="mailto:'+KONTAK_BANTUAN+'">'+KONTAK_BANTUAN+'</a>.':'Kontak bantuan belum dikonfigurasi. Isi KONTAK_BANTUAN di kode agar tampil di sini.';
+  var kt=document.querySelector('#pengaturan [data-isi="tampilan"] .set-pratinjau');if(kt)kt.dataset.ok=1}
+var _rp=renderPengaturan;renderPengaturan=function(){_rp();isiPanelBaru()};
+document.querySelector('.nav-link[data-hal="pengaturan"]')&&document.querySelectorAll('.nav-link[data-hal="pengaturan"]').forEach(function(a){a.addEventListener('click',function(){bukaPanel('')})});
+$('pengaturan').addEventListener('click',function(e){var b=e.target.closest('[data-panel]');if(b)return bukaPanel(b.dataset.panel);var ak=e.target.closest('[data-akun]');if(ak)aksiAkun(ak.dataset.akun)});
+$('pengaturan').addEventListener('change',function(e){var t=e.target;
+  if(t.dataset&&t.dataset.set){var o={};o[t.dataset.set]=t.type==='checkbox'?t.checked:t.value;var ok=simpanPeng(o);if(ok){terapkanTampilan();toastNeon('Pengaturan berhasil disimpan.')}else{toastNeon('Gagal menyimpan. Penyimpanan browser mungkin penuh atau diblokir.',true);isiPanelBaru()}}
+  else if(t.name==='def-mode'||t.name==='def-jumlah'||t.name==='set-waktu'||t.name==='tema'||t.id==='pubatur-publik'||t.id==='pubatur-statistik')setTimeout(function(){toastNeon('Pengaturan berhasil disimpan.')},60)});
+// sinkronisasi: catat hasil nyata
+if(typeof sinkron==='function'){var _sk=sinkron;sinkron=async function(){try{var r=await _sk.apply(this,arguments);try{localStorage.setItem('neon_sinkron_ok',Date.now());localStorage.removeItem('neon_sinkron_gagal')}catch(e){}return r}catch(e){try{localStorage.setItem('neon_sinkron_gagal',Date.now())}catch(_){}throw e}}}
+$('set-sinkron-btn').addEventListener('click',async function(){var b=this;if(!AkunApp.sesi())return toastNeon('Masuk akun dulu untuk sinkronisasi.',true);b.disabled=true;b.textContent='Menyinkronkan...';
+  try{await sinkron();toastNeon('Sinkronisasi berhasil.')}catch(e){toastNeon('Sinkronisasi gagal: '+(e.message||'periksa koneksi'),true)}b.disabled=false;b.textContent='Sinkronkan sekarang';$('set-sinkron').textContent=statusSinkron()});
+// ekspor
+function sel(v){v=v==null?'':String(v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}
+function tglLokal(t){var d=new Date(t),z=function(n){return String(n).padStart(2,'0')};return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())}
+function teksJawab(j){return j===null||j===undefined?'':Array.isArray(j)?j.map(function(k){return HURUF[k]}).join('+'):String(j)}
+$('set-csv').addEventListener('click',function(){var r=Riwayat.ambil();var m=$('set-ekspor-msg');if(!r.length){m.textContent='Belum ada riwayat untuk diekspor.';return}
+  var baris=[['Tanggal','Topik','Mata pelajaran','Status','Jawaban (PG: 0=A sampai 4=E; isian: angka)'].map(sel).join(',')];
+  r.forEach(function(x){baris.push([tglLokal(x.t),x.topik,namaMapel(x.mapel),x.j===null||x.j===undefined?'Kosong':x.b?'Benar':'Salah',teksJawab(x.j)].map(sel).join(','))});
+  var u=URL.createObjectURL(new Blob(['\ufeff'+baris.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='riwayat-neon-utbk-'+tglLokal(Date.now()).slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);
+  m.textContent=r.length+' catatan diekspor.';toastNeon('File CSV dibuat.')});
+$('set-pdf').addEventListener('click',function(){var d=Penyimpanan.ambil(),r=Riwayat.ambil(),m=$('set-ekspor-msg');if(!d.total&&!r.length){m.textContent='Belum ada data untuk dilaporkan.';return}
+  var pr=ProfilApp.ambil()||{},E=esc,pct=function(x){return x.total?Math.round(x.benar/x.total*100)+'%':'–'};
+  var tb=function(o,lbl){return '<table><tr><th>'+lbl+'</th><th>Dikerjakan</th><th>Benar</th><th>Akurasi</th></tr>'+Object.keys(o).map(function(k){return '<tr><td>'+E(lbl==='Mapel'?namaMapel(k):k)+'</td><td>'+o[k].total+'</td><td>'+o[k].benar+'</td><td>'+pct(o[k])+'</td></tr>'}).join('')+'</table>'};
+  var ar=$('area-cetak')||document.body.appendChild(Object.assign(document.createElement('div'),{id:'area-cetak'}));
+  ar.innerHTML='<h1>Laporan Perkembangan NEON UTBK</h1><p>'+E(pr.nama||'')+' · dicetak '+tglLokal(Date.now())+'</p><h2>Ringkasan</h2><p>'+d.total+' soal dikerjakan, '+d.benar+' benar, akurasi '+pct(d)+'.</p><h2>Per mata pelajaran</h2>'+tb(d.mapel,'Mapel')+'<h2>Per topik</h2>'+tb(d.topik,'Topik')+'<h2>30 pengerjaan terakhir</h2><table><tr><th>Tanggal</th><th>Topik</th><th>Status</th></tr>'+r.slice(-30).reverse().map(function(x){return '<tr><td>'+tglLokal(x.t)+'</td><td>'+E(x.topik)+'</td><td>'+(x.j===null||x.j===undefined?'Kosong':x.b?'Benar':'Salah')+'</td></tr>'}).join('')+'</table>';
+  document.body.classList.add('mencetak');window.addEventListener('afterprint',function f(){document.body.classList.remove('mencetak');window.removeEventListener('afterprint',f)});
+  m.textContent='Pada dialog cetak, pilih "Simpan sebagai PDF".';window.print()});
+// reset & hapus lokal (terpisah, masing-masing dengan konfirmasi)
+$('set-reset').addEventListener('click',function(){konfirmUjian('Reset statistik?','Yang dihapus: statistik total, akurasi per topik dan mapel, riwayat pengerjaan, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak terpengaruh. Tindakan ini tidak bisa dibatalkan.',[{label:'Batal',kelas:'btn-primary'},{label:'Ya, reset statistik',kelas:'btn-bahaya',fn:function(){Penyimpanan.reset();PilihanStat.reset();Riwayat.reset();toastNeon('Statistik direset.')}}])});
+$('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data lokal?',AkunApp.sesi()?'Data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan dihapus. Akunmu tetap ada dan datanya dapat terunduh lagi saat sinkronisasi.':'Kamu belum masuk akun, jadi data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan hilang permanen.',[{label:'Batal',kelas:'btn-primary'},{label:'Hapus data lokal',kelas:'btn-bahaya',fn:function(){['utbk_testing_stats','utbk_bank_custom','utbk_bank_folder','utbk_pilihan_stat','utbk_riwayat','utbk_profil','utbk_avatar','utbk_pengaturan','neon_sinkron_ok','neon_sinkron_gagal'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});location.reload()}}])});
+terapkanTampilan();
 </script>
 </body>
 </html>
