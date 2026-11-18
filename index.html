@@ -410,6 +410,32 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 }
 @media(max-width:480px){.bottomnav .nav-link.nl{padding:6px 2px;font-size:.66rem}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Bank Soal v2 */
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h2{font-size:1.5rem;margin:0}.page-head p{margin:2px 0 0}
+.ringkasan-bank{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.stat-tile{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:0}
+.stat-tile span{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat-tile strong{font-size:1.7rem;font-weight:800;line-height:1.25}
+.stat-tile small{font-size:.75rem;color:var(--muted)}
+.bank-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 170px 170px;gap:10px;margin:16px 0 4px}
+.state-kosong{text-align:center;padding:32px 16px;border:1.5px dashed var(--border);border-radius:12px;margin-top:14px}
+.state-kosong p{margin:4px 0 0}
+.wadah-folder{border-radius:14px;box-shadow:var(--shadow)}
+.wadah-folder>summary{padding:14px 16px;min-height:48px}
+.wadah-folder>summary .muted{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:600}
+.kartu-soal{border-radius:12px;transition:border-color .15s}
+.kartu-soal:hover,.kartu-soal[open]{border-color:var(--primary)}
+.kartu-soal>summary{padding:12px 14px}
+.badge.tk-mudah{background:var(--benar-soft);color:var(--benar)}
+.badge.tk-sedang{background:var(--warning-soft);color:var(--warning)}
+.badge.tk-sulit{background:var(--salah-soft);color:var(--salah)}
+#judul-form{scroll-margin-top:76px}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--warning-soft:#3b2506;--warning:#fbbf24}}
+:root[data-theme="dark"]{--warning-soft:#3b2506;--warning:#fbbf24}
+@media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #cari-soal{grid-column:1/-1}.page-head .btn{width:100%}}
+@media(max-width:600px){.kartu-soal>summary{flex-wrap:wrap}.pratinjau-soal{flex-basis:100%}}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -597,6 +623,8 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </section>
 
   <section id="bank" class="halaman" hidden>
+    <div class="page-head"><div><h2>Bank Soal</h2><p class="muted">Kelola, cari, dan latih soal buatanmu.</p></div><button class="btn btn-primary" id="btn-ke-form">+ Tambah soal</button></div>
+    <div class="ringkasan-bank" id="ringkasan-bank"></div>
     <div class="card kartu-admin" id="kartu-admin" hidden>
       <h2>Panel admin</h2>
       <label class="sakelar"><input type="checkbox" id="sw-admin"> Kelola soal bawaan (terlihat oleh semua pengguna)</label>
@@ -705,6 +733,11 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <button class="btn btn-primary btn-kecil" id="btn-cetak">Unduh PDF</button>
       </div>
       <p class="pesan" id="pesan-bank"></p>
+      <div class="bank-toolbar">
+        <input class="input" id="cari-soal" type="search" placeholder="Cari soal, topik, atau mata pelajaran..." aria-label="Cari soal">
+        <select class="input" id="filter-mapel" aria-label="Filter mata pelajaran"><option value="">Semua mapel</option><option value="PK">PK</option><option value="PM">PM</option></select>
+        <select class="input" id="filter-sulit" aria-label="Filter tingkat kesulitan"><option value="">Semua tingkat</option><option value="mudah">Mudah</option><option value="sedang">Sedang</option><option value="sulit">Sulit</option></select>
+      </div>
       <div id="daftar-custom"></div>
     </div>
   </section>
@@ -2553,7 +2586,7 @@ function optionsPindah(terpilih) {
 function itemSoalHTML(s, nomor) {
   const buka = bukaSoal.has(s.id) ? ' open' : '';
   return `<details class="kartu-soal" data-kunci="soal:${esc(s.id)}"${buka}>
-    <summary><span class="badge kosong">${esc(namaMapel(s.mataPelajaran))} · ${esc(s.topik)} · ${esc(s.tingkatKesulitan)}</span>
+    <summary><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(namaMapel(s.mataPelajaran))} · ${esc(s.topik)} · ${esc(s.tingkatKesulitan)}</span>
       <span class="pratinjau-soal">${nomor}. ${esc(previewTeks(s.soal))}</span></summary>
     <div class="isi-kartu">
       <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
@@ -2594,19 +2627,42 @@ function folderHTML(g, terbuka) {
     <div class="isi-folder">${g.items.length ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-aksi="pratinjau-folder" data-folder="${esc(key)}">Pratinjau semua soal di sini (${g.items.length})</button></div>` : ''}${isi}</div>
   </details>`;
 }
+// Pencarian dan filter tampilan bank (tidak memengaruhi isi PDF per folder)
+const FB = { q: '', mapel: '', sulit: '' };
+const filterBankAktif = () => !!(FB.q || FB.mapel || FB.sulit);
+function teksCari(s) {
+  const d = document.createElement('div');
+  d.innerHTML = sanitize(s.soal);
+  return `${d.textContent} ${s.topik} ${namaMapel(s.mataPelajaran)} ${s.mataPelajaran}`.toLowerCase();
+}
+function lolosFilterBank(s) {
+  if (FB.mapel && s.mataPelajaran !== FB.mapel) return false;
+  if (FB.sulit && s.tingkatKesulitan !== FB.sulit) return false;
+  return !FB.q || teksCari(s).includes(FB.q);
+}
+function ringkasanBank(semua, tampil) {
+  const n = (m) => semua.filter((s) => s.mataPelajaran === m).length;
+  const t = (a, b, c) => `<div class="stat-tile"><span>${a}</span><strong>${b}</strong>${c ? `<small>${c}</small>` : ''}</div>`;
+  $('ringkasan-bank').innerHTML = t('Total soal', semua.length) + t('PK', n('PK'), 'Pengetahuan Kuantitatif') + t('PM', n('PM'), 'Penalaran Matematika') + t('Ditampilkan', tampil);
+}
 function renderDaftarCustom() {
   const semua = BankSoal.ambil();
   $('judul-bank').innerHTML = (modeAdmin ? 'Soal bawaan - semua pengguna' : 'Bank soal saya') + ' (<span id="jumlah-custom">' + semua.length + '</span>)';
-  let html = '';
+  const f = filterBankAktif();
+  let html = '', tampil = 0;
   if (!semua.length) {
-    html = '<p class="muted">Belum ada soal di bank kamu. Tambahkan lewat form di atas.</p>';
+    html = '<div class="state-kosong"><strong>Bank soal masih kosong</strong><p class="muted">Tambahkan soal pertama lewat tombol "+ Tambah soal" di atas.</p></div>';
   } else {
     grupSoal().forEach((g) => {
-      if (!g.items.length && filterAktif === 'semua') return;
-      html += folderHTML(g, filterAktif !== 'semua');
+      const gf = f ? { ...g, items: g.items.filter(lolosFilterBank) } : g;
+      if (!gf.items.length && (f || filterAktif === 'semua')) return;
+      tampil += gf.items.length;
+      html += folderHTML(gf, filterAktif !== 'semua' || f);
     });
+    if (!html) html = '<div class="state-kosong"><strong>Tidak ada soal yang cocok</strong><p class="muted">Coba ubah kata kunci atau filter.</p></div>';
   }
   $('daftar-custom').innerHTML = html;
+  ringkasanBank(semua, tampil);
   $('label-cetak').textContent = filterAktif === 'semua' ? 'semua soal'
     : filterAktif === 'none' ? 'soal yang belum dikelompokkan'
     : `folder "${namaFolder(filterAktif)}"`;
@@ -2621,6 +2677,11 @@ $('daftar-custom').addEventListener('toggle', (e) => {
   const set = k.startsWith('folder:') ? bukaFolder : bukaSoal;
   if (d.open) set.add(id); else set.delete(id);
 }, true);
+let tundaCari;
+$('cari-soal').addEventListener('input', (e) => { clearTimeout(tundaCari); tundaCari = setTimeout(() => { FB.q = e.target.value.trim().toLowerCase(); renderDaftarCustom(); }, 150); });
+$('filter-mapel').addEventListener('change', (e) => { FB.mapel = e.target.value; renderDaftarCustom(); });
+$('filter-sulit').addEventListener('change', (e) => { FB.sulit = e.target.value; renderDaftarCustom(); });
+$('btn-ke-form').addEventListener('click', () => $('judul-form').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 // Muat ulang seluruh tampilan bank (folder, pilihan form, daftar soal, dan sumber di menu latihan)
 function renderSemuaBank() {
   // Soal bawaan tidak memakai folder, jadi bagian folder disembunyikan di mode admin
@@ -2922,7 +2983,7 @@ $('daftar-custom').addEventListener('click', (e) => {
   if (a === 'edit') mulaiEdit(b.dataset.id);
   else if (a === 'hapus') hapusSoal(b.dataset.id);
   else if (a === 'pratinjau') { const x = BankSoal.ambil().find((q) => q.id === b.dataset.id); if (x) bukaPratinjau([x], 'Pratinjau soal'); }
-  else if (a === 'pratinjau-folder') { const g = grupSoal().find((q) => (q.id || 'none') === b.dataset.folder); if (g) bukaPratinjau(g.items, 'Pratinjau: ' + g.nama); }
+  else if (a === 'pratinjau-folder') { const g = grupSoal().find((q) => (q.id || 'none') === b.dataset.folder); if (g) bukaPratinjau(g.items.filter(lolosFilterBank), 'Pratinjau: ' + g.nama); }
 });
 $('daftar-custom').addEventListener('change', (e) => {
   const sel = e.target.closest('select[data-pindah]');
