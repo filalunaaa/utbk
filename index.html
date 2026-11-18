@@ -853,7 +853,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 <div class="card"><h3 class="kartu-judul">Reset statistik</h3><p class="muted">Menghapus statistik, riwayat, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak dihapus.</p><button class="btn btn-secondary btn-kecil" id="set-reset">Reset statistik</button></div>
 <div class="card"><h3 class="kartu-judul">Hapus data lokal</h3><p class="muted">Menghapus data yang tersimpan di perangkat ini: statistik, riwayat, bank soal, profil, dan pengaturan. Akunmu tidak dihapus, dan jika masuk dengan akun, data bisa diunduh lagi dari server saat sinkronisasi.</p><button class="btn btn-secondary btn-kecil" id="set-lokal">Hapus data lokal</button></div>
 <div class="card zona-bahaya"><h3 class="kartu-judul">Zona berbahaya: hapus akun dan data</h3><p class="muted" id="teks-hapus"></p><button class="btn btn-bahaya btn-kecil" id="btn-hapus-buka">Hapus akun dan data</button><div id="blok-hapus" hidden><p class="label">Ketik HAPUS untuk konfirmasi</p><input class="input" id="hapus-konfirmasi" placeholder="HAPUS" autocomplete="off"><div class="aksi aksi-kiri"><button class="btn btn-bahaya btn-kecil" id="btn-hapus-final" disabled>Hapus permanen</button></div><p class="pesan" id="pesan-hapus"></p></div></div></div><div class="set-panel" data-isi="tentang" hidden><button type="button" class="set-balik" data-panel="">&lsaquo; Pengaturan</button><h2 class="set-jdl">Tentang Aplikasi</h2><div class="card"><div class="akun-ringkas"><span class="brand-mark" aria-hidden="true">N</span><div><b>nalarin</b><small class="muted">Learn. Practice. Improve.</small><small class="muted" id="set-versi"></small></div></div><p style="margin-top:10px">Aplikasi latihan soal UTBK dengan statistik belajar, Try Out, dan bank soal.</p></div>
-<div class="card"><details class="set-det" open><summary>Changelog</summary><ul class="set-info"><li><b>18 Nov 2026:</b> Pusat Pengaturan baru: preferensi belajar, Try Out, tampilan, ekspor data.</li><li>Beranda dashboard dengan grafik perkembangan, akses cepat, dan rekomendasi topik.</li><li>Mode ujian bebas gangguan dengan panel nomor soal dan konfirmasi keluar.</li><li>Dropdown dengan desain NEON.</li></ul></details>
+<div class="card"><details class="set-det" open><summary>Changelog</summary><ul class="set-info"><li><b>18 Nov 2026:</b> Hitung mundur kini mengikuti jadwal UTBK-SNBT yang sebenarnya, otomatis ke tahun berikutnya.</li><li><b>18 Nov 2026:</b> Pusat Pengaturan baru: preferensi belajar, Try Out, tampilan, ekspor data.</li><li>Beranda dashboard dengan grafik perkembangan, akses cepat, dan rekomendasi topik.</li><li>Mode ujian bebas gangguan dengan panel nomor soal dan konfirmasi keluar.</li><li>Dropdown dengan desain NEON.</li></ul></details>
 <details class="set-det"><summary>Kebijakan privasi</summary><p class="muted">Statistik, riwayat, dan bank soal disimpan di browser perangkatmu. Jika kamu masuk dengan akun, data disinkronkan ke server. Profil publik hanya menampilkan nama, username, avatar, dan statistik bila kamu mengaktifkannya. Kamu bisa menghapus data lokal atau akunmu kapan saja di Data dan Penyimpanan.</p></details>
 <details class="set-det"><summary>Ketentuan penggunaan</summary><p class="muted">Gunakan nalarin untuk belajar. Jangan membagikan akunmu, dan jangan mengunggah soal atau gambar yang melanggar hak cipta. Berita yang ditampilkan berasal dari media dan bukan pengumuman resmi; info resmi ada di portal SNPMB.</p></details>
 <details class="set-det"><summary>Bantuan dan laporan bug</summary><p class="muted" id="set-kontak"></p></details></div></div></section>
@@ -3755,6 +3755,50 @@ buatEditor('ed-soal', 'Tulis teks soal di sini...', false);
 buatEditor('ed-pembahasan', 'Tulis pembahasan di sini...', false);
 ['A', 'B', 'C', 'D', 'E'].forEach((h, k) => buatEditor('ed-opsi' + k, `Tulis pilihan ${h} (teks atau gambar)...`, true));
 // ---------- Beranda: hitung mundur, ringkasan, dan topik yang perlu diperkuat ----------
+var JADWAL_UTBK_BAWAAN=[{tahun:2026,mulai:'2026-04-21',selesai:'2026-04-30',status:'resmi'},{tahun:2027,mulai:'2027-04-21',selesai:'2027-04-30',status:'perkiraan'}];
+var jadwalUtbk=JADWAL_UTBK_BAWAAN.slice();
+function isoLokal(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function bersihJadwal(a){
+  if(!Array.isArray(a))return [];
+  var re=/^\d{4}-\d{2}-\d{2}$/;
+  return a.filter(function(x){return x&&re.test(x.mulai)&&re.test(x.selesai)&&x.selesai>=x.mulai&&!isNaN(new Date(x.mulai+'T00:00:00'));})
+    .map(function(x){return {tahun:+x.tahun||+x.mulai.slice(0,4),mulai:x.mulai,selesai:x.selesai,status:x.status==='resmi'?'resmi':'perkiraan'};})
+    .sort(function(a,b){return a.mulai<b.mulai?-1:1;});
+}
+function muatJadwalUtbk(){
+  try{
+    fetch('jadwal-utbk.json?v='+Math.floor(Date.now()/3600000),{cache:'no-cache'})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(j){
+        var a=bersihJadwal(j&&j.jadwal?j.jadwal:j);
+        if(!a.length)return;
+        jadwalUtbk=a;
+        var m=document.getElementById('menu');
+        if(m&&!m.hidden&&typeof renderBeranda==='function')renderBeranda();
+      }).catch(function(){});
+  }catch(e){}
+}
+function jadwalBerikutnya(){
+  var a=bersihJadwal(jadwalUtbk);if(!a.length)a=bersihJadwal(JADWAL_UTBK_BAWAAN);
+  var hariIni=isoLokal(new Date());
+  for(var i=0;i<a.length;i++)if(a[i].selesai>=hariIni)return a[i];
+  // jadwal terakhir sudah lewat: perkirakan tahun berikutnya dari pola terakhir
+  var j=a[a.length-1],t=j.tahun,mulai=j.mulai,selesai=j.selesai;
+  for(var k=0;k<20;k++){
+    t++;mulai=(+mulai.slice(0,4)+1)+mulai.slice(4);selesai=(+selesai.slice(0,4)+1)+selesai.slice(4);
+    if(selesai>=hariIni)return {tahun:t,mulai:mulai,selesai:selesai,status:'perkiraan'};
+  }
+  return j;
+}
+function rentangTgl(a,b){
+  var x=new Date(a+'T00:00:00'),y=new Date(b+'T00:00:00');
+  if(a===b)return formatTgl(a);
+  var bln=function(d){return d.toLocaleDateString('id-ID',{month:'long'});};
+  if(x.getMonth()===y.getMonth()&&x.getFullYear()===y.getFullYear())return x.getDate()+'–'+y.getDate()+' '+bln(y)+' '+y.getFullYear();
+  return formatTgl(a)+' – '+formatTgl(b);
+}
+function ketJadwal(j){return 'UTBK-SNBT '+j.tahun+' · '+rentangTgl(j.mulai,j.selesai)+(j.status==='resmi'?'':' (perkiraan)');}
+muatJadwalUtbk();
 function hariKeUjian(iso) {
   const hariIni = new Date();
   hariIni.setHours(0, 0, 0, 0);
@@ -3839,12 +3883,10 @@ function renderBeranda() {
   renderHeader();
   const kh = $('kartu-hitung');
   kh.classList.add('hero');
-  if (p && p.tanggalUjian) {
-    const hari = hariKeUjian(p.tanggalUjian);
-    if (hari > 0) kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><div class="hero-hari">${hari} hari</div><p class="hero-tgl">Ujian pada ${esc(formatTgl(p.tanggalUjian))}</p></div><button type="button" class="btn btn-kecil" id="btn-detail-hitung">Lihat countdown</button>`;
-    else if (hari === 0) kh.innerHTML = '<div><p class="hero-lbl">MENUJU UTBK</p><h2>Hari ini ujian. Semangat!</h2></div><button type="button" class="btn btn-kecil">Lihat countdown</button>';
-    else kh.innerHTML = '<div><p class="hero-lbl">MENUJU UTBK</p><h2>Tanggal ujian sudah lewat</h2><p class="hero-tgl">Ubah tanggal ujian di profil.</p></div><button type="button" class="btn btn-kecil">Buka profil</button>';
-  } else kh.innerHTML = '<div><p class="hero-lbl">MENUJU UTBK</p><h2>Tanggal ujian belum diatur</h2><p class="hero-tgl">Isi tanggal ujian di profil untuk melihat hitung mundur.</p></div><button type="button" class="btn btn-kecil">Lengkapi profil</button>';
+  const jd = jadwalBerikutnya();
+  const hari = hariKeUjian(jd.mulai);
+  if (hari > 0) kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><div class="hero-hari">${hari} hari</div><p class="hero-tgl">${esc(ketJadwal(jd))}</p></div><button type="button" class="btn btn-kecil" id="btn-detail-hitung">Lihat countdown</button>`;
+  else kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><h2>UTBK sedang berlangsung. Semangat!</h2><p class="hero-tgl">${esc(ketJadwal(jd))}</p></div><button type="button" class="btn btn-kecil" id="btn-detail-hitung">Lihat countdown</button>`;
 
   const ik = (path) => `<span class="sum-ik"><svg viewBox="0 0 24 24">${path}</svg></span>`;
   const kartu = (path, angka, label) => `<button type="button" class="sum-card" aria-label="${label}: ${angka}. Buka statistik lengkap">${ik(path)}<b>${angka}</b><span>${label}</span></button>`;
@@ -3888,9 +3930,7 @@ var _rsz = null;
 window.addEventListener('resize', () => { clearTimeout(_rsz); _rsz = setTimeout(() => { if (!$('menu').hidden) gambarGrafik(); }, 150); });
 $('kartu-ringkasan').addEventListener('click', () => renderStatistik());
 $('kartu-hitung').addEventListener('click', () => {
-  const p = ProfilApp.ambil();
-  if (p && p.tanggalUjian) openCountdown();
-  else { renderProfil(!p); tampil('profil'); }
+  openCountdown();
 });
 $('btn-tutup-hitung').addEventListener('click', closeCountdown);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCountdown(); });
@@ -3978,9 +4018,7 @@ function updateCountdown(iso) {
   const pesan = $('cd-pesan');
   if (diff <= 0) {
     ['cd-d', 'cd-h', 'cd-m', 'cd-s'].forEach((id) => setAngka(id, 0));
-    pesan.textContent = (Date.now() - target.getTime()) < 86400000
-      ? 'Hari ini waktunya. Semangat!'
-      : 'Tanggal ujian sudah lewat. Ubah di profil.';
+    pesan.textContent = 'UTBK sedang berlangsung. Semangat!';
     return;
   }
   const d = Math.floor(diff / 86400000);
@@ -3991,16 +4029,15 @@ function updateCountdown(iso) {
   setAngka('cd-h', hh);
   setAngka('cd-m', mm);
   setAngka('cd-s', ss);
-  pesan.textContent = 'Setiap hari latihan berarti. Terus semangat!';
+  pesan.textContent = 'Setiap hari latihan berarti. Terus semangat!' + (jadwalBerikutnya().status === 'resmi' ? '' : ' Jadwal resmi dari SNPMB belum diumumkan, tanggal ini masih perkiraan.');
 }
 function openCountdown() {
-  const p = ProfilApp.ambil();
-  if (!p || !p.tanggalUjian) return;
-  $('cd-tgl').textContent = 'Ujian pada ' + formatTgl(p.tanggalUjian);
+  const jd = jadwalBerikutnya();
+  $('cd-tgl').textContent = ketJadwal(jd);
   $('overlay-hitung').hidden = false;
-  updateCountdown(p.tanggalUjian);
+  updateCountdown(jd.mulai);
   clearInterval(timerHitung);
-  timerHitung = setInterval(() => updateCountdown(p.tanggalUjian), 1000);
+  timerHitung = setInterval(() => updateCountdown(jadwalBerikutnya().mulai), 1000);
 }
 function closeCountdown() {
   clearInterval(timerHitung);
@@ -4224,8 +4261,6 @@ function renderProfil(mengedit = false) {
   const akun = `<div class="card full"><p class="panel-judul">Akun</p>${akunHTML(sesi)}</div>`;
   if (p && !mengedit) {
     const baris = (a, v) => `<dt>${a}</dt><dd>${v}</dd>`;
-    const sisa = p.tanggalUjian ? hariKeUjian(p.tanggalUjian) : null;
-    const ujian = p.tanggalUjian ? `${esc(formatTgl(p.tanggalUjian))}${sisa >= 0 ? ` <span class="muted">(${sisa} hari lagi)</span>` : ''}` : '-';
     const tgl = p.tanggalLahir ? `${esc(formatTgl(p.tanggalLahir))} (${umurDari(p.tanggalLahir)} tahun)` : '-';
     kartu.innerHTML = `<div class="profil-grid">
       <div class="card"><p class="panel-judul">Identitas</p>
@@ -4236,7 +4271,7 @@ function renderProfil(mengedit = false) {
         ${p.publik && linkPublik ? `<p class="muted" style="margin:12px 0 0">Link profil: <a href="${linkPublik}" target="_blank" rel="noopener" style="word-break:break-all">${esc(linkPublik)}</a></p>` : ''}
       </div>
       <div class="card"><p class="panel-judul">Informasi akademik</p>
-        <dl class="info-profil">${baris('Status', esc(labelStatus(p.statusPendidikan)))}${baris('Tanggal ujian UTBK', ujian)}${baris('Sekolah / kampus', esc(p.sekolah || '-'))}${baris('Jurusan', esc(p.jurusan || '-'))}${baris('Target PTN dan prodi', esc(p.target || '-'))}</dl></div>
+        <dl class="info-profil">${baris('Status', esc(labelStatus(p.statusPendidikan)))}${baris('Sekolah / kampus', esc(p.sekolah || '-'))}${baris('Jurusan', esc(p.jurusan || '-'))}${baris('Target PTN dan prodi', esc(p.target || '-'))}</dl></div>
       <div class="card full"><p class="panel-judul">Informasi pribadi (hanya terlihat olehmu)</p>
         <dl class="info-profil">${baris('Tanggal lahir', tgl)}${baris('Kota domisili', esc(p.kota || '-'))}</dl></div>
       ${akun}
@@ -4259,7 +4294,6 @@ function renderProfil(mengedit = false) {
         </div></div>
       <div class="card"><p class="panel-judul">Informasi akademik</p>
         ${fld('Status pendidikan sekarang *', `<select class="input" id="pf-status">${opt(PROFIL_STATUS, 'statusPendidikan')}</select>`)}
-        ${fld('Tanggal ujian UTBK (opsional)', `<input class="input" type="date" id="pf-ujian" value="${v('tanggalUjian')}">`)}
         ${fld('Sekolah / kampus', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
         ${fld('Jurusan', `<select class="input" id="pf-jurusan">${opt(PROFIL_JURUSAN, 'jurusan')}</select>`)}
         ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="80" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}
@@ -4317,7 +4351,7 @@ async function simpanFormProfil() {
     nama, tanggalLahir: tgl, statusPendidikan: status,
     sekolah: $('pf-sekolah').value.trim(), jurusan: $('pf-jurusan').value,
     target: $('pf-target').value.trim(), kota: $('pf-kota').value.trim(),
-    tanggalUjian: $('pf-ujian').value, username,
+    tanggalUjian: '', username,
     deskripsi: $('pf-deskripsi').value.trim(), publik,
     tampilkanStatistik: $('pf-statistik').checked
   });
