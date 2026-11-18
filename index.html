@@ -486,6 +486,36 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .kartu-rek.kat-sedang .badge-rek{background:var(--warning-soft);color:var(--warning)}
 @media(min-width:700px){.rek-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:1100px){.rek-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Atur Latihan dan Review v2 */
+.setup-grid{display:grid;gap:18px;grid-template-columns:minmax(0,1fr);align-items:start}
+.setup-kolom{display:grid;gap:18px;min-width:0}
+.setup-kolom .card,.setup-ringkas{margin:0}
+.kartu-judul{display:flex;align-items:center;gap:10px;font-size:1rem;margin:0 0 2px}
+.kartu-judul .no{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:800;flex-shrink:0}
+.setup-ringkas .info{margin:14px 0}
+.ringkas-baris{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.ringkas-baris span{color:var(--muted)}.ringkas-baris b{text-align:right}
+.nomor-rev{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.nomor-rev button{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
+.nomor-rev button.benar{border-color:var(--benar);color:var(--benar);background:var(--benar-soft)}
+.nomor-rev button.salah{border-color:var(--salah);color:var(--salah);background:var(--salah-soft)}
+.nomor-rev button.kosong{color:var(--muted)}
+.nomor-rev button.aktif{background:var(--primary);border-color:var(--primary);color:#fff}
+.rev-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.rev-meta .badge{margin:0}.rev-meta .no{font-weight:800}
+.rev-body{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+.rev-body>*{min-width:0}
+.rev-sub{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
+.rev-ket{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;margin:0 0 12px}
+.rev-body .feedback{margin-top:0}
+@media(min-width:900px){
+  .setup-grid{grid-template-columns:minmax(0,1fr) 320px}
+  .setup-ringkas{position:sticky;top:24px}
+  #setup,#review{max-width:1040px}
+  .rev-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .rev-body .rev-pembahasan{grid-column:1/-1}
+}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -528,44 +558,59 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </section>
 
   <section id="setup" class="halaman" hidden>
-    <div class="card">
-      <h2>Atur latihan</h2>
-      <p class="label">Sumber soal</p>
-      <div class="pilihan" id="pilih-sumber"></div>
-      <p class="label">Mata pelajaran</p>
-      <div class="pilihan" id="pilih-mapel">
-        <label class="chip"><input type="radio" name="mapel" value="semua" checked><span>Semua</span></label>
-        <label class="chip"><input type="radio" name="mapel" value="PK"><span>Pengetahuan Kuantitatif</span></label>
-        <label class="chip"><input type="radio" name="mapel" value="PM"><span>Penalaran Matematika</span></label>
+    <div class="page-head"><div><h2>Atur latihan</h2><p class="muted">Pilih konfigurasi sesi, lalu mulai.</p></div></div>
+    <div class="setup-grid">
+      <div class="setup-kolom">
+        <div class="card">
+          <h3 class="kartu-judul"><span class="no">1</span>Sumber dan materi</h3>
+          <p class="label">Sumber soal</p>
+          <div class="pilihan" id="pilih-sumber"></div>
+          <p class="label">Mata pelajaran</p>
+          <div class="pilihan" id="pilih-mapel">
+            <label class="chip"><input type="radio" name="mapel" value="semua" checked><span>Semua</span></label>
+            <label class="chip"><input type="radio" name="mapel" value="PK"><span>Pengetahuan Kuantitatif</span></label>
+            <label class="chip"><input type="radio" name="mapel" value="PM"><span>Penalaran Matematika</span></label>
+          </div>
+          <p class="label">Topik</p>
+          <div class="pilihan" id="pilih-topik"></div>
+        </div>
+        <div class="card">
+          <h3 class="kartu-judul"><span class="no">2</span>Mode dan waktu</h3>
+          <p class="label">Mode</p>
+          <div class="pilihan">
+            <label class="chip"><input type="radio" name="mode" value="latihan" checked><span>Latihan</span></label>
+            <label class="chip"><input type="radio" name="mode" value="tryout"><span>Try Out</span></label>
+          </div>
+          <div id="blok-waktu" hidden>
+            <p class="label">Waktu per soal (Try Out)</p>
+            <div class="pilihan" id="pilih-waktu"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="kartu-judul"><span class="no">3</span>Jumlah dan kesulitan</h3>
+          <p class="label">Jumlah soal</p>
+          <div class="pilihan" id="pilih-jumlah">
+            <label class="chip"><input type="radio" name="jumlah" value="5" checked><span>5</span></label>
+            <label class="chip"><input type="radio" name="jumlah" value="10"><span>10</span></label>
+            <label class="chip"><input type="radio" name="jumlah" value="15"><span>15</span></label>
+            <label class="chip"><input type="radio" name="jumlah" value="20"><span>20</span></label>
+            <label class="chip"><input type="radio" name="jumlah" value="semua"><span>Semua</span></label>
+          </div>
+          <p class="label">Tingkat kesulitan</p>
+          <div class="pilihan" id="pilih-level">
+            <label class="chip"><input type="checkbox" value="mudah" checked><span>Mudah</span></label>
+            <label class="chip"><input type="checkbox" value="sedang" checked><span>Sedang</span></label>
+            <label class="chip"><input type="checkbox" value="sulit" checked><span>Sulit</span></label>
+          </div>
+        </div>
       </div>
-      <p class="label">Mode</p>
-      <div class="pilihan">
-        <label class="chip"><input type="radio" name="mode" value="latihan" checked><span>Latihan</span></label>
-        <label class="chip"><input type="radio" name="mode" value="tryout"><span>Try Out</span></label>
-      </div>
-      <div id="blok-waktu" hidden>
-        <p class="label">Waktu per soal (Try Out)</p>
-        <div class="pilihan" id="pilih-waktu"></div>
-      </div>
-      <p class="label">Jumlah soal</p>
-      <div class="pilihan" id="pilih-jumlah">
-        <label class="chip"><input type="radio" name="jumlah" value="5" checked><span>5</span></label>
-        <label class="chip"><input type="radio" name="jumlah" value="10"><span>10</span></label>
-        <label class="chip"><input type="radio" name="jumlah" value="15"><span>15</span></label>
-        <label class="chip"><input type="radio" name="jumlah" value="20"><span>20</span></label>
-        <label class="chip"><input type="radio" name="jumlah" value="semua"><span>Semua</span></label>
-      </div>
-      <p class="label">Topik</p>
-      <div class="pilihan" id="pilih-topik"></div>
-      <p class="label">Tingkat kesulitan</p>
-      <div class="pilihan" id="pilih-level">
-        <label class="chip"><input type="checkbox" value="mudah" checked><span>Mudah</span></label>
-        <label class="chip"><input type="checkbox" value="sedang" checked><span>Sedang</span></label>
-        <label class="chip"><input type="checkbox" value="sulit" checked><span>Sulit</span></label>
-      </div>
-      <p class="muted info" id="info-soal"></p>
-      <button class="btn btn-primary btn-besar" id="btn-mulai">Mulai sesi</button>
-      <button class="btn btn-secondary btn-besar" id="btn-kembali-menu">Kembali</button>
+      <aside class="card setup-ringkas" aria-label="Ringkasan sesi">
+        <h3 class="kartu-judul">Ringkasan sesi</h3>
+        <div id="ringkas-sesi"></div>
+        <p class="muted info" id="info-soal"></p>
+        <button class="btn btn-primary btn-besar" id="btn-mulai">Mulai sesi</button>
+        <button class="btn btn-secondary btn-besar" id="btn-kembali-menu">Kembali</button>
+      </aside>
     </div>
   </section>
 
@@ -1713,7 +1758,7 @@ function tampil(id) {
   const tombolProfil = $('btn-profil');
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
-  if (id === 'setup') { terapkanDefaultSetup(); syncBlokWaktu(); }
+  if (id === 'setup') { terapkanDefaultSetup(); syncBlokWaktu(); ringkasSesi(); }
   if (AkunApp.sesi()) sinkron().catch(() => {});
   document.querySelectorAll('.nav-link').forEach((a) => a.classList.toggle('aktif', a.dataset.hal === aktif));
   window.scrollTo(0, 0);
@@ -1748,6 +1793,18 @@ function soalTerfilter() {
   return sumberSoal().filter((s) =>
     (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(s.topik) && level.includes(s.tingkatKesulitan));
 }
+function ringkasSesi() {
+  const teks = (nm) => { const i = document.querySelector(`input[name="${nm}"]:checked`); return i && i.nextElementSibling ? i.nextElementSibling.textContent : '-'; };
+  const n = soalTerfilter().length, jml = jumlahDipilih(n), mode = nilai('mode');
+  const wEl = document.querySelector('input[name="waktu"]:checked');
+  const waktu = wEl ? Number(wEl.value) : DETIK_PER_SOAL;
+  const lv = centang('pilih-level').map((v) => v[0].toUpperCase() + v.slice(1)).join(', ') || '-';
+  const b = (a, v) => `<div class="ringkas-baris"><span>${a}</span><b>${v}</b></div>`;
+  $('ringkas-sesi').innerHTML = b('Sumber', esc(teks('sumber'))) + b('Mata pelajaran', esc(teks('mapel'))) +
+    b('Mode', mode === 'tryout' ? `Try Out · ${waktu} dtk/soal` : 'Latihan') + b('Jumlah soal', n ? jml : 0) +
+    b('Topik', `${centang('pilih-topik').length} dari ${document.querySelectorAll('#pilih-topik input').length}`) + b('Kesulitan', esc(lv)) +
+    (mode === 'tryout' && n ? b('Estimasi durasi', `± ${Math.ceil((jml * waktu) / 60)} menit`) : '');
+}
 function hitungSoal() {
   const n = soalTerfilter().length;
   const sumber = nilai('sumber');
@@ -1757,6 +1814,7 @@ function hitungSoal() {
       ? 'Bank soal kamu masih kosong. Buat soal dulu di menu Bank Soal.'
       : 'Belum ada soal yang cocok dengan filter. Ubah sumber, topik, atau kesulitan.');
   $('btn-mulai').disabled = n === 0;
+  ringkasSesi();
 }
 
 // ---------- Sesi soal ----------
@@ -1936,24 +1994,30 @@ function renderReviewIsi() {
   const daftar = soal
     .map((s, k) => ({ s, k, st: status[k] }))
     .filter((x) => filterReview === 'semua' || x.st === filterReview);
+  const jawabanKamu = (s, j) => (j === null || j === undefined ? 'Tidak dijawab' : adaIsian(s) ? esc(j) : (s.opsi.map((o, x) => (dipilih(s, j, x) ? HURUF[x] : null)).filter(Boolean).join(', ') || '-'));
   const slide = daftar.map(({ s, k, st }) => {
     const [kelasBadge, teksBadge] = st === 'benar' ? ['benar', 'Benar'] : st === 'salah' ? ['salah', 'Salah'] : ['kosong', 'Kosong'];
     const opsi = opsiReviewHTML(s, jawab[k]);
     return `<div class="slide-review" data-nomor="${k + 1}">
       <div class="card" style="margin-bottom:0">
-        <span class="badge ${kelasBadge}">${teksBadge}</span>
-        <p class="muted">Soal ${k + 1} (${esc(namaMapel(s.mataPelajaran))}, ${esc(s.topik)}, ${esc(s.tingkatKesulitan)})</p>
-        <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
-        <div class="opsi-list">${opsi}</div>
-        <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+        <div class="rev-meta"><span class="badge ${kelasBadge}">${teksBadge}</span><span class="no">Soal ${k + 1}</span><span class="pill-mapel" title="${esc(namaMapel(s.mataPelajaran))}">${esc(s.mataPelajaran)}</span><span class="muted">${esc(s.topik)}</span><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(s.tingkatKesulitan)}</span></div>
+        <div class="rev-body">
+          <div><p class="rev-sub">Soal</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div></div>
+          <div><p class="rev-sub">Jawaban</p>
+            <p class="rev-ket"><span>Jawabanmu: <b>${jawabanKamu(s, jawab[k])}</b></span><span>Jawaban benar: <b>${esc(kunciHuruf(s))}</b></span></p>
+            <div class="opsi-list">${opsi}</div></div>
+          <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+        </div>
       </div>
     </div>`;
   }).join('');
+  const nomor = `<div class="nomor-rev" id="nav-nomor" aria-label="Loncat ke soal">${daftar.map((x, i) => `<button type="button" class="${x.st}" data-goto="${i}" aria-label="Soal ${x.k + 1}">${x.k + 1}</button>`).join('')}</div>`;
   const kosong = '<p class="muted">Tidak ada soal di kategori ini.</p>';
   $('daftar-review').innerHTML =
     `<div class="card" style="margin-bottom:12px"><p class="label" style="margin-top:0">Tampilkan</p>
       <div class="pilihan">${chips}</div></div>` +
     (daftar.length ? `
+      ${nomor}
       <div class="navigasi-review">
         <button class="btn btn-secondary btn-kecil" id="rev-prev" aria-label="Soal sebelumnya">&lsaquo;</button>
         <span class="muted" id="rev-info"></span>
@@ -1972,6 +2036,7 @@ function perbaruiInfoReview() {
   if (!tr || !tr.children.length) return;
   const idx = Math.min(tr.children.length - 1, Math.max(0, Math.round(tr.scrollLeft / (tr.clientWidth || 1))));
   $('rev-info').textContent = `Nomor ${tr.children[idx].dataset.nomor} · ${idx + 1} dari ${tr.children.length}`;
+  document.querySelectorAll('#nav-nomor button').forEach((x, i) => x.classList.toggle('aktif', i === idx));
   $('rev-prev').disabled = idx === 0;
   $('rev-next').disabled = idx === tr.children.length - 1;
 }
@@ -3774,6 +3839,7 @@ $('pilih-waktu').addEventListener('change', (e) => {
   DETIK_PER_SOAL = v;
 });
 $('btn-ke-setup').addEventListener('click', () => tampil('setup'));
+$('setup').addEventListener('change', ringkasSesi);
 $('btn-kembali-menu').addEventListener('click', () => tampil('menu'));
 
 buatDatalist();
@@ -3787,6 +3853,7 @@ $('daftar-review').addEventListener('change', (e) => {
 $('daftar-review').addEventListener('click', (e) => {
   if (e.target.closest('#rev-prev')) geserReview(-1);
   else if (e.target.closest('#rev-next')) geserReview(1);
+  else { const g = e.target.closest('[data-goto]'); const tr = $('track-review'); if (g && tr) tr.scrollTo({ left: Number(g.dataset.goto) * tr.clientWidth, behavior: 'smooth' }); }
 });
 renderProfil(false);
 renderPengaturan();
