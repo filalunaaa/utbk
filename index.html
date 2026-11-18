@@ -230,6 +230,35 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 }
 
 /* Analisis pilihan jawaban */
+/* Riwayat sesi & pivot analisis pilihan */
+.sesi-tren{display:flex;align-items:flex-end;gap:3px;height:44px;margin:8px 0 4px}
+.sesi-tren i{flex:1;min-width:4px;max-width:22px;border-radius:3px 3px 0 0;background:var(--primary);opacity:.75;display:block}
+.sesi-tren i:last-child{opacity:1}
+.sesi-skor{font-weight:800;flex-shrink:0}
+.sesi-kartu>summary{flex-wrap:wrap}
+.sesi-kartu .pratinjau-soal{min-width:0}
+.sesi-sub{font-size:.9rem;font-weight:700;margin:14px 0 6px}
+.pv-grup{border-top:1px solid var(--border)}
+.pv-grup>summary{cursor:pointer;list-style:none;padding:9px 0;display:flex;justify-content:space-between;gap:8px;font-size:.92rem;font-weight:700}
+.pv-grup>summary::-webkit-details-marker{display:none}
+.pv-grup>summary::before{content:"\25B8";margin-right:6px;color:var(--accent);transition:transform .2s;display:inline-block}
+.pv-grup[open]>summary::before{transform:rotate(90deg)}
+.pv-grup>summary .muted{margin-left:auto;font-weight:500}
+.pv-topik{font-size:.8rem;font-weight:700;color:var(--muted);margin:8px 0 4px}
+.pv-wadah{overflow-x:auto;margin-bottom:8px}
+table.pivot{width:100%;border-collapse:collapse;font-size:.82rem;table-layout:fixed;min-width:300px}
+table.pivot th{font-weight:700;color:var(--muted);text-align:center;padding:4px 2px;border-bottom:1px solid var(--border)}
+table.pivot th:first-child{text-align:left}
+table.pivot td{padding:5px 2px;text-align:center;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+table.pivot td.ps{text-align:left;width:auto;padding-right:6px}
+table.pivot td.ps div{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
+table.pivot th:not(:first-child),table.pivot td:not(.ps){width:38px}
+table.pivot td.kunci{background:var(--benar-soft);color:var(--benar);font-weight:700}
+table.pivot td.kuat{background:var(--salah-soft);color:var(--salah);font-weight:700}
+table.pivot td.nol{color:var(--muted);opacity:.55}
+.pv-legenda{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:6px 0 4px}
+.pv-legenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
 .analisis-baris{display:flex;align-items:center;gap:8px;margin:6px 0}
 .analisis-baris .huruf{width:26px;height:26px;font-size:.8rem}
 .bar-wrap{flex:1;height:10px;background:var(--border);border-radius:999px;overflow:hidden}
@@ -905,6 +934,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <div id="hasil-rinci"></div>
       <div class="aksi">
         <button class="btn btn-secondary" id="btn-menu">Menu utama</button>
+        <button class="btn btn-secondary" id="btn-riwayat-sesi">Riwayat sesi</button>
         <button class="btn btn-primary" id="btn-review">Review soal</button>
       </div>
     </div>
@@ -1170,6 +1200,27 @@ const Riwayat = {
     const a = this.ambil();
     a.push({ id: String(soal.id), topik: soal.topik, mapel: soal.mataPelajaran,
       j: jawaban === undefined ? null : jawaban, b: !!benar, t: Date.now() });
+    this.simpan(a.slice(-this.MAKS));
+  },
+  reset() {
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
+  }
+};
+
+// Riwayat sesi: setiap latihan/try out yang selesai disimpan sebagai satu catatan (ringkasan + hasil tiap soal)
+const RiwayatSesi = {
+  KEY: 'utbk_riwayat_sesi',
+  MAKS: 60, // 60 sesi terbaru
+  ambil() {
+    try { const a = JSON.parse(localStorage.getItem(this.KEY)); return Array.isArray(a) ? a : []; }
+    catch (e) { return []; }
+  },
+  simpan(a) {
+    try { localStorage.setItem(this.KEY, JSON.stringify(a)); } catch (e) {}
+  },
+  catat(e) {
+    const a = this.ambil();
+    a.push(e);
     this.simpan(a.slice(-this.MAKS));
   },
   reset() {
@@ -1541,7 +1592,7 @@ const SYNC = {
   utbk_pengaturan: 'pengaturan'
 };
 // Riwayat dikirim terpisah: kalau server menolaknya, data lain tetap tersinkron
-const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat' };
+const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat', utbk_riwayat_sesi: 'riwayat_sesi' };
 // Semua data milik akun yang tersimpan di browser ini. Harus dibersihkan saat keluar atau ganti akun,
 // kalau tidak, data akun sebelumnya tercampur ke akun berikutnya.
 // ---------- Avatar profil ----------
@@ -1755,29 +1806,25 @@ async function sinkronInti() {
   });
   kirim.forEach(([lokal, raw]) => (terakhirDikirim[lokal] = raw));
 }
-let riwayatGagal = false;
+const opsionalGagal = new Set();
 async function sinkronOpsional() {
   const s = AkunApp.sesi();
-  if (!s || riwayatGagal) return;
-  const rows = [];
-  const kirim = [];
-  Object.entries(SYNC_OPSIONAL).forEach(([lokal, kunci]) => {
+  if (!s) return;
+  // Tiap data opsional dikirim sendiri-sendiri, supaya kalau satu ditolak server yang lain tetap tersinkron
+  for (const [lokal, kunci] of Object.entries(SYNC_OPSIONAL)) {
+    if (opsionalGagal.has(lokal)) continue;
     const raw = localStorage.getItem(lokal);
-    if (raw === null || raw === terakhirDikirim[lokal]) return;
+    if (raw === null || raw === terakhirDikirim[lokal]) continue;
     try {
-      rows.push({ user_id: s.user_id, kunci, nilai: JSON.parse(raw), diperbarui_pada: new Date().toISOString() });
-      kirim.push([lokal, raw]);
-    } catch (e) {}
-  });
-  if (!rows.length) return;
-  try {
-    await rest('data_pengguna?on_conflict=user_id,kunci', {
-      method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: rows
-    });
-    kirim.forEach(([lokal, raw]) => (terakhirDikirim[lokal] = raw));
-  } catch (e) {
-    riwayatGagal = true;
-    console.warn('Riwayat tidak ikut tersinkron ke akun (tetap tersimpan di perangkat ini):', e);
+      await rest('data_pengguna?on_conflict=user_id,kunci', {
+        method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
+        body: [{ user_id: s.user_id, kunci, nilai: JSON.parse(raw), diperbarui_pada: new Date().toISOString() }]
+      });
+      terakhirDikirim[lokal] = raw;
+    } catch (e) {
+      opsionalGagal.add(lokal);
+      console.warn(kunci + ' tidak ikut tersinkron ke akun (tetap tersimpan di perangkat ini):', e);
+    }
   }
 }
 async function sinkron() {
@@ -2140,6 +2187,7 @@ function selesai() {
     if (jawab[k] !== null) PilihanStat.catat(s, jawab[k]);
   });
   const benar = soal.filter((s, k) => jawabBenar(s, jawab[k])).length;
+  catatSesi(mode, soal, jawab, durasi, benar);
   $('skor').textContent = `${benar} / ${soal.length}`;
   $('persen').textContent = `Akurasi ${Math.round((benar / soal.length) * 100)}%`;
   $('waktu').textContent = mode === 'tryout' ? `Waktu pengerjaan: ${format(durasi)}` : '';
@@ -2273,39 +2321,145 @@ function renderReview() {
   perbaruiInfoReview();
 }
 
-// ---------- Analisis pilihan jawaban (statistik) ----------
+// ---------- Riwayat sesi (history latihan / try out) ----------
+const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.length);
+function catatSesi(mode, soal, jawab, durasi, benar) {
+  if (!soal.some((s, k) => !kosongJ(jawab[k]))) return; // tidak ada satu pun soal dijawab: tidak dicatat
+  const mapel = {}, topik = {};
+  const item = soal.map((s, k) => {
+    const b = jawabBenar(s, jawab[k]);
+    [[mapel, s.mataPelajaran], [topik, s.topik]].forEach(([o, nm]) => {
+      if (!nm) return;
+      o[nm] = o[nm] || { n: 0, b: 0 };
+      o[nm].n++; if (b) o[nm].b++;
+    });
+    return { id: String(s.id), j: kosongJ(jawab[k]) ? null : jawab[k], b: !!b };
+  });
+  RiwayatSesi.catat({ id: 's' + Date.now(), t: Date.now(), mode, d: durasi, n: soal.length, b: benar, mapel, topik, item });
+}
+const BATAS_SESI = 5;
+let batasSesi = BATAS_SESI;
+function riwayatSesiHTML() {
+  const semua = RiwayatSesi.ambil(); // lama -> baru
+  if (!semua.length) {
+    return '<p class="label">Riwayat sesi</p><p class="muted">Belum ada sesi tercatat. Setiap latihan atau try out yang selesai akan muncul di sini, lengkap dengan perubahan akurasinya.</p>';
+  }
+  const pct = (x) => Math.round((x.b / x.n) * 100);
+  const info = semua.map((e, i) => {
+    const sblm = semua[i - 1];
+    const p = pct(e);
+    const topik = Object.entries(e.topik || {}).map(([nm, x]) => {
+      let p0 = null;
+      for (let j = i - 1; j >= 0; j--) { const y = semua[j].topik && semua[j].topik[nm]; if (y) { p0 = pct(y); break; } }
+      const p1 = pct(x);
+      return { nm, n: x.n, b: x.b, p0, p1, d: p0 === null ? null : p1 - p0 };
+    }).sort((a, b) => (b.d ?? -999) - (a.d ?? -999));
+    return { e, p, d: sblm ? p - pct(sblm) : null, topik };
+  });
+  const tglPendek = (t) => new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  const terbaru = info[info.length - 1];
+  const tren = info.slice(-12).map((x) => `<i style="height:${Math.max(4, x.p)}%" title="${tglPendek(x.e.t)}: ${x.p}%"></i>`).join('');
+  const kepala = `<p class="label">Riwayat sesi</p>
+    <p class="muted" style="margin-bottom:0">${semua.length} sesi tercatat. Sesi terakhir ${terbaru.p}% ${badgeUbah(terbaru.d)} dibanding sesi sebelumnya.</p>
+    <div class="sesi-tren" role="img" aria-label="Akurasi per sesi, ${info.slice(-12).map((x) => x.p + '%').join(', ')}">${tren}</div>`;
+  const kartu = info.slice().reverse().slice(0, batasSesi).map(({ e, p, d, topik }) => {
+    const kosong = e.item.filter((r) => kosongJ(r.j)).length;
+    const salah = e.n - e.b - kosong;
+    const tglPenuh = new Date(e.t).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const naik = topik.filter((t) => t.d !== null && t.d > 0).map((t) => `${esc(t.nm)} (+${t.d})`);
+    const turun = topik.filter((t) => t.d !== null && t.d < 0).map((t) => `${esc(t.nm)} (${t.d})`);
+    const baru = topik.filter((t) => t.d === null).map((t) => esc(t.nm));
+    const ringkasan = [
+      naik.length ? `<p><strong>Meningkat:</strong> ${naik.join(', ')}.</p>` : '',
+      turun.length ? `<p><strong>Menurun:</strong> ${turun.join(', ')}. Baca ulang pembahasannya, lalu coba lagi.</p>` : '',
+      baru.length ? `<p><strong>Topik baru:</strong> ${baru.join(', ')}.</p>` : '',
+      !naik.length && !turun.length && !baru.length ? '<p>Akurasi di topik yang dikerjakan sama seperti sesi sebelumnya.</p>' : ''
+    ].join('');
+    const barisTopik = topik.map((t) => `<div class="lap-baris">
+      <div class="stat-judul"><span>${esc(t.nm)}</span><span>${t.b} dari ${t.n} benar</span></div>
+      <div class="progress"><div class="progress-bar gradasi" style="width:${t.p1}%;--p:${Math.max(1, t.p1)}"></div></div>
+      <div class="lap-ubah"><span>${t.p0 === null ? `Pertama kali: ${t.p1}%` : `${t.p0}% &rarr; ${t.p1}%`}</span>${badgeUbah(t.d)}</div></div>`).join('');
+    const barisMapel = Object.entries(e.mapel || {}).map(([m, x]) => { const q = pct(x); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">&middot; ${x.b}/${x.n}</span></span></div>`; }).join('');
+    return `<details class="kartu-soal sesi-kartu">
+      <summary><span class="badge ${e.mode === 'tryout' ? 'tk-sedang' : 'kosong'}">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span>
+        <span class="pratinjau-soal">${tglPendek(e.t)} &middot; ${e.n} soal</span>
+        <span class="sesi-skor">${p}%</span>${badgeUbah(d)}</summary>
+      <div class="isi-kartu">
+        <p class="muted" style="margin-top:8px">${tglPenuh}${e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : ''} &middot; ${e.b} benar, ${salah} salah, ${kosong} kosong</p>
+        <div class="lap-ringkasan">${ringkasan}</div>
+        <p class="sesi-sub">Per topik (dibanding sesi sebelumnya yang memuat topik ini)</p>${barisTopik}
+        <p class="sesi-sub">Per mata pelajaran</p>${barisMapel}
+        <details class="kartu-soal sesi-soal" data-sesi="${esc(e.id)}"><summary><span class="pratinjau-soal">Lihat jawaban per soal</span></summary><div class="isi-kartu"></div></details>
+      </div></details>`;
+  }).join('');
+  const lagi = semua.length > batasSesi
+    ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi-sesi="1">Tampilkan lebih banyak (${semua.length - batasSesi} lagi)</button></div>` : '';
+  return kepala + kartu + lagi;
+}
+function soalSesiHTML(e) {
+  const peta = new Map([...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())].map((s) => [String(s.id), s]));
+  const label = { benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
+  return e.item.map((r, i) => {
+    const st = kosongJ(r.j) ? 'kosong' : r.b ? 'benar' : 'salah';
+    const s = peta.get(r.id);
+    if (!s) return `<div class="kartu-soal" style="padding:10px 12px;display:flex;gap:8px;align-items:center"><span class="badge ${st}">${label[st]}</span><span class="muted">Soal ${i + 1} sudah dihapus dari bank</span></div>`;
+    return `<details class="kartu-soal">
+      <summary><span class="badge ${st}">${label[st]}</span><span class="pratinjau-soal">${i + 1}. ${esc(previewTeks(s.soal))}</span></summary>
+      <div class="isi-kartu">
+        <p class="muted" style="margin-top:8px">Jawaban Anda: <strong>${teksJawabanmu(s, r.j)}</strong> &middot; Kunci: <strong>${kunciHuruf(s)}</strong></p>
+        <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+        <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
+        <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+      </div></details>`;
+  }).join('');
+}
+
+// ---------- Analisis pilihan jawaban (pivot: mapel > topik > soal x pilihan) ----------
 function analisisHTML() {
   const data = PilihanStat.ambil();
   const peta = new Map([...SOAL, ...BankSoal.ambil()].map((s) => [String(s.id), s]));
   const daftar = Object.entries(data)
     .filter(([k, v]) => v.total > 0 && peta.has(k) && !adaIsian(peta.get(k)))
-    .map(([k, v]) => ({ s: peta.get(k), v }))
-    .sort((a, b) => b.v.total - a.v.total);
+    .map(([k, v]) => {
+      const s = peta.get(k);
+      const salah = [0, 1, 2, 3, 4].filter((i) => !kunciOpsi(s, i) && i < s.opsi.length);
+      const kuat = salah.reduce((a, b) => (v.pilih[b] > v.pilih[a] ? b : a), salah[0]);
+      const pctOpsi = [0, 1, 2, 3, 4].map((i) => (i < s.opsi.length ? Math.round((v.pilih[i] / v.total) * 100) : null));
+      return { s, v, kuat, pctKuat: kuat === undefined ? 0 : pctOpsi[kuat], pctOpsi };
+    });
   if (!daftar.length) {
     return '<p class="label">Analisis pilihan jawaban</p><p class="muted">Belum ada data. Analisis muncul setelah ada soal yang dijawab.</p>';
   }
-  const items = daftar.map(({ s, v }) => {
-    const salah = [0, 1, 2, 3, 4].filter((i) => !kunciOpsi(s, i));
-    const kuat = salah.reduce((a, b) => (v.pilih[b] > v.pilih[a] ? b : a), salah[0]);
-    const pctKuat = Math.round((v.pilih[kuat] / v.total) * 100);
-    const baris = s.opsi.map((_, i) => {
-      const p = Math.round((v.pilih[i] / v.total) * 100);
-      return `<div class="analisis-baris ${kunciOpsi(s, i) ? 'kunci' : ''}">
-        <span class="huruf">${HURUF[i]}</span>
-        <div class="bar-wrap"><div class="bar-isi" style="width:${p}%"></div></div>
-        <span class="muted">${p}%</span>
-      </div>`;
+  const AMBANG = 30; // pengecoh yang dipilih >= 30% murid ditandai merah
+  const grup = {};
+  daftar.forEach((d) => {
+    const m = d.s.mataPelajaran || '-', t = d.s.topik || 'Tanpa topik';
+    ((grup[m] = grup[m] || {})[t] = grup[m][t] || []).push(d);
+  });
+  const jumlahKuat = daftar.filter((d) => d.pctKuat >= AMBANG).length;
+  const tabel = (list) => {
+    const baris = list.slice().sort((a, b) => b.pctKuat - a.pctKuat || b.v.total - a.v.total).map((d, i) => {
+      const sel = d.pctOpsi.map((p, k) => {
+        if (p === null) return '<td class="nol">-</td>';
+        const kls = kunciOpsi(d.s, k) ? 'kunci' : (k === d.kuat && p >= AMBANG) ? 'kuat' : p === 0 ? 'nol' : '';
+        return `<td class="${kls}">${p}%</td>`;
+      }).join('');
+      return `<tr><td class="ps"><div>${esc(previewTeks(d.s.soal))}</div></td>${sel}<td class="nol">${d.v.total}</td></tr>`;
     }).join('');
-    return `<details class="kartu-soal" data-kunci="analisis:${esc(s.id)}">
-      <summary><span class="pratinjau-soal">${esc(previewTeks(s.soal))}</span><span class="muted">${v.total} jawaban</span></summary>
-      <div class="isi-kartu">
-        <p class="muted">Pengecoh terkuat: <strong>${HURUF[kuat]}</strong>, dipilih ${pctKuat}% murid.</p>
-        ${baris}
-      </div>
-    </details>`;
+    return `<div class="pv-wadah"><table class="pivot"><thead><tr><th>Soal</th>${HURUF.map((x) => `<th>${x}</th>`).join('')}<th>n</th></tr></thead><tbody>${baris}</tbody></table></div>`;
+  };
+  const bagianMapel = Object.entries(grup).map(([m, tp]) => {
+    const jml = Object.values(tp).reduce((a, l) => a + l.length, 0);
+    const isi = Object.entries(tp).map(([t, l]) => `<p class="pv-topik">${esc(t)}</p>${tabel(l)}`).join('');
+    return `<details class="pv-grup"><summary><span>${esc(namaMapel(m))}</span><span class="muted">${jml} soal</span></summary>${isi}</details>`;
   }).join('');
-  return `<p class="label">Analisis pilihan jawaban</p>
-    <p class="muted">Persentase tiap pilihan. Baris berwarna hijau adalah kunci jawaban.</p>${items}`;
+  return `<details class="kartu-soal" id="analisis-pilihan">
+    <summary><strong>Analisis pilihan jawaban</strong><span class="muted" style="margin-left:auto">${daftar.length} soal${jumlahKuat ? ' &middot; ' + jumlahKuat + ' pengecoh kuat' : ''}</span></summary>
+    <div class="isi-kartu">
+      <p class="muted" style="margin:8px 0 0">Persentase murid yang memilih tiap opsi, dikelompokkan per mata pelajaran dan topik. Soal dengan pengecoh terkuat ada di atas.</p>
+      <div class="pv-legenda"><span><i style="background:var(--benar-soft);border:1px solid var(--benar)"></i>Kunci jawaban</span><span><i style="background:var(--salah-soft);border:1px solid var(--salah)"></i>Pengecoh dipilih &ge; ${AMBANG}%</span><span>n = jumlah jawaban</span></div>
+      ${bagianMapel}
+    </div></details>`;
 }
 
 // ---------- Statistik ----------
@@ -2376,7 +2530,7 @@ function renderStatistik() {
     ? Object.entries(obj).map(([n, x]) => baris2(lab(n), x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   // Topik yang sudah dikerjakan bisa dibuka untuk melihat riwayat dan pembahasannya
-  batasRiwayat = {};
+  batasRiwayat = {}; batasSesi = BATAS_SESI;
   // Susun topik di bawah mata pelajarannya (topik ikut mapel yang paling banyak memuatnya di bank soal)
   const pivotMapel = () => {
     const topikLengkap = lengkap(d.topik, 'topik');
@@ -2414,6 +2568,7 @@ function renderStatistik() {
   $('isi-statistik').innerHTML =
     `<div class="ringkasan-bank">${[['Soal dikerjakan', d.total, ''], ['Benar', d.benar, 'benar'], ['Salah', d.total - d.benar, 'salah'], ['Akurasi', (d.total ? Math.round((d.benar / d.total) * 100) : 0) + '%', '']].map(([a, v, w]) => `<div class="stat-tile"><span>${a}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`).join('')}</div>` +
     `<div id="grafik-stat">${grafikStatHTML()}</div>` +
+    `<div id="riwayat-sesi">${riwayatSesiHTML()}</div>` +
     `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + analisisHTML();
   tampil('statistik');
   rumus($('isi-statistik'));
@@ -2421,6 +2576,24 @@ function renderStatistik() {
 
 $('isi-statistik').addEventListener('change', (e) => {
   if (e.target.name === 'periode-stat') { periodeStat = e.target.value; $('grafik-stat').innerHTML = grafikStatHTML(); }
+});
+
+
+// Daftar jawaban per soal di riwayat sesi diisi saat dibuka (supaya halaman tetap ringan)
+$('isi-statistik').addEventListener('toggle', (e) => {
+  const d = e.target;
+  if (!d.matches || !d.matches('details.sesi-soal') || !d.open) return;
+  const isi = d.querySelector('.isi-kartu');
+  if (isi.dataset.terisi) return;
+  const ent = RiwayatSesi.ambil().find((x) => x.id === d.dataset.sesi);
+  isi.innerHTML = ent ? soalSesiHTML(ent) : '<p class="muted">Data sesi tidak ditemukan.</p>';
+  isi.dataset.terisi = '1';
+  rumus(isi);
+}, true);
+$('isi-statistik').addEventListener('click', (e) => {
+  if (!e.target.closest('button[data-lagi-sesi]')) return;
+  batasSesi += BATAS_SESI;
+  $('riwayat-sesi').innerHTML = riwayatSesiHTML();
 });
 
 // ---------- Riwayat pengerjaan per topik ----------
@@ -3555,13 +3728,20 @@ window.addEventListener('beforeunload', (e) => { if (sesi && sesi.aktif && sesi.
 $('btn-review').addEventListener('click', renderReview);
 $('btn-kembali-hasil').addEventListener('click', () => tampil('hasil'));
 $('btn-menu').addEventListener('click', () => tampil('menu'));
+$('btn-riwayat-sesi').addEventListener('click', () => {
+  renderStatistik();
+  const el = $('riwayat-sesi');
+  const k = el && el.querySelector('details.sesi-kartu');
+  if (k) k.open = true;
+  if (el) el.scrollIntoView({ block: 'start' });
+});
 let konfirmReset = null;
 $('btn-reset').addEventListener('click', () => {
   const b = $('btn-reset');
   if (konfirmReset) {
     clearTimeout(konfirmReset); konfirmReset = null;
     b.textContent = 'Reset statistik';
-    Penyimpanan.reset(); PilihanStat.reset(); Riwayat.reset(); renderStatistik();
+    Penyimpanan.reset(); PilihanStat.reset(); Riwayat.reset(); RiwayatSesi.reset(); renderStatistik();
     return;
   }
   b.textContent = 'Yakin? Klik lagi untuk menghapus';
@@ -4186,7 +4366,7 @@ async function hapusAkunDanData() {
       return;
     }
   }
-  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat', 'utbk_pemilik',
+  ['utbk_testing_stats', 'utbk_bank_custom', 'utbk_bank_folder', 'utbk_pilihan_stat', 'utbk_riwayat', 'utbk_riwayat_sesi', 'utbk_pemilik',
     'utbk_pengaturan', 'utbk_profil', 'utbk_avatar', 'utbk_sesi'].forEach((k) => localStorage.removeItem(k));
   alert('Akun dan data kamu sudah dihapus.');
   location.href = location.pathname;
@@ -4649,8 +4829,8 @@ $('set-pdf').addEventListener('click',function(){var d=Penyimpanan.ambil(),r=Riw
   document.body.classList.add('mencetak');window.addEventListener('afterprint',function f(){document.body.classList.remove('mencetak');window.removeEventListener('afterprint',f)});
   m.textContent='Pada dialog cetak, pilih "Simpan sebagai PDF".';window.print()});
 // reset & hapus lokal (terpisah, masing-masing dengan konfirmasi)
-$('set-reset').addEventListener('click',function(){konfirmUjian('Reset statistik?','Yang dihapus: statistik total, akurasi per topik dan mapel, riwayat pengerjaan, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak terpengaruh. Tindakan ini tidak bisa dibatalkan.',[{label:'Batal',kelas:'btn-primary'},{label:'Ya, reset statistik',kelas:'btn-bahaya',fn:function(){Penyimpanan.reset();PilihanStat.reset();Riwayat.reset();toastNeon('Statistik direset.')}}])});
-$('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data lokal?',AkunApp.sesi()?'Data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan dihapus. Akunmu tetap ada dan datanya dapat terunduh lagi saat sinkronisasi.':'Kamu belum masuk akun, jadi data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan hilang permanen.',[{label:'Batal',kelas:'btn-primary'},{label:'Hapus data lokal',kelas:'btn-bahaya',fn:function(){['utbk_testing_stats','utbk_bank_custom','utbk_bank_folder','utbk_pilihan_stat','utbk_riwayat','utbk_profil','utbk_avatar','utbk_pengaturan','neon_sinkron_ok','neon_sinkron_gagal'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});location.reload()}}])});
+$('set-reset').addEventListener('click',function(){konfirmUjian('Reset statistik?','Yang dihapus: statistik total, akurasi per topik dan mapel, riwayat pengerjaan, riwayat sesi, dan analisis pilihan jawaban. Bank soal, profil, dan pengaturan tidak terpengaruh. Tindakan ini tidak bisa dibatalkan.',[{label:'Batal',kelas:'btn-primary'},{label:'Ya, reset statistik',kelas:'btn-bahaya',fn:function(){Penyimpanan.reset();PilihanStat.reset();Riwayat.reset();RiwayatSesi.reset();toastNeon('Statistik direset.')}}])});
+$('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data lokal?',AkunApp.sesi()?'Data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan dihapus. Akunmu tetap ada dan datanya dapat terunduh lagi saat sinkronisasi.':'Kamu belum masuk akun, jadi data di perangkat ini (statistik, riwayat, bank soal, profil, pengaturan) akan hilang permanen.',[{label:'Batal',kelas:'btn-primary'},{label:'Hapus data lokal',kelas:'btn-bahaya',fn:function(){['utbk_testing_stats','utbk_bank_custom','utbk_bank_folder','utbk_pilihan_stat','utbk_riwayat','utbk_riwayat_sesi','utbk_profil','utbk_avatar','utbk_pengaturan','neon_sinkron_ok','neon_sinkron_gagal'].forEach(function(k){try{localStorage.removeItem(k)}catch(e){}});location.reload()}}])});
 document.getElementById('dash-pengaturan').addEventListener('click',function(){document.querySelector('.side-nav [data-hal="pengaturan"]').click()});
 
 (function(){var box=$('pilih-topik'),wad=$('tp-wadah'),tg=$('tp-toggle'),cari=$('tp-cari');
