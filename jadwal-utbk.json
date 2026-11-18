@@ -1,0 +1,8 @@
+{
+  "diperbarui": "2026-11-18",
+  "catatan": "Ubah file ini kalau SNPMB mengumumkan jadwal resmi. status: 'resmi' atau 'perkiraan'. Tanggal format YYYY-MM-DD. Sumber resmi: https://snpmb.id",
+  "jadwal": [
+    { "tahun": 2026, "mulai": "2026-04-21", "selesai": "2026-04-30", "status": "resmi" },
+    { "tahun": 2027, "mulai": "2027-04-21", "selesai": "2027-04-30", "status": "perkiraan" }
+  ]
+}
