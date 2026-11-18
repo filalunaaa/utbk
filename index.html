@@ -96,7 +96,7 @@ p{margin-bottom:12px}
 .opsi.benar .cek{background:var(--benar);border-color:var(--benar)}
 .opsi.salah .cek{background:var(--salah);border-color:var(--salah)}
 /* Soal isian bilangan cacah */
-.isian-input{font-size:1.05rem;font-weight:600;text-align:center;max-width:200px}
+.isian-input{font-size:1.05rem;font-weight:600;text-align:center;width:150px}
 .isian-input.benar{border-color:var(--benar);background:var(--benar-soft)}
 .isian-input.salah{border-color:var(--salah);background:var(--salah-soft)}
 .isian-review{display:flex;flex-wrap:wrap;gap:12px}
@@ -643,7 +643,7 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 #opsi-list .opsi.benar .huruf{background:var(--benar);color:#fff}#opsi-list .opsi.salah .huruf{background:var(--salah);color:#fff}
 #opsi-list .opsi.nonaktif{opacity:.55;cursor:default}
 #opsi-list .opsi:focus-visible{outline:3px solid rgba(37,99,235,.45);outline-offset:2px}
-.isian-input{font-size:1.05rem;font-weight:600;letter-spacing:.04em;min-height:42px;padding:8px 12px;max-width:200px;width:100%}.isian-input::placeholder{font-size:.9rem;font-weight:400;letter-spacing:0}.isian .label{margin-bottom:4px}
+.isian-input{display:block;font-size:1.05rem;font-weight:600;letter-spacing:.04em;min-height:46px;padding:10px 14px;width:150px;max-width:100%}.isian-input::placeholder{font-size:.9rem;font-weight:400;letter-spacing:0}.isian .label{margin-bottom:4px}
 .isian-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.2);outline:0}
 .ex-foot{position:sticky;bottom:0;z-index:5;align-items:center;margin:18px -20px 0;padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--card);border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius)}
 .ex-foot .btn{min-height:46px;min-width:104px}.ex-pos{font-size:.85rem;font-weight:700;color:var(--muted)}
@@ -2054,10 +2054,9 @@ function renderSoal() {
     const j = jawab[i];
     const kelasIsi = kunci[i] ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
     $('opsi-list').innerHTML = `<div class="isian">
-      <label class="label" for="inp-isian" style="margin-top:0">Jawaban Anda (bilangan cacah)</label>
-      <input id="inp-isian" class="input isian-input${kelasIsi}" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
-        placeholder="Ketik angka" value="${j === null || j === undefined ? '' : esc(j)}" ${kunci[i] ? 'disabled' : ''}>
-      <p class="muted" style="margin-top:6px">Isi dengan angka bulat 0, 1, 2, dan seterusnya. Tanpa koma, titik, atau tanda minus.</p></div>`;
+      <input id="inp-isian" aria-label="Jawaban Anda (bilangan cacah)" class="input isian-input${kelasIsi}" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
+        placeholder="Contoh: 24" value="${j === null || j === undefined ? '' : esc(j)}" ${kunci[i] ? 'disabled' : ''}>
+      <p class="muted" style="margin:4px 0 0;font-size:.8rem">Angka bulat, tanpa koma atau minus.</p></div>`;
   } else {
     $('opsi-list').innerHTML = s.opsi.map((o, k) => {
       let kelas = 'opsi';
@@ -3515,7 +3514,7 @@ function renderPratinjau() {
   const nama = { pg: 'pilihan ganda', kompleks: 'centang semua yang benar', isian: 'isian bilangan cacah' }[s.tipe];
   const kunci = isian ? esc(s.jawaban || '(belum diisi)') : kunciHuruf(s);
   const badan = isian
-    ? '<div class="isian"><input class="input isian-input" disabled placeholder="Ketik angka"></div>'
+    ? '<div class="isian"><input class="input isian-input" disabled placeholder="Contoh: 24"></div>'
     : `<div class="opsi-list">${s.opsi.map((o, k) => `<div class="opsi${kunciEditor && kunciOpsi(s, k) ? ' benar' : ''}">${s.tipe === 'kompleks' ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`).join('')}</div>`;
   const cek = bacaForm();
   kotak.innerHTML = `<div class="pratinjau-judul"><strong>Pratinjau</strong><span class="muted">Tampilan siswa: kunci dan pembahasan disembunyikan.</span></div>
@@ -3562,7 +3561,7 @@ function renderPv() {
   $('pv-info').textContent = `Soal ${pv.i + 1} dari ${n} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ', centang semua yang benar' : adaIsian(s) ? ', isian bilangan cacah' : ''}`;
   $('pv-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal');
   $('pv-opsi').innerHTML = adaIsian(s)
-    ? `<div class="isian"><label class="label" for="pv-isian" style="margin-top:0">Jawaban Anda (bilangan cacah)</label><input id="pv-isian" class="input isian-input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Ketik angka" value="${p === null ? '' : esc(p)}"></div>`
+    ? `<div class="isian"><input id="pv-isian" aria-label="Jawaban Anda (bilangan cacah)" class="input isian-input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Contoh: 24" value="${p === null ? '' : esc(p)}"></div>`
     : s.opsi.map((o, k) => {
       const dipil = adaGanda(s) ? Array.isArray(p) && p.includes(k) : p === k;
       const kelas = pv.kunci && kunciOpsi(s, k) ? ' benar' : dipil ? ' terpilih' : '';
