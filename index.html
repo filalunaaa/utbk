@@ -233,6 +233,20 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 /* Riwayat sesi & pivot analisis pilihan */
 /* Riwayat sesi: kartu per sesi + halaman pembahasan */
 /* Riwayat sesi v4: timeline, ring skor, peta hasil */
+/* v5: legenda kotak warna, tag mapel lengkap, pil selisih */
+.sx-lgd{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:.9rem}
+.sx-lgd span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+.sx-lgd b{color:var(--text);font-size:1.05rem;font-weight:800}
+.sx-lgd i{width:12px;height:12px;border-radius:4px;background:var(--border);display:inline-block}
+.sx-lgd i.benar{background:var(--benar)}.sx-lgd i.salah{background:var(--salah)}
+.sx-tag{font-size:.74rem;font-weight:700;letter-spacing:0;padding:2px 9px;border-radius:999px}
+.rs-delta{padding:2px 9px;border-radius:999px;font-size:.82rem}
+.rs-delta.naik{background:var(--benar-soft)}.rs-delta.turun{background:var(--salah-soft)}
+.rs-delta.tetap,.rs-delta.baru{background:var(--border);font-size:.75rem}
+.rs-delta.naik::before,.rs-delta.turun::before{content:"";display:inline-block;margin-right:5px;border-left:4px solid transparent;border-right:4px solid transparent;vertical-align:1px}
+.rs-delta.naik::before{border-bottom:6px solid currentColor}
+.rs-delta.turun::before{border-top:6px solid currentColor}
+
 .sx-ringkas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}
 .sx-ringkas div{background:var(--primary-soft);border-radius:12px;padding:8px 10px}
 .sx-ringkas small{display:block;font-size:.72rem;color:var(--muted);font-weight:600}
@@ -2484,9 +2498,9 @@ const IK_RS = {
 };
 function deltaHTML(d) {
   if (d === null) return '<span class="rs-delta baru">Baru</span>';
-  if (d > 0) return `<span class="rs-delta naik" title="Selisih poin akurasi">${IK_RS.naik}+${d}</span>`;
-  if (d < 0) return `<span class="rs-delta turun" title="Selisih poin akurasi">${IK_RS.turun}${d}</span>`;
-  return '<span class="rs-delta tetap">= 0</span>';
+  if (d > 0) return `<span class="rs-delta naik" title="Selisih poin akurasi">+${d}</span>`;
+  if (d < 0) return `<span class="rs-delta turun" title="Selisih poin akurasi">${d}</span>`;
+  return '<span class="rs-delta tetap">sama</span>';
 }
 const petaSoal = () => new Map([...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())].map((s) => [String(s.id), s]));
 function metaItem(r, peta) {
@@ -2558,7 +2572,7 @@ function daftarItem(e, peta, m) {
 }
 function tagMapel(a, maks) {
   const k = urutMapel(a);
-  return k.slice(0, maks).map((m) => `<span class="sx-tag" title="${esc(namaMapel(m))}">${esc(m)}</span>`).join('') + (k.length > maks ? `<span class="sx-tag">+${k.length - maks}</span>` : '');
+  return k.slice(0, maks).map((m) => `<span class="sx-tag">${esc(namaMapel(m))}</span>`).join('') + (k.length > maks ? `<span class="sx-tag">+${k.length - maks}</span>` : '');
 }
 const IK_PANAH = SV('<path d="M9 6l6 6-6 6"/>');
 function daftarSesiHTML() {
@@ -2579,7 +2593,7 @@ function daftarSesiHTML() {
       <span class="sx-tengah">
         <span class="sx-atas"><b>${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</b><span>${jamSesi(e.t)}</span></span>
         <span class="sx-meta">${st.n} soal &middot; ${st.b} benar${st.k ? ' &middot; ' + st.k + ' kosong' : ''}${dur}</span>
-        <span class="sx-tags">${filterSesiMapel ? `<span class="sx-tag">${esc(filterSesiMapel)}</span>` : tagMapel(a, 3)}</span>
+        <span class="sx-tags">${filterSesiMapel ? `<span class="sx-tag">${esc(namaMapel(filterSesiMapel))}</span>` : tagMapel(a, 2)}</span>
         <span class="sx-strip" aria-hidden="true">${strip}</span>
       </span>
       <span class="sx-kanan">${deltaHTML(a.d)}${IK_PANAH}</span></button>`;
@@ -2599,7 +2613,7 @@ function riwayatSesiHTML() {
   const terbaik = A.length ? Math.max(...A.map((x) => x.st.p)) : 0;
   const mapelAda = [...new Set(semua.flatMap((e) => e.item.map((r) => metaItem(r, peta).m)).filter(Boolean))];
   if (filterSesiMapel && !mapelAda.includes(filterSesiMapel)) filterSesiMapel = '';
-  const fil = [['', 'Semua']].concat(mapelAda.map((m) => [m, m])).map(([v, l]) => `<button type="button" class="sx-f${v === filterSesiMapel ? ' on' : ''}" data-fm="${esc(v)}" title="${esc(v ? namaMapel(v) : 'Semua mata pelajaran')}">${esc(l)}</button>`).join('');
+  const fil = [['', 'Semua']].concat(mapelAda.map((m) => [m, namaMapel(m)])).map(([v, l]) => `<button type="button" class="sx-f${v === filterSesiMapel ? ' on' : ''}" data-fm="${esc(v)}" title="${esc(v ? namaMapel(v) : 'Semua mata pelajaran')}">${esc(l)}</button>`).join('');
   return `<p class="label">Riwayat sesi</p>
     <div class="sx-ringkas"><div><small>Sesi</small><b>${semua.length}</b></div><div><small>Rata-rata</small><b>${rata}%</b></div><div><small>Terbaik</small><b>${terbaik}%</b></div></div>
     <div class="sx-filter">${fil}<button type="button" class="sx-urut" id="rs-urut">${IK_RS.urut}${urutSesi === 'baru' ? 'Terbaru' : 'Terlama'}</button></div>
@@ -2657,8 +2671,8 @@ function renderDetailSesi() {
     <div class="card sx-hero ${kelasSkor(st.p)}" style="margin-top:12px">
       <div class="sx-hero-atas">${ringSesi(st.p, 84)}
         <div><span class="sx-mode">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span><h2>${tglPenuh}</h2><p class="muted" style="margin:2px 0 0">${st.n} soal${dur}</p></div></div>
-      <div class="sx-tags" style="margin-top:12px">${rdState.m ? `<span class="sx-tag">${esc(rdState.m)}</span>` : tagMapel(a, 6)}</div>
-      <div class="rs-chips" style="margin-top:10px"><span class="rs-chip ok">${IK_RS.ok}${st.b} benar</span><span class="rs-chip no">${IK_RS.no}${st.s} salah</span>${st.k ? `<span class="rs-chip">${st.k} kosong</span>` : ''}</div>
+      <div class="sx-tags" style="margin-top:12px">${rdState.m ? `<span class="sx-tag">${esc(namaMapel(rdState.m))}</span>` : tagMapel(a, 6)}</div>
+      <div class="sx-lgd"><span><i class="benar"></i><b>${st.b}</b> benar</span><span><i class="salah"></i><b>${st.s}</b> salah</span>${st.k ? `<span><i class="kosong"></i><b>${st.k}</b> kosong</span>` : ''}</div>
       <p class="gm-judul" style="margin-top:14px">Peta soal (ketuk nomor untuk melompat)</p><div class="gm-petak">${petak}</div>
     </div>
     <div class="card">
