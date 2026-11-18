@@ -143,7 +143,25 @@ p{margin-bottom:12px}
 .konten p{margin-bottom:8px}
 .konten ul,.konten ol,.editor-area ul,.editor-area ol{padding-left:28px;margin:6px 0 10px 0}
 .konten li,.editor-area li{margin-bottom:2px}
-.konten table,.editor-area table{border-collapse:separate;border-spacing:0;width:100%;margin:12px 0 16px;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow);font-size:.95rem}.konten th{background:var(--primary);color:#fff;font-weight:700;text-align:left;padding:10px 14px}.konten td{text-align:left;padding:10px 14px;border-top:1px solid var(--border)}.konten tbody tr:nth-child(even) td{background:var(--primary-soft)}.konten tbody td:first-child{border-left:4px solid var(--primary)}
+.konten table,.editor-area table{border-collapse:collapse;width:100%;margin:10px 0 14px;font-size:.92rem;line-height:1.45;display:table!important;overflow:visible}
+.konten th,.konten td,.editor-area th,.editor-area td{padding:7px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}
+.konten th,.editor-area th{font-weight:700;color:var(--primary-dark);border-bottom:2px solid var(--primary);background:transparent;white-space:normal}
+.konten tbody tr:last-child td,.konten tr:last-child td{border-bottom:none}
+.konten tbody tr:hover td{background:var(--primary-soft)}
+.editor-area td,.editor-area th{min-width:48px;border:1px dashed var(--border)}
+.editor-area th{border-bottom:2px solid var(--primary)}
+@media(max-width:520px){.konten table,.editor-area table{font-size:.85rem}.konten th,.konten td{padding:6px 8px}}
+.bar-tabel{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:5px 8px;background:var(--card);border-bottom:1px solid var(--border);font-size:.8rem}
+.bar-tabel .judul-bar{font-weight:700;color:var(--muted);margin-right:4px}
+.bar-tabel button{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:6px;padding:3px 8px;font:inherit;font-size:.8rem;cursor:pointer}
+.bar-tabel button:hover{background:var(--hover)}
+.bar-tabel button.bahaya{color:var(--salah)}
+.pemilih-tabel{position:absolute;z-index:20;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:var(--shadow)}
+.pemilih-tabel .kisi{display:grid;grid-template-columns:repeat(8,22px);gap:3px}
+.pemilih-tabel .kisi i{width:22px;height:22px;border:1px solid var(--border);border-radius:4px;cursor:pointer}
+.pemilih-tabel .kisi i.on{background:var(--primary);border-color:var(--primary)}
+.pemilih-tabel .info{margin-top:8px;font-size:.8rem;color:var(--muted);text-align:center}
+.editor{position:relative}
 .konten{line-height:1.85}.konten p{margin-bottom:12px}.konten p:last-child{margin-bottom:0}
 .konten ul,.konten ol{margin:4px 0 12px 0}.konten li{margin-bottom:6px}
 .konten mjx-container:not([display="true"]){margin:0 .18em}
@@ -617,7 +635,7 @@ body[data-hal="kuis"] .container{padding-top:0}
 .ex-nav button:disabled{opacity:.4;cursor:not-allowed}
 .teks-soal{font-size:1.08rem;line-height:1.75;margin:16px 0 20px;overflow-x:auto;overflow-wrap:anywhere}
 .teks-soal img,.opsi-isi img{max-width:100%;height:auto}
-.teks-soal table{display:block;max-width:100%;overflow-x:auto}
+.teks-soal table{max-width:100%}
 mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 #opsi-list .opsi{min-height:56px;border-radius:14px;padding:12px 14px;border-width:2px;cursor:pointer}
 #opsi-list .opsi .huruf{width:34px;height:34px;border-radius:50%;font-weight:800}
@@ -2460,6 +2478,7 @@ const IKON = {
   wrapKanan: ikon('<rect x="10" y="4" width="6" height="6" rx="1"/><path d="M2 4h6M2 7h6M2 10h6M2 13h14"/>'),
   tengahGambar: ikon('<path d="M2 3h14M2 15h14"/><rect x="5.5" y="6" width="7" height="6" rx="1"/>'),
   sebaris: ikon('<path d="M2 7h14M2 11h14"/><rect x="6.5" y="6" width="5" height="6" rx="1" fill="currentColor"/>'),
+  tabel: ikon('<rect x="2" y="3" width="14" height="12" rx="1.5"/><path d="M2 7.5h14M2 11h14M7 3v12M12 3v12"/>'),
   rumus: ikon('<text x="1.5" y="13" font-size="11" font-style="italic" fill="currentColor" stroke="none">fx</text>'),
   hapus: ikon('<path d="M3 5h12M7 5V3h4v2M5 5l1 11h6l1-11"/>'),
   daftarTitik: ikon('<circle cx="3" cy="5" r="1.2" fill="currentColor"/><circle cx="3" cy="9" r="1.2" fill="currentColor"/><circle cx="3" cy="13" r="1.2" fill="currentColor"/><path d="M7 5h9M7 9h9M7 13h9"/>'),
@@ -2500,6 +2519,7 @@ const TOMBOL_EDITOR = [
   { sep: true },
   { aksi: 'rumus', ikon: IKON.rumus, judul: 'Jadikan rumus (diapit tanda $)' },
   { sep: true },
+  { aksi: 'tabel', ikon: IKON.tabel, judul: 'Sisipkan tabel' },
   { aksi: 'gambar', ikon: IKON.gambar, judul: 'Sisipkan gambar di posisi kursor' }
 ];
 // Toolbar ringkas untuk pilihan jawaban: format dasar dan gambar saja
@@ -2529,6 +2549,89 @@ function barGambarHTML() {
 }
 
 // kecil = true untuk pilihan jawaban (toolbar ringkas, area lebih pendek)
+const BAR_TABEL = `<div class="bar-tabel" hidden><span class="judul-bar">Tabel:</span>
+  <button type="button" data-t="baris+">+ Baris</button><button type="button" data-t="kolom+">+ Kolom</button>
+  <button type="button" data-t="baris-">− Baris</button><button type="button" data-t="kolom-">− Kolom</button>
+  <button type="button" class="bahaya" data-t="hapus">Hapus tabel</button></div>`;
+function sel2cell(area) {
+  const s = window.getSelection();
+  if (!s.rangeCount) return null;
+  let n = s.anchorNode;
+  if (n && n.nodeType === 3) n = n.parentNode;
+  const c = n && n.closest ? n.closest('td,th') : null;
+  return c && area.contains(c) ? c : null;
+}
+function isiSel(c) { c.innerHTML = '<br>'; }
+function fokusSel(c) {
+  const rg = document.createRange(); rg.selectNodeContents(c); rg.collapse(true);
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(rg);
+}
+function aksiTabel(area, aksi) {
+  const c = sel2cell(area);
+  if (!c) return;
+  const tr = c.parentNode, tbl = c.closest('table'), idx = c.cellIndex;
+  if (aksi === 'hapus') { tbl.remove(); return; }
+  if (aksi === 'baris+') {
+    const baru = document.createElement('tr');
+    for (let i = 0; i < tr.cells.length; i++) { const d = document.createElement('td'); isiSel(d); baru.appendChild(d); }
+    if (tr.parentNode.tagName === 'THEAD') {
+      let tb = tbl.tBodies[0];
+      if (!tb) { tb = document.createElement('tbody'); tbl.appendChild(tb); }
+      tb.insertBefore(baru, tb.firstChild);
+    } else tr.after(baru);
+    fokusSel(baru.cells[Math.min(idx, baru.cells.length - 1)]);
+  } else if (aksi === 'baris-') {
+    const tujuan = tr.nextElementSibling || tr.previousElementSibling;
+    tr.remove();
+    if (!tbl.rows.length) tbl.remove(); else if (tujuan) fokusSel(tujuan.cells[Math.min(idx, tujuan.cells.length - 1)]);
+  } else if (aksi === 'kolom+') {
+    [...tbl.rows].forEach((row) => {
+      const d = document.createElement(row.cells[idx] && row.cells[idx].tagName === 'TH' ? 'th' : 'td');
+      isiSel(d);
+      row.cells[idx] ? row.cells[idx].after(d) : row.appendChild(d);
+    });
+    fokusSel(tr.cells[idx + 1]);
+  } else if (aksi === 'kolom-') {
+    if (tr.cells.length <= 1) { tbl.remove(); return; }
+    [...tbl.rows].forEach((row) => row.cells[idx] && row.cells[idx].remove());
+    fokusSel(tr.cells[Math.min(idx, tr.cells.length - 1)]);
+  }
+}
+function sisipTabel(area, baris, kolom) {
+  const sel = (tag) => `<${tag}><br></${tag}>`;
+  const kepala = '<thead><tr>' + sel('th').repeat(kolom) + '</tr></thead>';
+  const badan = '<tbody>' + ('<tr>' + sel('td').repeat(kolom) + '</tr>').repeat(Math.max(baris - 1, 1)) + '</tbody>';
+  area.focus();
+  document.execCommand('insertHTML', false, `<table data-baru="1">${kepala}${badan}</table><p><br></p>`);
+  const tb = area.querySelector('table[data-baru]');
+  if (tb) { tb.removeAttribute('data-baru'); fokusSel(tb.rows[0].cells[0]); }
+}
+function pemilihTabel(wadah, area, tombol) {
+  const lama = wadah.querySelector('.pemilih-tabel');
+  if (lama) { lama.remove(); return; }
+  const R = 6, K = 8;
+  const el = document.createElement('div');
+  el.className = 'pemilih-tabel';
+  el.innerHTML = '<div class="kisi">' + Array.from({ length: R * K }, (_, i) => `<i data-r="${Math.floor(i / K) + 1}" data-k="${(i % K) + 1}"></i>`).join('') + '</div><div class="info">Pilih ukuran tabel</div>';
+  el.style.top = (tombol.offsetTop + tombol.offsetHeight + 6) + 'px';
+  el.style.left = '8px';
+  el.addEventListener('mousedown', (e) => e.preventDefault());
+  const sorot = (r, k) => {
+    el.querySelectorAll('i').forEach((c) => c.classList.toggle('on', +c.dataset.r <= r && +c.dataset.k <= k));
+    el.querySelector('.info').textContent = r ? `${r} baris × ${k} kolom` : 'Pilih ukuran tabel';
+  };
+  el.addEventListener('mouseover', (e) => { const c = e.target.closest('i'); if (c) sorot(+c.dataset.r, +c.dataset.k); });
+  el.addEventListener('click', (e) => {
+    const c = e.target.closest('i');
+    if (!c) return;
+    el.remove();
+    sisipTabel(area, +c.dataset.r, +c.dataset.k);
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  wadah.appendChild(el);
+  const tutup = (e) => { if (!el.contains(e.target) && !tombol.contains(e.target)) { el.remove(); document.removeEventListener('mousedown', tutup); } };
+  setTimeout(() => document.addEventListener('mousedown', tutup), 0);
+}
 function buatEditor(id, placeholder, kecil) {
   const wadah = $(id);
   wadah.classList.add('editor');
@@ -2538,11 +2641,36 @@ function buatEditor(id, placeholder, kecil) {
     const isi = t.ikon || t.label;
     const data = t.list ? `data-list="${t.list}"` : `data-cmd="${t.cmd || ''}" data-val="${t.val || ''}" data-aksi="${t.aksi || ''}"`;
     return `<button type="button" ${data} title="${t.judul}" aria-label="${t.judul}">${isi}</button>`;
-  }).join('')}</div><div class="editor-area${kecil ? ' kecil' : ''}" contenteditable="true" data-placeholder="${placeholder}"></div>${barGambarHTML()}`;
+  }).join('')}</div>${kecil ? '' : BAR_TABEL}<div class="editor-area${kecil ? ' kecil' : ''}" contenteditable="true" data-placeholder="${placeholder}"></div>${barGambarHTML()}`;
 
   const area = wadah.querySelector('.editor-area');
   const toolbar = wadah.querySelector('.editor-toolbar');
   const bar = wadah.querySelector('.bar-gambar');
+  const barT = wadah.querySelector('.bar-tabel');
+  if (barT) {
+    const segarkanBarT = () => { barT.hidden = !(document.activeElement === area && sel2cell(area)); };
+    ['keyup', 'click', 'focus', 'input'].forEach((ev) => area.addEventListener(ev, segarkanBarT));
+    document.addEventListener('selectionchange', () => { if (document.activeElement === area) segarkanBarT(); });
+    barT.addEventListener('mousedown', (e) => e.preventDefault());
+    barT.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-t]');
+      if (!b) return;
+      area.focus();
+      aksiTabel(area, b.dataset.t);
+      segarkanBarT();
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    area.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const c = sel2cell(area);
+      if (!c) return;
+      e.preventDefault();
+      const semua = [...c.closest('table').querySelectorAll('th,td')];
+      const i = semua.indexOf(c) + (e.shiftKey ? -1 : 1);
+      if (i >= semua.length) { aksiTabel(area, 'baris+'); return; }
+      if (i >= 0) fokusSel(semua[i]);
+    });
+  }
   // Agar klik tombol tidak mencuri fokus/posisi kursor dari editor
   toolbar.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
   toolbar.addEventListener('click', (e) => {
@@ -2551,6 +2679,7 @@ function buatEditor(id, placeholder, kecil) {
     editorAktif = area;
     if (b.dataset.aksi === 'rumus') { area.focus(); return sisipRumus(); }
     if (b.dataset.aksi === 'gambar') { $('file-gambar').click(); return; }
+    if (b.dataset.aksi === 'tabel') return pemilihTabel(wadah, area, b);
     area.focus();
     if (b.dataset.list) return terapkanDaftar(b.dataset.list, area);
     document.execCommand(b.dataset.cmd, false, b.dataset.val || null);
@@ -2994,6 +3123,7 @@ function simpanSoal() {
   }
   resetForm();
   tutupForm();
+  if ($('hasil-validasi').innerHTML) jalankanValidasi();
   pesanForm(pesan, false);
   pesanBank(pesan, false);
   renderSemuaBank();
