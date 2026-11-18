@@ -43,6 +43,11 @@ p{margin-bottom:12px}
 .aksi-kiri{justify-content:flex-start;flex-wrap:wrap;align-items:center}
 .alat-dev{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
 .alat-dev summary{cursor:pointer;font-weight:700}
+.es-baris{display:grid;grid-template-columns:minmax(0,1fr) 78px 78px 28px;gap:6px;align-items:center;margin-top:6px}
+.es-baris.kepala{font-size:.78rem;font-weight:700;color:var(--muted);margin-top:10px}
+.es-baris input{width:100%;padding:6px 8px;font:inherit;font-size:.9rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text)}
+.es-baris .x{border:none;background:transparent;color:var(--salah);cursor:pointer;font-size:1.1rem}
+.es-judul{font-size:.8rem;font-weight:700;margin-top:12px}
 .vl-ringkas{margin:10px 0;font-weight:700}
 .vl-item{border:1px solid var(--border);border-left:4px solid var(--salah);border-radius:8px;background:var(--card);padding:8px 12px;margin-top:8px;font-size:.9rem}
 .vl-item.peringatan{border-left-color:#d97706}
@@ -923,6 +928,17 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <p class="muted">Periksa semua soal bawaan yang sedang aktif: opsi kembar, kunci di luar jangkauan, pembahasan kosong, rumus tanpa tanda $, dan lainnya.</p>
         <div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" id="btn-validasi">Cek semua soal</button></div>
         <div id="hasil-validasi"></div>
+      </details>
+      <details class="alat-dev" id="alat-stat">
+        <summary>Atur statistik akun saya</summary>
+        <p class="muted">Ubah angka statistik akunmu langsung, tanpa mengerjakan soal. Hanya memengaruhi akunmu sendiri.</p>
+        <div id="editor-stat"></div>
+        <div class="aksi-kecil">
+          <button class="btn btn-primary btn-kecil" id="btn-simpan-stat">Simpan statistik</button>
+          <button class="btn btn-secondary btn-kecil" id="btn-tambah-topik">+ Topik</button>
+          <button class="btn btn-secondary btn-kecil" id="btn-nol-stat">Kosongkan semua</button>
+        </div>
+        <p class="pesan" id="pesan-stat"></p>
       </details>
     </div>
     <div class="card" id="kartu-form" hidden>
@@ -3003,6 +3019,60 @@ $('btn-validasi').addEventListener('click', jalankanValidasi);
 $('hasil-validasi').addEventListener('click', (e) => {
   const b = e.target.closest('[data-edit]');
   if (b) mulaiEdit(b.dataset.edit);
+});
+function renderEditorStat() {
+  const d = Penyimpanan.ambil();
+  const baris = (grup, nama, v, tetap) => `<div class="es-baris" data-grup="${grup}">`
+    + (tetap ? `<span>${esc(nama)}</span>` : `<input class="nm" value="${esc(nama)}" placeholder="Nama topik" aria-label="Nama topik">`)
+    + `<input class="tt" type="number" min="0" step="1" value="${v.total || 0}" aria-label="Total">`
+    + `<input class="bn" type="number" min="0" step="1" value="${v.benar || 0}" aria-label="Benar">`
+    + (tetap ? '<span></span>' : '<button type="button" class="x" title="Hapus">✕</button>') + '</div>';
+  const mapel = { PK: { total: 0, benar: 0 }, PM: { total: 0, benar: 0 }, ...d.mapel };
+  $('editor-stat').innerHTML = '<div class="es-baris kepala"><span></span><span>Total</span><span>Benar</span><span></span></div>'
+    + baris('all', 'Keseluruhan', d, true)
+    + '<div class="es-judul">Per mata pelajaran</div>'
+    + Object.entries(mapel).map(([k, v]) => baris('mapel', k, v, true)).join('')
+    + '<div class="es-judul">Per topik</div><div id="stat-topik">'
+    + Object.entries(d.topik || {}).map(([k, v]) => baris('topik', k, v, false)).join('') + '</div>';
+}
+function bacaEditorStat() {
+  const hasil = { total: 0, benar: 0, mapel: {}, topik: {} };
+  const ambil = (el) => ({ total: Number(el.querySelector('.tt').value), benar: Number(el.querySelector('.bn').value) });
+  for (const el of document.querySelectorAll('#editor-stat .es-baris[data-grup]')) {
+    const v = ambil(el);
+    if (![v.total, v.benar].every((x) => Number.isInteger(x) && x >= 0)) return { error: 'Semua angka harus bilangan bulat 0 atau lebih.' };
+    if (v.benar > v.total) return { error: 'Jumlah benar tidak boleh melebihi total.' };
+    const g = el.dataset.grup;
+    if (g === 'all') { hasil.total = v.total; hasil.benar = v.benar; continue; }
+    const nama = g === 'mapel' ? el.querySelector('span').textContent : el.querySelector('.nm').value.trim();
+    if (!nama) { if (v.total || v.benar) return { error: 'Ada topik yang belum diberi nama.' }; continue; }
+    if (g === 'topik' && hasil.topik[nama]) return { error: 'Nama topik kembar: ' + nama };
+    hasil[g][nama] = v;
+  }
+  return hasil;
+}
+function pesanStat(teks, err) { const p = $('pesan-stat'); p.textContent = teks; p.className = 'pesan ' + (err ? 'err' : 'ok'); }
+$('alat-stat').addEventListener('toggle', () => { if ($('alat-stat').open) renderEditorStat(); });
+$('btn-tambah-topik').addEventListener('click', () => {
+  if (!$('stat-topik')) renderEditorStat();
+  $('stat-topik').insertAdjacentHTML('beforeend', '<div class="es-baris" data-grup="topik"><input class="nm" placeholder="Nama topik" aria-label="Nama topik"><input class="tt" type="number" min="0" step="1" value="0" aria-label="Total"><input class="bn" type="number" min="0" step="1" value="0" aria-label="Benar"><button type="button" class="x" title="Hapus">✕</button></div>');
+  $('stat-topik').lastElementChild.querySelector('.nm').focus();
+});
+$('editor-stat').addEventListener('click', (e) => { const x = e.target.closest('.x'); if (x) x.closest('.es-baris').remove(); });
+$('btn-simpan-stat').addEventListener('click', async () => {
+  const h = bacaEditorStat();
+  if (h.error) return pesanStat(h.error, true);
+  Penyimpanan.simpan(h);
+  renderEditorStat(); renderBeranda();
+  pesanStat('Statistik disimpan.', false);
+  try { await sinkron(); pesanStat('Statistik disimpan dan disinkronkan ke akun.', false); }
+  catch (err) { pesanStat('Tersimpan di perangkat ini, tapi gagal sinkron ke akun: ' + err.message, true); }
+});
+$('btn-nol-stat').addEventListener('click', async () => {
+  if (!confirm('Kosongkan semua statistik akunmu?')) return;
+  Penyimpanan.simpan(Penyimpanan.kosong());
+  renderEditorStat(); renderBeranda();
+  try { await sinkron(); pesanStat('Statistik dikosongkan.', false); } catch (err) { pesanStat('Dikosongkan di perangkat ini, gagal sinkron: ' + err.message, true); }
 });
 function pesanForm(teks, err) {
   const p = $('pesan-form');
