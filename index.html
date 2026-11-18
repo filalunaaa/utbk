@@ -79,6 +79,22 @@ p{margin-bottom:12px}
 .opsi-isi img{max-width:100%;height:auto}
 .opsi .huruf,.huruf{flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--primary-soft);color:var(--accent);border-radius:50%;font-weight:700;font-size:.9rem}
 .opsi.terpilih{border-color:var(--primary);background:var(--primary-soft)}
+/* Kotak centang untuk soal pilihan ganda kompleks */
+.opsi .cek{flex-shrink:0;width:22px;height:22px;border:2px solid var(--border);border-radius:6px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff}
+.opsi.terpilih .cek{background:var(--primary);border-color:var(--primary)}
+.opsi.terpilih .cek::after,.opsi.benar .cek::after,.opsi.salah .cek::after{content:"\2713"}
+.opsi.benar .cek{background:var(--benar);border-color:var(--benar)}
+.opsi.salah .cek{background:var(--salah);border-color:var(--salah)}
+/* Soal isian bilangan cacah */
+.isian-input{font-size:1.5rem;font-weight:700;text-align:center;letter-spacing:.06em;max-width:280px}
+.isian-input.benar{border-color:var(--benar);background:var(--benar-soft)}
+.isian-input.salah{border-color:var(--salah);background:var(--salah-soft)}
+.isian-review{display:flex;flex-wrap:wrap;gap:12px}
+.isian-review>div{flex:1;min-width:140px;border:2px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.isian-review>div strong{font-size:1.25rem}
+.isian-review .jawab.benar{border-color:var(--benar);background:var(--benar-soft)}
+.isian-review .jawab.salah{border-color:var(--salah);background:var(--salah-soft)}
+.isian-review .kunci{border-color:var(--benar)}
 .opsi.benar{border-color:var(--benar);background:var(--benar-soft)}
 .opsi.salah{border-color:var(--salah);background:var(--salah-soft)}
 .feedback{margin-top:16px;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--primary-soft)}
@@ -501,26 +517,46 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <label class="chip"><input type="radio" name="f-level" value="sulit"><span>Sulit</span></label>
       </div>
 
+      <p class="label">Tipe soal</p>
+      <div class="pilihan" id="pilih-tipe">
+        <label class="chip"><input type="radio" name="f-tipe" value="pg" checked><span>Pilihan ganda</span></label>
+        <label class="chip"><input type="radio" name="f-tipe" value="kompleks"><span>PG kompleks (centang)</span></label>
+        <label class="chip"><input type="radio" name="f-tipe" value="isian"><span>Isian bilangan cacah</span></label>
+      </div>
+
       <p class="label" for="f-folder">Simpan ke folder</p>
       <select class="input" id="f-folder"></select>
 
       <p class="label">Teks soal</p>
       <div class="editor-wrap" id="ed-soal"></div>
 
+      <div id="blok-opsi">
       <p class="label">Pilihan jawaban (bisa teks atau gambar)</p>
       <div class="baris-opsi-ed"><span class="huruf">A</span><div class="editor-wrap" id="ed-opsi0"></div></div>
       <div class="baris-opsi-ed"><span class="huruf">B</span><div class="editor-wrap" id="ed-opsi1"></div></div>
       <div class="baris-opsi-ed"><span class="huruf">C</span><div class="editor-wrap" id="ed-opsi2"></div></div>
       <div class="baris-opsi-ed"><span class="huruf">D</span><div class="editor-wrap" id="ed-opsi3"></div></div>
       <div class="baris-opsi-ed"><span class="huruf">E</span><div class="editor-wrap" id="ed-opsi4"></div></div>
+      </div>
 
-      <p class="label">Kunci jawaban</p>
-      <div class="pilihan">
+      <p class="label" id="label-kunci">Kunci jawaban</p>
+      <div class="pilihan" id="kunci-pg">
         <label class="chip"><input type="radio" name="f-jawaban" value="0" checked><span>A</span></label>
         <label class="chip"><input type="radio" name="f-jawaban" value="1"><span>B</span></label>
         <label class="chip"><input type="radio" name="f-jawaban" value="2"><span>C</span></label>
         <label class="chip"><input type="radio" name="f-jawaban" value="3"><span>D</span></label>
         <label class="chip"><input type="radio" name="f-jawaban" value="4"><span>E</span></label>
+      </div>
+      <div class="pilihan" id="kunci-kompleks" hidden>
+        <label class="chip"><input type="checkbox" name="f-jawaban-ganda" value="0"><span>A</span></label>
+        <label class="chip"><input type="checkbox" name="f-jawaban-ganda" value="1"><span>B</span></label>
+        <label class="chip"><input type="checkbox" name="f-jawaban-ganda" value="2"><span>C</span></label>
+        <label class="chip"><input type="checkbox" name="f-jawaban-ganda" value="3"><span>D</span></label>
+        <label class="chip"><input type="checkbox" name="f-jawaban-ganda" value="4"><span>E</span></label>
+      </div>
+      <div id="kunci-isian" hidden>
+        <input class="input isian-input" id="f-isian" type="text" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="contoh: 24">
+        <p class="muted" style="margin-top:6px">Isi dengan bilangan cacah (0, 1, 2, dan seterusnya), tanpa koma, titik, atau tanda minus.</p>
       </div>
 
       <p class="label">Pembahasan</p>
@@ -625,6 +661,7 @@ const PilihanStat = {
     try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) {}
   },
   catat(soal, pilihan) {
+    if (adaIsian(soal)) return; // soal isian tidak punya pilihan untuk dianalisis
     const d = this.ambil();
     const k = String(soal.id);
     d[k] = d[k] || { total: 0, pilih: [0, 0, 0, 0, 0] };
@@ -921,7 +958,11 @@ const SOAL_BAWAAN = [
   { id: 55, mataPelajaran: "PM", topik: "Peluang", tingkatKesulitan: "sedang",
     soal: "<p>Sebuah kotak pensil berisi 3 spidol merah, 3 spidol hitam, dan 4 spidol biru. Dari dalam kotak pensil akan diambil 3 spidol sekaligus secara acak. Jika peluang terambil 2 spidol biru dan 1 spidol merah adalah $\\frac{a}{b}$, maka nilai $a + \\frac{b}{5}$ sama dengan ...</p>",
     opsi: ["5", "6", "7", "10", "20"], jawaban: 2,
-    pembahasan: "<p>Banyak cara mengambil 3 dari 10 spidol: $\\binom{10}{3} = 120$.</p><p>Cara mengambil 2 biru dan 1 merah: $\\binom{4}{2} \\cdot \\binom{3}{1} = 6 \\times 3 = 18$.</p><p>Peluang $= \\frac{18}{120} = \\frac{3}{20}$, jadi $a = 3$ dan $b = 20$.</p><p>Nilai $a + \\frac{b}{5} = 3 + 4 = 7$.</p>" }
+    pembahasan: "<p>Banyak cara mengambil 3 dari 10 spidol: $\\binom{10}{3} = 120$.</p><p>Cara mengambil 2 biru dan 1 merah: $\\binom{4}{2} \\cdot \\binom{3}{1} = 6 \\times 3 = 18$.</p><p>Peluang $= \\frac{18}{120} = \\frac{3}{20}$, jadi $a = 3$ dan $b = 20$.</p><p>Nilai $a + \\frac{b}{5} = 3 + 4 = 7$.</p>" },
+  {"id":56,"tipe":"isian","mataPelajaran":"PK","topik":"Aljabar","tingkatKesulitan":"sedang","soal":"<p>Jika $3x + 5 = 29$, maka nilai dari $x^2 - 4x$ adalah ...</p>","opsi":[],"jawaban":32,"pembahasan":"<p>Dari $3x + 5 = 29$ diperoleh $3x = 24$, sehingga $x = 8$.</p><p>Maka $x^2 - 4x = 8^2 - 4 \\cdot 8 = 64 - 32 = 32$.</p>"},
+  {"id":57,"tipe":"isian","mataPelajaran":"PM","topik":"Barisan dan Deret","tingkatKesulitan":"sedang","soal":"<p>Pada barisan aritmetika, suku ke-3 adalah $11$ dan suku ke-7 adalah $27$. Suku ke-10 barisan tersebut adalah ...</p>","opsi":[],"jawaban":39,"pembahasan":"<p>$U_7 - U_3 = 4b = 16$, sehingga beda $b = 4$.</p><p>Suku pertama $a = U_3 - 2b = 11 - 8 = 3$.</p><p>Maka $U_{10} = a + 9b = 3 + 36 = 39$.</p>"},
+  {"id":58,"tipe":"kompleks","mataPelajaran":"PK","topik":"Fungsi","tingkatKesulitan":"sedang","soal":"<p>Diberikan fungsi $f(x) = x^2 - 4x + 3$.</p><p>Pilihlah semua pernyataan yang benar!</p>","opsi":["$f(0) = 3$","Grafik $f$ memotong sumbu X di $x = 1$ dan $x = 3$","Nilai minimum $f(x)$ adalah $-1$","Sumbu simetri grafik $f$ adalah $x = -2$","$f(x) > 0$ untuk semua bilangan real $x$"],"jawaban":[0,1,2],"pembahasan":"<p>A benar: $f(0) = 3$.</p><p>B benar: $f(x) = (x-1)(x-3)$, sehingga memotong sumbu X di $x = 1$ dan $x = 3$.</p><p>C benar dan D salah: sumbu simetri $x = -\\frac{b}{2a} = 2$, dan nilai minimumnya $f(2) = 4 - 8 + 3 = -1$.</p><p>E salah: karena $f(2) = -1 < 0$.</p>"},
+  {"id":59,"tipe":"kompleks","mataPelajaran":"PK","topik":"Persen","tingkatKesulitan":"sedang","soal":"<p>Harga sebuah barang adalah Rp200.000. Toko memberi diskon 20%, lalu diskon tambahan 10% dari harga setelah diskon pertama.</p><p>Pilihlah semua pernyataan yang benar!</p>","opsi":["Harga setelah diskon pertama adalah Rp160.000.","Diskon tambahan bernilai Rp20.000.","Harga akhir barang adalah Rp144.000.","Total potongan harga sama dengan 28% dari harga awal.","Total potongan harga sama dengan 30% dari harga awal."],"jawaban":[0,2,3],"pembahasan":"<p>Setelah diskon 20%, harga menjadi $0{,}8 \\times 200.000 = 160.000$ (A benar).</p><p>Diskon tambahan $10\\% \\times 160.000 = 16.000$, bukan 20.000 (B salah).</p><p>Harga akhir $160.000 - 16.000 = 144.000$ (C benar).</p><p>Total potongan $200.000 - 144.000 = 56.000$, yaitu $\\frac{56.000}{200.000} \\times 100\\% = 28\\%$ (D benar, E salah).</p>"}
 ];
 
 // ---------- Soal bawaan dari server (Supabase: tabel soal_default) ----------
@@ -1241,15 +1282,38 @@ const HURUF = ['A', 'B', 'C', 'D', 'E'];
 const NAMA_MAPEL = { PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' };
 const namaMapel = (v) => NAMA_MAPEL[v] || v;
 // Soal "pilih semua yang benar": jawaban berupa array indeks, contoh [0, 2]
-const adaGanda = (s) => Array.isArray(s.jawaban);
-const kunciHuruf = (s) => (adaGanda(s) ? s.jawaban.map((k) => HURUF[k]).join(', ') : HURUF[s.jawaban]);
-const kunciOpsi = (s, k) => (adaGanda(s) ? s.jawaban.includes(k) : s.jawaban === k);
-const dipilih = (s, j, k) => (adaGanda(s) ? Array.isArray(j) && j.includes(k) : j === k);
+// Tiga tipe soal: 'pg' (satu jawaban), 'kompleks' (centang semua yang benar, jawaban array), 'isian' (bilangan cacah)
+const tipeSoal = (s) => (s.tipe === 'isian' ? 'isian' : Array.isArray(s.jawaban) ? 'kompleks' : 'pg');
+const adaIsian = (s) => tipeSoal(s) === 'isian';
+const adaGanda = (s) => tipeSoal(s) === 'kompleks';
+const kunciHuruf = (s) => (adaIsian(s) ? String(s.jawaban) : adaGanda(s) ? s.jawaban.map((k) => HURUF[k]).join(', ') : HURUF[s.jawaban]);
+const kunciOpsi = (s, k) => (adaIsian(s) ? false : adaGanda(s) ? s.jawaban.includes(k) : s.jawaban === k);
+const dipilih = (s, j, k) => (adaIsian(s) ? false : adaGanda(s) ? Array.isArray(j) && j.includes(k) : j === k);
 const jawabBenar = (s, j) => {
   if (j === null || j === undefined) return false;
+  if (adaIsian(s)) return Number(j) === Number(s.jawaban);
   if (!adaGanda(s)) return j === s.jawaban;
   return Array.isArray(j) && j.length === s.jawaban.length && s.jawaban.every((k) => j.includes(k));
 };
+const teksJawabanmu = (s, j) => (j === null || j === undefined || (Array.isArray(j) && !j.length) ? 'Tidak dijawab'
+  : adaIsian(s) ? String(j) : Array.isArray(j) ? j.map((k) => HURUF[k]).join(', ') : HURUF[j]);
+// Tampilan pilihan (atau kotak jawaban untuk soal isian) yang dipakai di review, riwayat, dan bank soal.
+// j = jawaban pengguna; kalau tidak diberikan (undefined) hanya kunci yang ditandai.
+function opsiReviewHTML(s, j) {
+  if (adaIsian(s)) {
+    if (j === undefined) return `<div class="isian-review"><div class="kunci"><span class="muted">Kunci jawaban (bilangan cacah)</span><strong>${esc(s.jawaban)}</strong></div></div>`;
+    const kosong = j === null;
+    return `<div class="isian-review">
+      <div class="jawab ${kosong ? '' : jawabBenar(s, j) ? 'benar' : 'salah'}"><span class="muted">Jawaban Anda</span><strong>${kosong ? 'Tidak dijawab' : esc(j)}</strong></div>
+      <div class="kunci"><span class="muted">Kunci jawaban</span><strong>${esc(s.jawaban)}</strong></div></div>`;
+  }
+  return s.opsi.map((o, x) => {
+    let kelas = 'opsi';
+    if (kunciOpsi(s, x)) kelas += ' benar';
+    else if (dipilih(s, j, x)) kelas += ' salah';
+    return `<div class="${kelas}">${adaGanda(s) ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[x]}</span>${isiOpsi(o)}</div>`;
+  }).join('');
+}
 const $ = (id) => document.getElementById(id);
 let sesi = null;
 let editId = null;           // id soal bank yang sedang diedit (null = soal baru)
@@ -1422,16 +1486,26 @@ function renderSoal() {
   const { soal, jawab, kunci, i, mode } = sesi;
   const s = soal[i];
   $('bar').style.width = ((i + 1) / soal.length) * 100 + '%';
-  $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ' · pilih semua yang benar' : ''}`;
+  $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
   $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal');
-  $('opsi-list').innerHTML = s.opsi.map((o, k) => {
-    let kelas = 'opsi';
-    if (kunci[i]) {
-      if (kunciOpsi(s, k)) kelas += ' benar';
-      else if (dipilih(s, jawab[i], k)) kelas += ' salah';
-    } else if (dipilih(s, jawab[i], k)) kelas += ' terpilih';
-    return `<div class="${kelas}" data-k="${k}"><span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`;
-  }).join('');
+  if (adaIsian(s)) {
+    const j = jawab[i];
+    const kelasIsi = kunci[i] ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
+    $('opsi-list').innerHTML = `<div class="isian">
+      <label class="label" for="inp-isian" style="margin-top:0">Jawaban Anda (bilangan cacah)</label>
+      <input id="inp-isian" class="input isian-input${kelasIsi}" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
+        placeholder="Ketik angka" value="${j === null || j === undefined ? '' : esc(j)}" ${kunci[i] ? 'disabled' : ''}>
+      <p class="muted" style="margin-top:6px">Isi dengan angka bulat 0, 1, 2, dan seterusnya. Tanpa koma, titik, atau tanda minus.</p></div>`;
+  } else {
+    $('opsi-list').innerHTML = s.opsi.map((o, k) => {
+      let kelas = 'opsi';
+      if (kunci[i]) {
+        if (kunciOpsi(s, k)) kelas += ' benar';
+        else if (dipilih(s, jawab[i], k)) kelas += ' salah';
+      } else if (dipilih(s, jawab[i], k)) kelas += ' terpilih';
+      return `<div class="${kelas}" data-k="${k}">${adaGanda(s) ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`;
+    }).join('');
+  }
 
   const fb = $('feedback');
   fb.hidden = !kunci[i];
@@ -1543,12 +1617,7 @@ function renderReviewIsi() {
     .filter((x) => filterReview === 'semua' || x.st === filterReview);
   const slide = daftar.map(({ s, k, st }) => {
     const [kelasBadge, teksBadge] = st === 'benar' ? ['benar', 'Benar'] : st === 'salah' ? ['salah', 'Salah'] : ['kosong', 'Kosong'];
-    const opsi = s.opsi.map((o, x) => {
-      let kelas = 'opsi';
-      if (kunciOpsi(s, x)) kelas += ' benar';
-      else if (dipilih(s, jawab[k], x)) kelas += ' salah';
-      return `<div class="${kelas}"><span class="huruf">${HURUF[x]}</span>${isiOpsi(o)}</div>`;
-    }).join('');
+    const opsi = opsiReviewHTML(s, jawab[k]);
     return `<div class="slide-review" data-nomor="${k + 1}">
       <div class="card" style="margin-bottom:0">
         <span class="badge ${kelasBadge}">${teksBadge}</span>
@@ -1601,7 +1670,7 @@ function analisisHTML() {
   const data = PilihanStat.ambil();
   const peta = new Map([...SOAL, ...BankSoal.ambil()].map((s) => [String(s.id), s]));
   const daftar = Object.entries(data)
-    .filter(([k, v]) => v.total > 0 && peta.has(k))
+    .filter(([k, v]) => v.total > 0 && peta.has(k) && !adaIsian(peta.get(k)))
     .map(([k, v]) => ({ s: peta.get(k), v }))
     .sort((a, b) => b.v.total - a.v.total);
   if (!daftar.length) {
@@ -1724,14 +1793,8 @@ function riwayatTopikHTML(topik, batas) {
       return `<div class="kartu-soal" style="padding:10px 12px;display:flex;gap:8px;align-items:center">
         <span class="badge ${st}">${label[st]}</span><span class="muted">${tglPendek} &middot; soal ini sudah dihapus dari bank</span></div>`;
     }
-    const opsi = s.opsi.map((o, x) => {
-      let kelas = 'opsi';
-      if (kunciOpsi(s, x)) kelas += ' benar';
-      else if (dipilih(s, r.j, x)) kelas += ' salah';
-      return `<div class="${kelas}"><span class="huruf">${HURUF[x]}</span>${isiOpsi(o)}</div>`;
-    }).join('');
-    const jawabanmu = kosongJ(r.j) ? 'Tidak dijawab'
-      : (Array.isArray(r.j) ? r.j.map((k) => HURUF[k]).join(', ') : HURUF[r.j]);
+    const opsi = opsiReviewHTML(s, kosongJ(r.j) ? null : r.j);
+    const jawabanmu = teksJawabanmu(s, r.j);
     return `<details class="kartu-soal">
       <summary><span class="badge ${st}">${label[st]}</span>
         <span class="pratinjau-soal">${esc(previewTeks(s.soal))}</span>
@@ -2139,25 +2202,50 @@ function buatDatalist() {
   $('daftar-topik').innerHTML = topik.map((t) => `<option value="${esc(t)}">`).join('');
 }
 // Baca isi form; kembalikan objek soal atau pesan error
+// Tampilkan bagian form sesuai tipe soal
+function ubahTipeForm() {
+  const tipe = nilai('f-tipe');
+  $('blok-opsi').hidden = tipe === 'isian';
+  $('kunci-pg').hidden = tipe !== 'pg';
+  $('kunci-kompleks').hidden = tipe !== 'kompleks';
+  $('kunci-isian').hidden = tipe !== 'isian';
+  $('label-kunci').textContent = tipe === 'kompleks' ? 'Kunci jawaban (centang semua yang benar)'
+    : tipe === 'isian' ? 'Kunci jawaban (bilangan cacah)' : 'Kunci jawaban';
+}
+$('pilih-tipe').addEventListener('change', ubahTipeForm);
+$('f-isian').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, ''); });
 function bacaForm() {
   const topik = $('f-topik').value.trim();
+  const tipe = nilai('f-tipe');
   if (!topik) return { error: 'Topik belum diisi.' };
   if (kosongEditor(getArea('soal'))) return { error: 'Teks soal belum diisi.' };
   if (adaRumusTanpaTanda(getArea('soal').textContent)) return { error: 'Teks soal punya rumus tanpa tanda $. Blok rumusnya lalu klik ikon fx.' };
-  for (let k = 0; k < 5; k++) {
+  for (let k = 0; tipe !== 'isian' && k < 5; k++) {
     if (kosongEditor(getArea('opsi' + k))) return { error: `Pilihan ${HURUF[k]} belum diisi (teks atau gambar).` };
     if (adaRumusTanpaTanda(getArea('opsi' + k).textContent)) return { error: `Pilihan ${HURUF[k]} punya rumus tanpa tanda $. Blok rumusnya lalu klik ikon fx.` };
   }
   if (kosongEditor(getArea('pembahasan'))) return { error: 'Pembahasan belum diisi.' };
   if (adaRumusTanpaTanda(getArea('pembahasan').textContent)) return { error: 'Pembahasan punya rumus tanpa tanda $. Blok rumusnya lalu klik ikon fx.' };
+  let jawaban;
+  if (tipe === 'isian') {
+    const v = $('f-isian').value.trim();
+    if (!/^\d{1,12}$/.test(v)) return { error: 'Kunci jawaban harus bilangan cacah: angka 0, 1, 2, dan seterusnya, tanpa koma atau tanda minus.' };
+    jawaban = Number(v);
+  } else if (tipe === 'kompleks') {
+    jawaban = [...document.querySelectorAll('input[name="f-jawaban-ganda"]:checked')].map((c) => Number(c.value)).sort();
+    if (!jawaban.length) return { error: 'Centang minimal satu kunci jawaban.' };
+  } else {
+    jawaban = Number(nilai('f-jawaban'));
+  }
   return {
+    tipe,
     mataPelajaran: nilai('f-mapel'),
     topik,
     tingkatKesulitan: nilai('f-level'),
     folderId: $('f-folder').value || null,
     soal: sanitize(getArea('soal').innerHTML),
-    opsi: [0, 1, 2, 3, 4].map((k) => sanitize(getArea('opsi' + k).innerHTML)),
-    jawaban: Number(nilai('f-jawaban')),
+    opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => sanitize(getArea('opsi' + k).innerHTML)),
+    jawaban,
     pembahasan: sanitize(getArea('pembahasan').innerHTML)
   };
 }
@@ -2168,6 +2256,10 @@ function resetForm() {
   document.querySelector('input[name="f-mapel"][value="PK"]').checked = true;
   document.querySelector('input[name="f-level"][value="sedang"]').checked = true;
   document.querySelector('input[name="f-jawaban"][value="0"]').checked = true;
+  document.querySelector('input[name="f-tipe"][value="pg"]').checked = true;
+  document.querySelectorAll('input[name="f-jawaban-ganda"]').forEach((c) => (c.checked = false));
+  $('f-isian').value = '';
+  ubahTipeForm();
   // Soal baru otomatis masuk folder yang sedang dibuka
   const folderAktif = BankFolder.ambil().some((f) => f.id === filterAktif) ? filterAktif : '';
   renderOpsiFolder(folderAktif);
@@ -2180,13 +2272,18 @@ function isiForm(s) {
   $('f-topik').value = s.topik;
   document.querySelector(`input[name="f-mapel"][value="${s.mataPelajaran}"]`).checked = true;
   document.querySelector(`input[name="f-level"][value="${s.tingkatKesulitan}"]`).checked = true;
-  document.querySelector(`input[name="f-jawaban"][value="${s.jawaban}"]`).checked = true;
+  const tipe = tipeSoal(s);
+  document.querySelector(`input[name="f-tipe"][value="${tipe}"]`).checked = true;
+  document.querySelectorAll('input[name="f-jawaban-ganda"]').forEach((c) => (c.checked = tipe === 'kompleks' && s.jawaban.includes(Number(c.value))));
+  $('f-isian').value = tipe === 'isian' ? String(s.jawaban) : '';
+  document.querySelector(`input[name="f-jawaban"][value="${tipe === 'pg' ? s.jawaban : 0}"]`).checked = true;
+  ubahTipeForm();
   renderOpsiFolder(s.folderId || '');
   // Gambar dari format lama ikut dimasukkan ke editor agar bisa diatur posisinya
   const gambarLama = (g) => (g ? `<p><img src="${g}" alt="Gambar" style="display:block;margin:8px auto;width:60%"></p>` : '');
   getArea('soal').innerHTML = sanitize(s.soal) + gambarLama(s.gambarSoal);
   getArea('pembahasan').innerHTML = sanitize(s.pembahasan) + gambarLama(s.gambarPembahasan);
-  s.opsi.forEach((o, k) => (getArea('opsi' + k).innerHTML = sanitize(o)));
+  [0, 1, 2, 3, 4].forEach((k) => (getArea('opsi' + k).innerHTML = s.opsi[k] ? sanitize(s.opsi[k]) : ''));
   pilihGambar(null);
 }
 function simpanSoal() {
@@ -2241,8 +2338,8 @@ function itemSoalHTML(s, nomor) {
       <span class="pratinjau-soal">${nomor}. ${esc(previewTeks(s.soal))}</span></summary>
     <div class="isi-kartu">
       <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
-      <div class="opsi-list">${s.opsi.map((o, k) =>
-        `<div class="opsi ${kunciOpsi(s, k) ? 'benar' : ''}"><span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`).join('')}</div>
+      <p class="muted" style="margin-bottom:8px">${{ pg: 'Pilihan ganda', kompleks: 'PG kompleks (centang semua yang benar)', isian: 'Isian bilangan cacah' }[tipeSoal(s)]}</p>
+      <div class="opsi-list">${opsiReviewHTML(s)}</div>
       <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
       <div class="aksi-kecil">
         ${modeAdmin ? '' : `<label class="muted">Pindah ke</label>
@@ -2339,7 +2436,10 @@ function cetakPDF() {
     <div class="soal-cetak">
       <p><strong>${nomor}.</strong> <span class="muted">(${esc(namaMapel(s.mataPelajaran))}, ${esc(s.topik)}, ${esc(s.tingkatKesulitan)})</span></p>
       <div>${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
-      <div style="margin-top:6px">${s.opsi.map((o, k) => `<div class="opsi-cetak"><strong>${HURUF[k]}.</strong> ${sanitize(o)}</div>`).join('')}</div>
+      <div style="margin-top:6px">${adaIsian(s)
+        ? '<p style="margin-top:10px">Jawaban (bilangan cacah): ____________________</p>'
+        : (adaGanda(s) ? '<p class="muted">Pilih semua jawaban yang benar.</p>' : '') +
+          s.opsi.map((o, k) => `<div class="opsi-cetak">${adaGanda(s) ? '&#9744; ' : ''}<strong>${HURUF[k]}.</strong> ${sanitize(o)}</div>`).join('')}</div>
     </div>`; }).join('')}`).join('');
 
   let nomorKunci = 0;
@@ -2420,6 +2520,17 @@ $('pilih-topik').addEventListener('change', hitungSoal);
 $('pilih-level').addEventListener('change', hitungSoal);
 $('btn-mulai').addEventListener('click', mulai);
 
+// Soal isian: simpan angka yang diketik (hanya digit)
+$('opsi-list').addEventListener('input', (e) => {
+  if (!sesi || !e.target.matches('.isian-input')) return;
+  const v = e.target.value.replace(/\D/g, '');
+  if (v !== e.target.value) e.target.value = v;
+  sesi.jawab[sesi.i] = v === '' ? null : Number(v);
+  if (sesi.mode === 'latihan' && !sesi.kunci[sesi.i]) $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
+});
+$('opsi-list').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.matches('.isian-input') && !$('btn-aksi').disabled) $('btn-aksi').click();
+});
 $('opsi-list').addEventListener('click', (e) => {
   const b = e.target.closest('.opsi');
   if (!b || sesi.kunci[sesi.i]) return;
