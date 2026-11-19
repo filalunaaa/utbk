@@ -2401,7 +2401,8 @@ function sumberSoal() {
   if (v === 'bank') return custom;
   if (v === 'g:none') return custom.filter((s) => !s.folderId);
   if (v.startsWith('f:')) { const id = v.slice(2); return custom.filter((s) => s.folderId === id); }
-  return [...SOAL, ...custom];
+  // Mode admin: BankSoal.ambil() mengembalikan SOAL itu sendiri, jadi gabungan harus unik agar soal tidak ganda
+  return [...new Set([...SOAL, ...custom])];
 }
 
 // ---------- Helper ----------
@@ -5236,7 +5237,7 @@ function closeCountdown() {
 // ---------- Rekomendasi belajar (dari statistik) ----------
 function renderRekomendasi() {
   const d = Penyimpanan.ambil();
-  const semua = [...SOAL, ...BankSoal.ambil()];
+  const semua = [...new Set([...SOAL, ...BankSoal.ambil()])];
   const mapelDari = {};
   semua.forEach((s) => { if (!mapelDari[namaTopikResmi(s)]) mapelDari[namaTopikResmi(s)] = s.mataPelajaran; });
   const daftar = [...new Set(semua.map(namaTopikResmi))].map((nama) => {
@@ -5877,7 +5878,7 @@ terapkanTampilan();
         lr=lr.concat(t.legacy)});
       idx[r.id+'.umum']={type:'umum',id:r.id+'.umum',nama:'Belum diklasifikasikan ke topik',s:k,r:r,legacy:r.umum};
       idx[r.id]={type:'rumpun',id:r.id,nama:r.nama,s:k,r:r,legacy:lr,subIds:semuaSub}})});
-  function semuaSoal(){return SOAL.concat(BankSoal.ambil())}
+  function semuaSoal(){return Array.from(new Set(SOAL.concat(BankSoal.ambil())))}
   function cocokSub(x,id){return x.subtopikId===id||(x.subtopikIds||[]).indexOf(id)>-1}
   function anggota(n,x){
     if(x.mataPelajaran!==n.s)return false;
