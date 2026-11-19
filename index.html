@@ -64,7 +64,6 @@ p{margin-bottom:12px}
 .info{margin-top:16px}
 .progress{height:8px;background:var(--border);border-radius:999px;overflow:hidden;margin-bottom:8px}
 .progress-bar{height:100%;background:var(--primary);border-radius:999px;transition:width .3s}
-/* Bar statistik: gradasi merah (kiri) ke hijau (kanan) di sepanjang bar penuh; bar pendek hanya menampakkan bagian merah/oranye */
 .riwayat-topik{margin-bottom:12px}
 .riwayat-topik>summary{list-style:none;cursor:pointer}
 .riwayat-topik>summary::-webkit-details-marker{display:none}
@@ -80,7 +79,7 @@ p{margin-bottom:12px}
 .mapel-pivot>summary .stat-judul span:first-child::before{content:"\25B8";display:inline-block;margin-right:6px;color:var(--accent);transition:transform .2s}
 .mapel-pivot[open]>summary .stat-judul span:first-child::before{transform:rotate(90deg)}
 .isi-mapel{margin:12px 0 4px;padding-left:14px;border-left:3px solid var(--border)}
-.progress-bar.gradasi{background:linear-gradient(90deg,#dc2626 0%,#f59e0b 50%,#16a34a 100%);background-size:calc(10000% / var(--p,100)) 100%;background-repeat:no-repeat}
+
 .baris-info{display:flex;justify-content:space-between;gap:8px}
 .timer{font-weight:700;color:var(--accent)}
 .timer.habis{color:var(--salah)}
@@ -2616,7 +2615,7 @@ function renderLaporan() {
   }).filter(Boolean).sort((x, y) => (y.delta ?? -999) - (x.delta ?? -999));
   const baris = (it) => `<div class="lap-baris">
       <div class="stat-judul"><span>${esc(it.nama)}</span><span>${it.dBenar} dari ${it.dTotal} benar di sesi ini</span></div>
-      <div class="progress"><div class="progress-bar gradasi" style="width:${it.pKini}%;--p:${Math.max(1, it.pKini)}"></div></div>
+      <div class="progress"><div class="progress-bar" style="width:${it.pKini}%;background:${warnaLevel(it.pKini)}"></div></div>
       <div class="lap-ubah"><span>${it.pAwal === null ? `Data pertama: ${it.pKini}%` : `${it.pAwal}% &rarr; ${it.pKini}%`}</span>${badgeUbah(it.delta)}</div>
     </div>`;
   const topik = kumpul('topik', (n) => n);
@@ -3019,12 +3018,14 @@ function grafikStatHTML() {
     <div class="grafik-kartu"><h3>Perbandingan PK dan PM</h3><div class="bandingan">${banding}</div></div>
   </div><p class="muted" style="margin:10px 0 0">Grafik dihitung dari riwayat pengerjaan terbaru (maksimal 600 soal tersimpan).</p>`;
 }
+// Warna solid untuk bar statistik sesuai level nilai (tanpa gradasi)
+function warnaLevel(p) { return p < 50 ? 'var(--salah)' : p < 75 ? 'var(--warning)' : 'var(--benar)'; }
 function renderStatistik() {
   const d = Penyimpanan.ambil();
   const baris = (nama, x) => {
     const p = x.total ? Math.round((x.benar / x.total) * 100) : 0;
     return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${x.benar} dari ${x.total} benar (${p}%)</span></div>
-      <div class="progress"><div class="progress-bar gradasi" style="width:${p}%;--p:${Math.max(1, p)}"></div></div></div>`;
+      <div class="progress"><div class="progress-bar" style="width:${p}%;background:${warnaLevel(p)}"></div></div></div>`;
   };
   // Tampilkan semua mapel/topik yang ada di bank soal, termasuk yang belum pernah dikerjakan
   const semuaSoal = [...SOAL, ...(modeAdmin ? [] : BankSoal.ambil())];
@@ -4962,7 +4963,7 @@ function renderRekomendasi() {
   const kartu = (r) => `<div class="kartu-rek kat-${r.kat}">
       <div class="baris-rek"><span class="badge-rek">${esc(r.judul)}</span><span class="pill-mapel" title="${esc(namaMapel(r.mapel))}">${esc(r.mapel || '-')}</span></div>
       <h3>${esc(r.nama)}</h3>
-      ${r.total ? `<div class="rek-akurasi"><div class="progress"><div class="progress-bar gradasi" style="width:${r.pct}%;--p:${Math.max(1, r.pct)}"></div></div><strong>${r.pct}%</strong></div><p class="muted" style="margin:0 0 8px">${r.total} soal dikerjakan</p>` : '<p class="muted" style="margin:6px 0 8px">Belum ada latihan</p>'}
+      ${r.total ? `<div class="rek-akurasi"><div class="progress"><div class="progress-bar" style="width:${r.pct}%;background:${warnaLevel(r.pct)}"></div></div><strong>${r.pct}%</strong></div><p class="muted" style="margin:0 0 8px">${r.total} soal dikerjakan</p>` : '<p class="muted" style="margin:6px 0 8px">Belum ada latihan</p>'}
       <p class="rek-saran">${esc(r.saran)}</p>
       <button class="btn btn-primary btn-kecil" data-latihan="${esc(r.nama)}">Latihan 5 soal</button>
     </div>`;
