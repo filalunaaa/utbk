@@ -946,6 +946,11 @@ body #kuis{max-width:var(--w-soal,780px)}
 .sub-info{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--primary-soft);border-radius:10px;margin-top:12px}.sub-info[hidden]{display:none}
 @media(min-width:760px){.mt-grid{grid-template-columns:320px minmax(0,1fr);align-items:start}.mt-nav{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}.mt-alat{flex-direction:row;align-items:center;flex-wrap:wrap}.mt-alat .input{max-width:340px}#materi{max-width:1100px}}
 @media(max-width:759px){#materi[data-sheet="1"] .mt-detail{position:fixed;inset:0;z-index:150;background:var(--bg);overflow-y:auto;padding:0 16px calc(24px + env(safe-area-inset-bottom,0px))}#materi[data-sheet="1"] .mt-balik{display:block;position:sticky;top:0;z-index:2;width:calc(100% + 32px);margin:0 -16px 8px;padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);text-align:left}#materi:not([data-sheet="1"]) .mt-detail{display:none}.mt-metrik{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.baris-dua{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.kotak-cakupan{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--primary-soft)}
+.kartu-meta{margin-top:6px}
+@media(max-width:480px){.baris-dua{grid-template-columns:1fr}}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -1175,7 +1180,17 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     </div>
     <div class="card" id="kartu-form" hidden>
       <h2 id="judul-form">Tambah soal baru</h2>
-      <p class="muted tex2jax_ignore">Ketik seperti di Word. Rumus ditulis di antara tanda $, contoh: $\frac{1}{2}$ atau $x^2 + y^2$.</p>
+      <p class="muted tex2jax_ignore">Ketik seperti di Word. Rumus ditulis di antara tanda dolar, atau pakai tombol fx setelah diblok.</p>
+      <details class="tex2jax_ignore" style="margin:-4px 0 12px">
+        <summary class="muted" style="cursor:pointer">Panduan menulis rumus (LaTeX)</summary>
+        <ul class="muted" style="margin:8px 0 0 18px;font-size:.9rem">
+          <li>Pecahan: <code>\frac{a}{b}</code></li>
+          <li>Akar: <code>\sqrt{x}</code> atau <code>\sqrt[3]{x}</code></li>
+          <li>Pangkat dan indeks: <code>x^{2}</code>, <code>x_{1}</code></li>
+          <li>Simbol: <code>\le</code>, <code>\ge</code>, <code>\neq</code>, <code>\times</code>, <code>\pi</code>, <code>\infty</code></li>
+          <li>Huruf Yunani: <code>\alpha</code>, <code>\beta</code>, <code>\theta</code></li>
+        </ul>
+      </details>
 
       <p class="label">Mata pelajaran</p>
       <div class="pilihan">
@@ -1183,12 +1198,13 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <label class="chip"><input type="radio" name="f-mapel" value="PM"><span>Penalaran Matematika</span></label>
       </div>
 
-      <p class="label" for="f-topik">Topik</p>
-      <input class="input" id="f-topik" placeholder="contoh: Aljabar" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">
-      <datalist id="daftar-topik"></datalist>
-
-      <p class="label">Subtopik <span class="muted">(opsional, untuk mengelompokkan lebih spesifik)</span></p>
+      <p class="label">Rumpun materi *</p>
+      <select class="input" id="f-rumpun" aria-label="Rumpun materi"></select>
+      <p class="label">Topik *</p>
+      <select class="input" id="f-topiktax" aria-label="Topik"></select>
+      <p class="label">Subtopik <span class="muted">(wajib jika topik punya subtopik)</span></p>
       <select class="input" id="f-sub" aria-label="Subtopik"></select>
+      <div class="kotak-cakupan" id="kotak-cakupan" hidden></div>
 
       <p class="label">Tingkat kesulitan</p>
       <div class="pilihan">
@@ -1204,7 +1220,37 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <label class="chip"><input type="radio" name="f-tipe" value="isian"><span>Isian bilangan cacah</span></label>
       </div>
 
-      <p class="label" for="f-folder">Simpan ke folder</p>
+      <div class="kartu-meta">
+        <p class="label">Metadata (opsional)</p>
+        <input class="input" id="f-sumber" maxlength="120" placeholder="Sumber soal, misalnya: Latihan SNBT 2024">
+        <div class="baris-dua">
+          <input class="input" id="f-tahun" inputmode="numeric" maxlength="4" placeholder="Tahun, misalnya 2024">
+          <input class="input" id="f-tag" maxlength="120" placeholder="Tag, pisahkan dengan koma">
+        </div>
+        <p class="label">Status publikasi</p>
+        <div class="pilihan">
+          <label class="chip"><input type="radio" name="f-status" value="terbit" checked><span>Terbit</span></label>
+          <label class="chip"><input type="radio" name="f-status" value="draf"><span>Draf</span></label>
+        </div>
+        <div id="blok-pm" hidden>
+          <p class="label">Dimensi Penalaran Matematika *</p>
+          <select class="input" id="f-dimensi">
+            <option value="">— pilih dimensi —</option>
+            <option value="Formulating">Formulating</option>
+            <option value="Employing">Employing</option>
+            <option value="Interpreting and Evaluating">Interpreting and Evaluating</option>
+          </select>
+          <p class="label">Konteks *</p>
+          <select class="input" id="f-konteks">
+            <option value="">— pilih konteks —</option>
+            <option value="Personal">Personal</option>
+            <option value="Occupational">Occupational</option>
+            <option value="Social">Social</option>
+            <option value="Scientific">Scientific</option>
+          </select>
+        </div>
+      </div>
+      <p class="label" for="f-folder">Folder pribadi <span class="muted">(bukan klasifikasi akademik)</span></p>
       <select class="input" id="f-folder"></select>
 
       <p class="label">Teks soal</p>
@@ -1347,7 +1393,7 @@ const Penyimpanan = {
     const d = this.ambil();
     d.total++;
     if (benar) d.benar++;
-    [['mapel', soal.mataPelajaran], ['topik', soal.topik]].forEach(([k, nama]) => {
+    [['mapel', soal.mataPelajaran], ['topik', namaTopikResmi(soal)]].forEach(([k, nama]) => {
       d[k][nama] = d[k][nama] || { total: 0, benar: 0 };
       d[k][nama].total++;
       if (benar) d[k][nama].benar++;
@@ -2252,7 +2298,7 @@ function renderPilihSumber() {
 }
 function buatTopik() {
   const mapel = nilai('mapel');
-  const topik = [...new Set(sumberSoal().filter((s) => mapel === 'semua' || s.mataPelajaran === mapel).map((s) => s.topik))];
+  const topik = [...new Set(sumberSoal().filter((s) => mapel === 'semua' || s.mataPelajaran === mapel).map(namaTopikResmi))];
   $('pilih-topik').innerHTML = topik
     .map((t) => `<label class="chip"><input type="checkbox" value="${esc(t)}" checked><span>${esc(t)}</span></label>`)
     .join('');
@@ -2261,7 +2307,7 @@ function buatTopik() {
 function soalTerfilter() {
   const mapel = nilai('mapel'), topik = centang('pilih-topik'), level = centang('pilih-level');
   return sumberSoal().filter((s) =>
-    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(s.topik) && level.includes(s.tingkatKesulitan) && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
+    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(namaTopikResmi(s)) && level.includes(s.tingkatKesulitan) && (modeAdmin || s.status !== 'draf') && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
 }
 function ringkasSesi() {
   const teks = (nm) => { const i = document.querySelector(`input[name="${nm}"]:checked`); return i && i.nextElementSibling ? i.nextElementSibling.textContent : '-'; };
@@ -3028,6 +3074,9 @@ function ikonUkuran(p) {
 
 // ---------- Editor ala Word ----------
 const TOMBOL_EDITOR = [
+  { cmd: 'undo', label: '&#8630;', judul: 'Urungkan (Ctrl+Z)' },
+  { cmd: 'redo', label: '&#8631;', judul: 'Ulangi (Ctrl+Y)' },
+  { sep: true },
   { cmd: 'bold', label: '<b>B</b>', judul: 'Tebal (Ctrl+B)' },
   { cmd: 'italic', label: '<i>I</i>', judul: 'Miring (Ctrl+I)' },
   { cmd: 'underline', label: '<u>U</u>', judul: 'Garis bawah (Ctrl+U)' },
@@ -3603,6 +3652,7 @@ function pesanBank(teks, err) {
   p.className = 'pesan ' + (err ? 'err' : 'ok');
 }
 function buatDatalist() {
+  if (!$('daftar-topik')) return;
   const topik = [...new Set([...SOAL, ...BankSoal.ambil()].map((s) => s.topik))];
   $('daftar-topik').innerHTML = topik.map((t) => `<option value="${esc(t)}">`).join('');
 }
@@ -3618,12 +3668,20 @@ function ubahTipeForm() {
     : tipe === 'isian' ? 'Kunci jawaban (bilangan cacah)' : 'Kunci jawaban';
 }
 $('pilih-tipe').addEventListener('change', ubahTipeForm);
-document.querySelectorAll('input[name="f-mapel"]').forEach((i) => i.addEventListener('change', () => renderSubForm('')));
+document.querySelectorAll('input[name="f-mapel"]').forEach((i) => i.addEventListener('change', () => { renderCascade({}); toggleMetaPM(); }));
+$('f-rumpun').addEventListener('change', () => { renderTopikForm($('f-rumpun').value, ''); renderSubForm(''); });
+$('f-topiktax').addEventListener('change', () => renderSubForm(''));
+$('f-sub').addEventListener('change', () => tampilCakupan(topikTaxById($('f-topiktax').value)));
 $('f-isian').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, ''); });
 function bacaForm() {
-  const topik = $('f-topik').value.trim();
   const tipe = nilai('f-tipe');
-  if (!topik) return { error: 'Topik belum diisi.' };
+  const tpPilih = topikTaxById($('f-topiktax').value);
+  if (!$('f-rumpun').value || !tpPilih) return { error: 'Pilih rumpun dan topik materi dulu.' };
+  if (tpPilih.mapel !== nilai('f-mapel')) return { error: 'Topik tidak sesuai dengan mata pelajaran yang dipilih.' };
+  if (tpPilih.topik.sub.length && !$('f-sub').value) return { error: 'Pilih subtopik untuk topik ini.' };
+  const topik = tpPilih.topik.nama;
+  const meta = bacaMeta();
+  if (meta.error) return { error: meta.error };
   if (kosongEditor(getArea('soal'))) return { error: 'Teks soal belum diisi.' };
   if (adaRumusTanpaTanda(getArea('soal').textContent)) return { error: 'Teks soal punya rumus tanpa tanda $. Blok rumusnya lalu klik ikon fx.' };
   for (let k = 0; tipe !== 'isian' && k < 5; k++) {
@@ -3647,7 +3705,10 @@ function bacaForm() {
     tipe,
     mataPelajaran: nilai('f-mapel'),
     topik,
+    topikId: tpPilih.topik.id,
+    rumpunId: tpPilih.rumpun.id,
     ...($('f-sub').value ? { subtopikId: $('f-sub').value } : {}),
+    ...meta.data,
     tingkatKesulitan: nilai('f-level'),
     folderId: $('f-folder').value || null,
     soal: sanitize(getArea('soal').innerHTML),
@@ -3658,8 +3719,8 @@ function bacaForm() {
 }
 function resetForm() {
   if ($('kotak-pratinjau')) { $('kotak-pratinjau').hidden = true; $('btn-pratinjau').textContent = 'Pratinjau'; }
-  $('f-topik').value = '';
-  renderSubForm('');
+  renderCascade({});
+  resetMeta();
   semuaArea().forEach((a) => (a.innerHTML = ''));
   pilihGambar(null);
   document.querySelector('input[name="f-mapel"][value="PK"]').checked = true;
@@ -3678,9 +3739,11 @@ function resetForm() {
   $('btn-batal-edit').hidden = false;
 }
 function isiForm(s) {
-  $('f-topik').value = s.topik;
   document.querySelector(`input[name="f-mapel"][value="${s.mataPelajaran}"]`).checked = true;
-  renderSubForm(subDari(s));
+  const tpAwal = topikTaxById(s.topikId) || cariTopikTax(s.mataPelajaran, s.topik);
+  renderCascade(tpAwal ? { rumpun: tpAwal.rumpun.id, topik: tpAwal.topik.id, sub: s.subtopikId || subDari(s) } : {});
+  isiMeta(s);
+  if (!tpAwal) pesanForm('Topik lama "' + s.topik + '" belum punya padanan di taksonomi. Pilih rumpun dan topik yang sesuai.', true);
   document.querySelector(`input[name="f-level"][value="${s.tingkatKesulitan}"]`).checked = true;
   const tipe = tipeSoal(s);
   document.querySelector(`input[name="f-tipe"][value="${tipe}"]`).checked = true;
@@ -3722,7 +3785,7 @@ function simpanSoal() {
   buatDatalist();
 }
 function bukaForm() {
-  renderSubForm($('f-sub').value);
+  renderCascade({ rumpun: $('f-rumpun').value, topik: $('f-topiktax').value, sub: $('f-sub').value });
   const k = $('kartu-form');
   k.hidden = false;
   k.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3801,6 +3864,104 @@ function folderHTML(g, terbuka) {
 const FB = { q: '', mapel: '', sulit: '', sub: '' };
 const filterBankAktif = () => !!(FB.q || FB.mapel || FB.sulit || FB.sub);
 // Subtopik: pilihan diambil dari taksonomi Jelajahi Materi (satu sumber data)
+// ---------- Klasifikasi akademik (Subtes > Rumpun > Topik > Subtopik) ----------
+function topikTaxById(id) {
+  if (!id || typeof TAKSONOMI === 'undefined') return null;
+  for (const k of Object.keys(TAKSONOMI)) for (const r of TAKSONOMI[k].rumpun) for (const tp of r.topik) {
+    if (tp.id === id) return { mapel: k, rumpun: r, topik: tp };
+  }
+  return null;
+}
+// Cari topik dari nama resmi atau nama lama. Hanya dipakai kalau hasilnya pasti satu.
+function cariTopikTax(mapel, nama) {
+  if (!nama || typeof TAKSONOMI === 'undefined') return null;
+  const n = String(nama).trim().toLowerCase();
+  const hasil = [];
+  Object.keys(TAKSONOMI).filter((k) => !mapel || k === mapel).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => r.topik.forEach((tp) => {
+    if (tp.nama.toLowerCase() === n || (tp.legacy || []).some((x) => x.toLowerCase() === n)) hasil.push({ mapel: k, rumpun: r, topik: tp });
+  })));
+  return hasil.length === 1 ? hasil[0] : null;
+}
+// Nama topik resmi untuk satu soal. Dipakai di menu, filter, dan statistik supaya nama lama tidak terpisah.
+function namaTopikResmi(s) {
+  const byId = topikTaxById(s.topikId);
+  if (byId) return byId.topik.nama;
+  const m = cariTopikTax(s.mataPelajaran, s.topik);
+  return m ? m.topik.nama : (s.topik || '');
+}
+function renderRumpunForm(terpilih) {
+  const k = nilai('f-mapel');
+  $('f-rumpun').innerHTML = '<option value="">— pilih rumpun —</option>' +
+    TAKSONOMI[k].rumpun.map((r) => `<option value="${esc(r.id)}"${r.id === terpilih ? ' selected' : ''}>${esc(r.nama)}</option>`).join('');
+}
+function renderTopikForm(rumpunId, terpilih) {
+  const k = nilai('f-mapel');
+  const r = TAKSONOMI[k].rumpun.find((x) => x.id === rumpunId);
+  $('f-topiktax').innerHTML = '<option value="">— pilih topik —</option>' +
+    (r ? r.topik.map((tp) => `<option value="${esc(tp.id)}"${tp.id === terpilih ? ' selected' : ''}>${esc(tp.nama)}</option>`).join('') : '');
+  $('f-topiktax').disabled = !r;
+}
+function renderSubForm(terpilih) {
+  const tp = topikTaxById($('f-topiktax').value);
+  const subs = tp ? tp.topik.sub : [];
+  $('f-sub').innerHTML = '<option value="">— tanpa subtopik —</option>' +
+    subs.map((sb) => `<option value="${esc(sb.id)}"${sb.id === terpilih ? ' selected' : ''}>${esc(sb.nama)}</option>`).join('');
+  $('f-sub').disabled = !subs.length;
+  tampilCakupan(tp);
+}
+function renderCascade(p) {
+  renderRumpunForm(p.rumpun || '');
+  renderTopikForm(p.rumpun || '', p.topik || '');
+  renderSubForm(p.sub || '');
+}
+// Deskripsi cakupan: topik punya deskripsi di taksonomi; subtopik belum punya, jadi ditandai jelas
+function tampilCakupan(tp) {
+  const kot = $('kotak-cakupan');
+  if (!tp) { kot.hidden = true; kot.innerHTML = ''; return; }
+  const sb = tp.topik.sub.find((x) => x.id === $('f-sub').value);
+  kot.hidden = false;
+  kot.innerHTML = `<p class="label" style="margin-top:0">Cakupan kompetensi</p>
+    <p>${esc(tp.topik.desk || 'Deskripsi topik belum tersedia.')}</p>
+    ${sb ? `<p class="muted">${esc(sb.desk || 'Deskripsi subtopik belum tersedia.')}</p>` : ''}`;
+}
+function toggleMetaPM() { $('blok-pm').hidden = nilai('f-mapel') !== 'PM'; }
+function resetMeta() {
+  $('f-sumber').value = '';
+  $('f-tahun').value = '';
+  $('f-tag').value = '';
+  document.querySelector('input[name="f-status"][value="terbit"]').checked = true;
+  $('f-dimensi').value = '';
+  $('f-konteks').value = '';
+  $('blok-pm').hidden = true; // form selalu kembali ke PK
+}
+function isiMeta(s) {
+  $('f-sumber').value = s.sumber || '';
+  $('f-tahun').value = s.tahun || '';
+  $('f-tag').value = (s.tag || []).join(', ');
+  document.querySelector(`input[name="f-status"][value="${s.status === 'draf' ? 'draf' : 'terbit'}"]`).checked = true;
+  $('f-dimensi').value = s.dimensi || '';
+  $('f-konteks').value = s.konteks || '';
+  toggleMetaPM();
+}
+// Metadata dan klasifikasi Penalaran Matematika yang wajib diisi
+function bacaMeta() {
+  const mapel = nilai('f-mapel');
+  const tahunRaw = $('f-tahun').value.trim();
+  if (tahunRaw && !/^\d{4}$/.test(tahunRaw)) return { error: 'Tahun harus 4 digit, misalnya 2024.' };
+  const data = {
+    sumber: $('f-sumber').value.trim(),
+    tahun: tahunRaw ? Number(tahunRaw) : null,
+    tag: $('f-tag').value.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean),
+    status: nilai('f-status')
+  };
+  if (mapel === 'PM') {
+    if (!$('f-dimensi').value) return { error: 'Dimensi Penalaran Matematika wajib dipilih.' };
+    if (!$('f-konteks').value) return { error: 'Konteks wajib dipilih untuk Penalaran Matematika.' };
+    data.dimensi = $('f-dimensi').value;
+    data.konteks = $('f-konteks').value;
+  }
+  return { data };
+}
 function subDari(s) { return s.subtopikId || (s.subtopikIds && s.subtopikIds[0]) || ''; }
 function namaSub(id) {
   if (!id || typeof TAKSONOMI === 'undefined') return '';
@@ -4145,7 +4306,7 @@ function dataPratinjau() {
   else jawaban = Number(nilai('f-jawaban'));
   return { tipe, jawaban, soal: baca('soal'), pembahasan: baca('pembahasan'),
     opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => baca('opsi' + k)),
-    mapel: nilai('f-mapel'), topik: $('f-topik').value.trim(), level: nilai('f-level') };
+    mapel: nilai('f-mapel'), topik: (topikTaxById($('f-topiktax').value) || { topik: { nama: '' } }).topik.nama, level: nilai('f-level') };
 }
 let kunciEditor = false;
 function renderPratinjau() {
@@ -4624,8 +4785,8 @@ function renderRekomendasi() {
   const d = Penyimpanan.ambil();
   const semua = [...SOAL, ...BankSoal.ambil()];
   const mapelDari = {};
-  semua.forEach((s) => { if (!mapelDari[s.topik]) mapelDari[s.topik] = s.mataPelajaran; });
-  const daftar = [...new Set(semua.map((s) => s.topik))].map((nama) => {
+  semua.forEach((s) => { if (!mapelDari[namaTopikResmi(s)]) mapelDari[namaTopikResmi(s)] = s.mataPelajaran; });
+  const daftar = [...new Set(semua.map(namaTopikResmi))].map((nama) => {
     const x = d.topik[nama] || { total: 0, benar: 0 };
     const pct = x.total ? Math.round((x.benar / x.total) * 100) : null;
     let kat, judul, saran, urut;
@@ -5144,7 +5305,7 @@ setInterval(() => { if (AkunApp.sesi()) sinkron().catch(() => {}); }, 30000);
       else if(e.key==='Enter'&&!pop.hidden&&idx>-1){e.preventDefault();var b2=pop.querySelectorAll('.dd-item:not(:disabled)')[idx];if(b2)pilih(b2)}
       else if(e.key==='Escape'||e.key==='Tab'){tutup()}}
   },true);
-  var ft=document.getElementById('f-topik');
+  var ft=document.getElementById('f-topik')||document.createElement('input');
   ft.addEventListener('focus',function(){buka(ft,'topik')});
   ft.addEventListener('click',function(){if(pop.hidden)buka(ft,'topik')});
   ft.addEventListener('input',function(){if(pop.hidden)buka(ft,'topik');else isi()});
