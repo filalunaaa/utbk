@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>nalarin - Learn. Practice. Improve.</title>
-<meta name="theme-color" content="#6c5ce7">
+<meta name="theme-color" content="#ffffff">
 <script>try{var m={terang:"light",gelap:"dark"}[localStorage.getItem("neon_tema")];if(m)document.documentElement.dataset.theme=m}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--primary:#6c5ce7;--primary-dark:#5a4bd1;--primary-soft:#efeaff;--text:#2d2a4a;--muted:#7a7597;--bg:#f8f7ff;--card:#ffffff;--border:#e8e4fb;--benar:#22b391;--benar-soft:#e3f9f2;--salah:#f0556b;--salah-soft:#ffedf0;--accent:#6c5ce7;--hover:#e0d8ff;--radius:12px;--shadow:0 1px 2px rgba(45,42,74,.06),0 4px 14px rgba(45,42,74,.05)}
+:root{--primary:#4a6cf7;--primary-dark:#3a58e0;--primary-soft:#eef3ff;--text:#1f2937;--muted:#6b7280;--bg:#ffffff;--card:#ffffff;--border:#e5e7eb;--benar:#16a34a;--benar-soft:#ecfdf3;--salah:#e11d48;--salah-soft:#fff1f2;--accent:#4a6cf7;--hover:#e1e9ff;--radius:12px;--shadow:0 1px 2px rgba(45,42,74,.06),0 4px 14px rgba(45,42,74,.05)}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
@@ -524,7 +524,7 @@ h1,h2,h3{letter-spacing:-.01em;font-weight:700}
 .lap-ringkasan p:last-child{margin:0}
 
 /* ===== nalarin v2: design system, tata letak, navigasi ===== */
-:root{--primary:#6c5ce7;--primary-dark:#5a4bd1;--primary-soft:#efeaff;--navy:#3b3566;--bg:#f8f7ff;--card:#ffffff;--border:#e8e4fb;--text:#2d2a4a;--muted:#7a7597;--benar:#22b391;--benar-soft:#e3f9f2;--warning:#e09300;--warning-soft:#fff6dd;--salah:#f0556b;--salah-soft:#ffedf0;--radius:14px;--shadow:0 1px 2px rgba(45,42,74,.06),0 4px 14px rgba(45,42,74,.05);--side-w:248px;--nav-h:64px}
+:root{--primary:#4a6cf7;--primary-dark:#3a58e0;--primary-soft:#eef3ff;--navy:#1f2937;--bg:#ffffff;--card:#ffffff;--border:#e5e7eb;--text:#1f2937;--muted:#6b7280;--benar:#16a34a;--benar-soft:#ecfdf3;--warning:#d97706;--warning-soft:#fffbeb;--salah:#e11d48;--salah-soft:#fff1f2;--radius:14px;--shadow:0 1px 2px rgba(45,42,74,.06),0 4px 14px rgba(45,42,74,.05);--side-w:248px;--nav-h:64px}
 body{-webkit-font-smoothing:antialiased}
 h2{font-weight:800;letter-spacing:-.01em}
 .card{border-radius:var(--radius);padding:22px;min-width:0}
@@ -1021,6 +1021,19 @@ body #kuis{max-width:var(--w-soal,780px)}
 .btn-secondary:hover:enabled{background:#ffe7a8}
 :root[data-theme="dark"] .btn-secondary{background:#352b20;color:#e3c99a}
 
+
+/* Tema bening/putih: topbar dan aksen netral, warna status tetap jelas */
+.topbar{background:var(--card);color:var(--text);border-bottom:1px solid var(--border);box-shadow:none}
+.topbar .nav-link{color:var(--muted)}
+.topbar .nav-link:hover,.topbar .nav-link.aktif{background:var(--primary-soft);color:var(--primary)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:enabled{background:var(--primary-dark)}
+.btn-secondary{background:#f1f5f9;color:#334155}
+.btn-secondary:hover:enabled{background:#e2e8f0}
+.pub-hero{background:var(--primary-soft);color:var(--text)}
+.pub-hero *{color:inherit}
+.opsi.benar,.badge.benar{color:var(--benar)}
+.opsi.salah,.badge.salah{color:var(--salah)}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
