@@ -1036,7 +1036,8 @@ body #kuis{max-width:var(--w-soal,780px)}
 
 /* Hierarki materi di Atur Latihan: Rumpun > Topik > Subtopik */
 .tp-blok{min-width:0}
-.tp-blok.nol .pv-chip,.sb-chip.nol{opacity:.6}
+/* Topik/subtopik tanpa soal tetap terbaca penuh; hanya hitungannya dibuat netral */
+.tp-blok.nol .pv-chip em,.sb-chip.nol em,.tp-blok.nol .pv-chip input:checked~em,.sb-chip.nol input:checked~em{color:var(--muted);font-weight:600}
 .tp-blok.buka{grid-column:1/-1}
 .sb-toggle{display:block;border:0;background:none;color:var(--accent);font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;padding:4px 2px 0 6px}
 .sb-toggle::before{content:"\25B8 "}
