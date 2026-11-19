@@ -2396,24 +2396,6 @@ let barTerpilih = null;      // bar pengatur gambar yang sedang tampil
 // Soal untuk latihan sesuai sumber yang dipilih di menu
 function sumberSoal() {
   const v = nilai('sumber');
-
-  // Admin sedang mengelola bank soal bawaan.
-  // Jangan gabungkan SOAL dengan dirinya sendiri.
-  if (modeAdmin) return SOAL;
-
-  const custom = BankSoal.ambil();
-
-  if (v === 'bawaan') return SOAL;
-  if (v === 'bank') return custom;
-  if (v === 'g:none') return custom.filter((s) => !s.folderId);
-  if (v.startsWith('f:')) {
-    const id = v.slice(2);
-    return custom.filter((s) => s.folderId === id);
-  }
-
-  return [...SOAL, ...custom];
-}
-  const v = nilai('sumber');
   const custom = BankSoal.ambil();
   if (v === 'bawaan') return SOAL;
   if (v === 'bank') return custom;
@@ -5895,9 +5877,7 @@ terapkanTampilan();
         lr=lr.concat(t.legacy)});
       idx[r.id+'.umum']={type:'umum',id:r.id+'.umum',nama:'Belum diklasifikasikan ke topik',s:k,r:r,legacy:r.umum};
       idx[r.id]={type:'rumpun',id:r.id,nama:r.nama,s:k,r:r,legacy:lr,subIds:semuaSub}})});
-  function semuaSoal() {
-  return modeAdmin ? SOAL : SOAL.concat(BankSoal.ambil());
-}
+  function semuaSoal(){return SOAL.concat(BankSoal.ambil())}
   function cocokSub(x,id){return x.subtopikId===id||(x.subtopikIds||[]).indexOf(id)>-1}
   function anggota(n,x){
     if(x.mataPelajaran!==n.s)return false;
