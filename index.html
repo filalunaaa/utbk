@@ -884,6 +884,38 @@ body #kuis{max-width:var(--w-soal,780px)}
 #pilih-topik .chip span{padding:5px 11px;font-size:.82rem;line-height:1.3}
 .tp-toggle{display:block;margin-top:6px}
 #kuis,#review{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}#kuis input,#review input,#kuis textarea{-webkit-user-select:text;user-select:text}#kuis img,#review img{-webkit-user-drag:none;user-drag:none}
+
+/* ===== Jelajahi Materi ===== */
+.sec-aksi{display:flex;gap:8px;flex-wrap:wrap}
+.mt-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end;margin-bottom:12px}.mt-head h2{margin:0}
+.mt-alat{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.mt-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.mt-nav{padding:10px;max-height:none}
+.mt-tree,.mt-tree ul{list-style:none;margin:0;padding:0}.mt-tree ul{margin-left:14px;border-left:1px solid var(--border);padding-left:6px}
+.mt-row{display:flex;align-items:stretch;border-radius:10px}
+.mt-chev{flex:0 0 32px;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:8px;font:inherit}
+.mt-chev svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;transition:transform .15s}.mt-chev[aria-expanded="true"] svg{transform:rotate(90deg)}
+.mt-chev:disabled{opacity:.25;cursor:default}
+.mt-nama{flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;border:0;background:none;color:var(--text);font:inherit;padding:9px 8px;border-radius:8px;cursor:pointer;min-height:40px}
+.mt-r>.mt-row .mt-nama{font-weight:800}.mt-t>.mt-row .mt-nama{font-weight:600;font-size:.95rem}.mt-s>.mt-row .mt-nama{font-weight:400;font-size:.88rem;color:var(--muted)}
+.mt-nama:hover,.mt-chev:hover{background:var(--primary-soft)}
+.mt-row.aktif .mt-nama{background:var(--primary-soft);color:var(--accent);box-shadow:inset 3px 0 0 var(--primary)}
+.mt-nama:focus-visible,.mt-chev:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+.mt-n{font-size:.78rem;color:var(--muted);font-weight:600;flex-shrink:0}.mt-n.nol{opacity:.55}
+.mt-hasil{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;color:var(--text);padding:10px;border-radius:10px;cursor:pointer}.mt-hasil:hover{background:var(--primary-soft)}
+.mt-hasil small{display:block;color:var(--muted)}
+.mt-kosong{padding:20px 10px;text-align:center}
+.mt-detail .card{margin-bottom:12px}
+.mt-crumb{display:flex;flex-wrap:wrap;gap:4px;font-size:.82rem;color:var(--muted);margin-bottom:6px}.mt-crumb button{border:0;background:none;color:var(--accent);font:inherit;cursor:pointer;padding:0}
+.mt-judul{margin:0 0 4px;font-size:1.35rem}
+.mt-rel{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--primary-soft);color:var(--accent);margin-left:6px;vertical-align:middle}
+.mt-metrik{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:14px 0}
+.mt-metrik div{border:1px solid var(--border);border-radius:12px;padding:10px 12px}.mt-metrik b{display:block;font-size:1.3rem}.mt-metrik span{font-size:.78rem;color:var(--muted)}
+.mt-daftar{list-style:none;margin:8px 0 0;padding:0}.mt-daftar button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;border:0;border-top:1px solid var(--border);background:none;color:var(--text);font:inherit;padding:12px 4px;cursor:pointer}.mt-daftar button:hover{background:var(--primary-soft)}
+.mt-balik{display:none;border:0;background:none;color:var(--accent);font:inherit;font-weight:600;padding:6px 0;margin-bottom:6px;cursor:pointer}
+.sub-info{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--primary-soft);border-radius:10px;margin-top:12px}.sub-info[hidden]{display:none}
+@media(min-width:760px){.mt-grid{grid-template-columns:300px minmax(0,1fr);align-items:start}.mt-nav{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}.mt-alat{flex-direction:row;align-items:center}.mt-alat .input{max-width:340px}#materi{max-width:1100px}}
+@media(max-width:759px){#materi[data-sheet="1"] .mt-detail{position:fixed;inset:0;z-index:150;background:var(--bg);overflow-y:auto;padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px))}#materi[data-sheet="1"] .mt-balik{display:block}#materi:not([data-sheet="1"]) .mt-detail{display:none}}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -895,6 +927,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   <div class="brand"><span class="brand-mark" aria-hidden="true">N</span><div><b>nalarin</b><small>Learn. Practice. Improve.</small></div></div>
   <nav class="side-nav">
     <a href="#" class="nav-link nl aktif" data-hal="menu" aria-label="Beranda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></a>
+    <a href="#" class="nav-link nl" data-hal="materi" aria-label="Jelajahi Materi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="18" cy="17" r="3"/></svg><span>Jelajahi Materi</span></a>
     <a href="#" class="nav-link nl" data-hal="setup" aria-label="Atur Latihan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span>Atur Latihan</span></a>
     <a href="#" class="nav-link nl" data-hal="bank" aria-label="Bank Soal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H19"/></svg><span>Bank Soal</span></a>
     <a href="#" class="nav-link nl" data-hal="statistik" aria-label="Statistik"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Statistik</span></a>
@@ -932,7 +965,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <div id="grafik" class="grafik"></div>
     </div>
     <section id="mulai-belajar" aria-labelledby="jdl-mulai">
-      <div class="sec-head"><h2 id="jdl-mulai">Mulai Belajar</h2><button type="button" class="btn btn-secondary btn-kecil" id="btn-ke-setup">Atur sesi lengkap</button></div>
+      <div class="sec-head"><h2 id="jdl-mulai">Mulai Belajar</h2><span class="sec-aksi"><button type="button" class="btn btn-secondary btn-kecil" id="btn-materi">Jelajahi materi</button><button type="button" class="btn btn-secondary btn-kecil" id="btn-ke-setup">Atur sesi lengkap</button></span></div>
       <div class="qa-grid">
         <button type="button" class="qa" data-qa="latihan"><span class="qa-ik"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></span><b>Latihan</b><span>Latihan soal dengan pembahasan langsung.</span></button>
         <button type="button" class="qa" data-qa="tryout"><span class="qa-ik"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span><b>Try Out</b><span>Simulasikan ujian dengan batas waktu.</span></button>
@@ -943,6 +976,12 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     <div class="card" id="kartu-berita"></div>
   </section>
 
+  <section id="materi" class="halaman" hidden>
+    <div class="mt-head"><div><h2>Jelajahi Materi</h2><p class="muted">Temukan, pelajari, dan latih setiap materi Pengetahuan Kuantitatif dan Penalaran Matematika.</p></div>
+      <div class="seg" role="group" aria-label="Subtes" id="mt-subtes"><button type="button" data-s="PK" aria-pressed="true">Pengetahuan Kuantitatif</button><button type="button" data-s="PM" aria-pressed="false">Penalaran Matematika</button></div></div>
+    <div class="mt-alat"><input class="input" id="mt-cari" type="search" placeholder="Cari rumpun, topik, atau subtopik..." autocomplete="off" aria-label="Cari materi"><div class="pilihan" id="mt-filter" role="group" aria-label="Filter"></div></div>
+    <div class="mt-grid"><div class="card mt-nav" id="mt-nav"></div><div class="mt-detail" id="mt-detail"></div></div>
+  </section>
   <section id="setup" class="halaman" hidden>
     <div class="page-head"><div><h2>Atur latihan</h2><p class="muted">Pilih konfigurasi sesi, lalu mulai.</p></div></div>
     <div class="setup-grid">
@@ -957,6 +996,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
             <label class="chip"><input type="radio" name="mapel" value="PK"><span>Pengetahuan Kuantitatif</span></label>
             <label class="chip"><input type="radio" name="mapel" value="PM"><span>Penalaran Matematika</span></label>
           </div>
+          <div class="dd-info sub-info" id="sub-info" hidden></div>
           <div class="tp-head"><p class="label" style="margin:0">Topik <span class="tp-hitung" id="tp-hitung"></span></p><div class="tp-aksi"><button type="button" class="tp-link" id="tp-semua">Pilih semua</button><button type="button" class="tp-link" id="tp-kosong">Kosongkan</button></div></div>
           <input class="input tp-cari" id="tp-cari" type="search" placeholder="Cari topik..." autocomplete="off" aria-label="Cari topik">
           <div class="tp-wadah" id="tp-wadah"><div class="pilihan" id="pilih-topik"></div><p class="muted" id="tp-nihil" hidden style="margin:6px 0 0">Tidak ada topik yang cocok.</p></div>
@@ -2149,12 +2189,12 @@ function isiOpsi(html) {
 }
 function tampil(id) {
   document.querySelectorAll('.halaman').forEach((h) => (h.hidden = h.id !== id));
-  const aktif = ({ statistik: 'statistik', riwayatdetail: 'statistik', bank: 'bank', pengaturan: 'pengaturan', setup: 'setup', kuis: 'setup', hasil: 'setup', review: 'setup', rekomendasi: 'rekomendasi', profil: 'profil', publik: 'profil' })[id] || 'menu';
+  const aktif = ({ materi: 'materi', statistik: 'statistik', riwayatdetail: 'statistik', bank: 'bank', pengaturan: 'pengaturan', setup: 'setup', kuis: 'setup', hasil: 'setup', review: 'setup', rekomendasi: 'rekomendasi', profil: 'profil', publik: 'profil' })[id] || 'menu';
   document.body.dataset.hal = id;
   const tombolProfil = $('btn-profil');
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
-  if (id === 'setup') { terapkanDefaultSetup(); syncBlokWaktu(); ringkasSesi(); }
+  if (id === 'setup') { if (!window._dariMateri) window._subAktif = null; window._dariMateri = false; terapkanDefaultSetup(); syncBlokWaktu(); ringkasSesi(); }
   if (AkunApp.sesi()) sinkron().catch(() => {});
   document.querySelectorAll('.nav-link').forEach((a) => a.classList.toggle('aktif', a.dataset.hal === aktif));
   window.scrollTo(0, 0);
@@ -2187,7 +2227,7 @@ function buatTopik() {
 function soalTerfilter() {
   const mapel = nilai('mapel'), topik = centang('pilih-topik'), level = centang('pilih-level');
   return sumberSoal().filter((s) =>
-    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(s.topik) && level.includes(s.tingkatKesulitan));
+    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(s.topik) && level.includes(s.tingkatKesulitan) && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
 }
 function ringkasSesi() {
   const teks = (nm) => { const i = document.querySelector(`input[name="${nm}"]:checked`); return i && i.nextElementSibling ? i.nextElementSibling.textContent : '-'; };
@@ -5119,6 +5159,107 @@ document.getElementById('dash-pengaturan').addEventListener('click',function(){d
   filter();hitung();
 })();
 terapkanTampilan();
+</script>
+<script>
+// ===== Jelajahi Materi: taksonomi bertingkat Subtes > Rumpun > Topik > Subtopik =====
+var TAKSONOMI={"PK":{"nama":"Pengetahuan Kuantitatif","rumpun":[{"id":"pk.bilangan-dan-operasi","nama":"Bilangan dan Operasi","umum":[],"sembunyiKosong":false,"topik":[{"id":"pk.bilangan-dan-operasi.operasi-bilangan","nama":"Operasi Bilangan","legacy":[],"rel":"inti","desk":"Operasi hitung pada bilangan bulat, pecahan, dan desimal.","sub":[{"id":"pk.bilangan-dan-operasi.operasi-bilangan.bilangan-bulat","nama":"Bilangan bulat"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.pecahan","nama":"Pecahan"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.desimal","nama":"Desimal"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.operasi-campuran","nama":"Operasi campuran"}]},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan","nama":"Rasio dan Perbandingan","legacy":["Perbandingan"],"rel":"inti","desk":"Perbandingan senilai, berbalik nilai, rasio, dan proporsi.","sub":[{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.perbandingan-senilai","nama":"Perbandingan senilai"},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.perbandingan-berbalik-nilai","nama":"Perbandingan berbalik nilai"},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.rasio-dan-proporsi","nama":"Rasio dan proporsi"}]},{"id":"pk.bilangan-dan-operasi.persentase","nama":"Persentase","legacy":["Persen"],"rel":"inti","desk":"Persentase dan perubahannya.","sub":[{"id":"pk.bilangan-dan-operasi.persentase.persentase","nama":"Persentase"},{"id":"pk.bilangan-dan-operasi.persentase.perubahan-persentase","nama":"Perubahan persentase"}]},{"id":"pk.bilangan-dan-operasi.pangkat-dan-bentuk-akar","nama":"Pangkat dan Bentuk Akar","legacy":["Eksponen","Logaritma"],"rel":"pendukung","desk":"Sifat pangkat, bentuk akar, dan logaritma dasar.","sub":[]}]},{"id":"pk.aljabar","nama":"Aljabar","umum":["Aljabar"],"sembunyiKosong":false,"topik":[{"id":"pk.aljabar.bentuk-aljabar","nama":"Bentuk Aljabar","legacy":[],"rel":"inti","desk":"Operasi, pemfaktoran, dan identitas aljabar.","sub":[{"id":"pk.aljabar.bentuk-aljabar.operasi-bentuk-aljabar","nama":"Operasi bentuk aljabar"},{"id":"pk.aljabar.bentuk-aljabar.pemfaktoran","nama":"Pemfaktoran"},{"id":"pk.aljabar.bentuk-aljabar.identitas-aljabar","nama":"Identitas aljabar"}]},{"id":"pk.aljabar.persamaan-linear","nama":"Persamaan Linear","legacy":[],"rel":"inti","desk":"Persamaan linear satu variabel.","sub":[{"id":"pk.aljabar.persamaan-linear.persamaan-linear-satu-variabel","nama":"Persamaan linear satu variabel"}]},{"id":"pk.aljabar.pertidaksamaan","nama":"Pertidaksamaan","legacy":["Program Linear"],"rel":"inti","desk":"Pertidaksamaan linear dan penerapannya, termasuk program linear.","sub":[{"id":"pk.aljabar.pertidaksamaan.pertidaksamaan-linear","nama":"Pertidaksamaan linear"}]},{"id":"pk.aljabar.sistem-persamaan","nama":"Sistem Persamaan","legacy":["Sistem Persamaan Linear"],"rel":"inti","desk":"Sistem persamaan linear dua variabel.","sub":[{"id":"pk.aljabar.sistem-persamaan.sistem-persamaan-linear-dua-variabel","nama":"Sistem Persamaan Linear Dua Variabel"}]},{"id":"pk.aljabar.persamaan-kuadrat","nama":"Persamaan Kuadrat","legacy":["Persamaan Kuadrat"],"rel":"inti","desk":"Akar, diskriminan, dan hubungan akar dengan koefisien.","sub":[{"id":"pk.aljabar.persamaan-kuadrat.akar-persamaan-kuadrat","nama":"Akar persamaan kuadrat"},{"id":"pk.aljabar.persamaan-kuadrat.diskriminan","nama":"Diskriminan"},{"id":"pk.aljabar.persamaan-kuadrat.hubungan-akar-dan-koefisien","nama":"Hubungan akar dan koefisien"}]},{"id":"pk.aljabar.fungsi","nama":"Fungsi","legacy":["Fungsi"],"rel":"inti","desk":"Fungsi linear, kuadrat, grafik, komposisi, dan invers.","sub":[{"id":"pk.aljabar.fungsi.fungsi-linear","nama":"Fungsi linear"},{"id":"pk.aljabar.fungsi.fungsi-kuadrat","nama":"Fungsi kuadrat"},{"id":"pk.aljabar.fungsi.grafik-fungsi","nama":"Grafik fungsi"},{"id":"pk.aljabar.fungsi.fungsi-komposisi","nama":"Fungsi komposisi"},{"id":"pk.aljabar.fungsi.fungsi-invers","nama":"Fungsi invers"}]},{"id":"pk.aljabar.pola-barisan-dan-deret","nama":"Pola, Barisan, dan Deret","legacy":["Barisan dan Deret","Deret"],"rel":"inti","desk":"Pola bilangan, barisan, dan deret aritmetika serta geometri.","sub":[{"id":"pk.aljabar.pola-barisan-dan-deret.barisan-aritmetika","nama":"Barisan aritmetika"},{"id":"pk.aljabar.pola-barisan-dan-deret.barisan-geometri","nama":"Barisan geometri"},{"id":"pk.aljabar.pola-barisan-dan-deret.deret-aritmetika","nama":"Deret aritmetika"},{"id":"pk.aljabar.pola-barisan-dan-deret.deret-geometri","nama":"Deret geometri"},{"id":"pk.aljabar.pola-barisan-dan-deret.pola-bilangan","nama":"Pola bilangan"}]}]},{"id":"pk.geometri-dan-pengukuran","nama":"Geometri dan Pengukuran","umum":["Geometri"],"sembunyiKosong":false,"topik":[{"id":"pk.geometri-dan-pengukuran.bangun-datar","nama":"Bangun Datar","legacy":[],"rel":"inti","desk":"Segitiga, segiempat, poligon, lingkaran, keliling, dan luas.","sub":[{"id":"pk.geometri-dan-pengukuran.bangun-datar.segitiga","nama":"Segitiga"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.segiempat","nama":"Segiempat"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.poligon","nama":"Poligon"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.lingkaran","nama":"Lingkaran"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.keliling-dan-luas-bangun-datar","nama":"Keliling dan luas bangun datar"}]},{"id":"pk.geometri-dan-pengukuran.bangun-ruang","nama":"Bangun Ruang","legacy":["Bangun Ruang"],"rel":"inti","desk":"Kubus, balok, prisma, limas, tabung, kerucut, bola, volume, dan luas permukaan.","sub":[{"id":"pk.geometri-dan-pengukuran.bangun-ruang.kubus-dan-balok","nama":"Kubus dan balok"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.prisma-dan-limas","nama":"Prisma dan limas"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.tabung-kerucut-dan-bola","nama":"Tabung, kerucut, dan bola"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.volume","nama":"Volume"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.luas-permukaan","nama":"Luas permukaan"}]},{"id":"pk.geometri-dan-pengukuran.geometri-koordinat","nama":"Geometri Koordinat","legacy":["Transformasi Geometri"],"rel":"inti","desk":"Jarak antartitik, koordinat Kartesius, dan transformasi.","sub":[{"id":"pk.geometri-dan-pengukuran.geometri-koordinat.jarak-antar-titik","nama":"Jarak antar titik"},{"id":"pk.geometri-dan-pengukuran.geometri-koordinat.koordinat-kartesius","nama":"Koordinat Kartesius"}]},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan","nama":"Kesebangunan dan Kekongruenan","legacy":[],"rel":"inti","desk":"Perbandingan sisi, kesebangunan, dan kekongruenan.","sub":[{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.perbandingan-sisi","nama":"Perbandingan sisi"},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.kesebangunan","nama":"Kesebangunan"},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.kekongruenan","nama":"Kekongruenan"}]},{"id":"pk.geometri-dan-pengukuran.pengukuran","nama":"Pengukuran","legacy":[],"rel":"inti","desk":"Satuan panjang, luas, dan volume.","sub":[{"id":"pk.geometri-dan-pengukuran.pengukuran.satuan-panjang-luas-dan-volume","nama":"Satuan panjang, luas, dan volume"}]},{"id":"pk.geometri-dan-pengukuran.trigonometri","nama":"Trigonometri","legacy":["Trigonometri"],"rel":"pengayaan","desk":"Perbandingan trigonometri dasar.","sub":[]}]},{"id":"pk.analisis-data-dan-statistika","nama":"Analisis Data dan Statistika","umum":["Statistika"],"sembunyiKosong":false,"topik":[{"id":"pk.analisis-data-dan-statistika.penyajian-data","nama":"Penyajian Data","legacy":[],"rel":"inti","desk":"Tabel dan diagram batang, garis, serta lingkaran.","sub":[{"id":"pk.analisis-data-dan-statistika.penyajian-data.tabel","nama":"Tabel"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-batang","nama":"Diagram batang"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-garis","nama":"Diagram garis"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-lingkaran","nama":"Diagram lingkaran"}]},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan","nama":"Ukuran Pemusatan","legacy":[],"rel":"inti","desk":"Mean, median, dan modus.","sub":[{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.mean","nama":"Mean"},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.median","nama":"Median"},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.modus","nama":"Modus"}]},{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran","nama":"Ukuran Penyebaran","legacy":[],"rel":"inti","desk":"Jangkauan dan kuartil.","sub":[{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran.jangkauan","nama":"Jangkauan"},{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran.kuartil","nama":"Kuartil"}]},{"id":"pk.analisis-data-dan-statistika.interpretasi-data","nama":"Interpretasi Data","legacy":[],"rel":"inti","desk":"Membaca grafik, membandingkan data, dan menarik kesimpulan.","sub":[{"id":"pk.analisis-data-dan-statistika.interpretasi-data.interpretasi-grafik","nama":"Interpretasi grafik"},{"id":"pk.analisis-data-dan-statistika.interpretasi-data.perbandingan-data","nama":"Perbandingan data"},{"id":"pk.analisis-data-dan-statistika.interpretasi-data.penarikan-kesimpulan","nama":"Penarikan kesimpulan"}]}]},{"id":"pk.peluang-dan-kombinatorika","nama":"Peluang dan Kombinatorika","umum":[],"sembunyiKosong":false,"topik":[{"id":"pk.peluang-dan-kombinatorika.dasar-peluang","nama":"Dasar Peluang","legacy":["Peluang"],"rel":"inti","desk":"Ruang sampel, kejadian, peluang sederhana, dan komplemen.","sub":[{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.ruang-sampel","nama":"Ruang sampel"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.titik-sampel","nama":"Titik sampel"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.kejadian","nama":"Kejadian"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.peluang-sederhana","nama":"Peluang sederhana"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.peluang-komplemen","nama":"Peluang komplemen"}]},{"id":"pk.peluang-dan-kombinatorika.peluang-gabungan","nama":"Peluang Gabungan","legacy":[],"rel":"inti","desk":"Gabungan kejadian.","sub":[{"id":"pk.peluang-dan-kombinatorika.peluang-gabungan.gabungan-kejadian","nama":"Gabungan kejadian"}]},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan","nama":"Kaidah Pencacahan","legacy":["Kaidah Pencacahan"],"rel":"inti","desk":"Aturan penjumlahan, perkalian, permutasi, dan kombinasi.","sub":[{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.aturan-penjumlahan","nama":"Aturan penjumlahan"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.aturan-perkalian","nama":"Aturan perkalian"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.permutasi","nama":"Permutasi"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.kombinasi","nama":"Kombinasi"}]}]}]},"PM":{"nama":"Penalaran Matematika","rumpun":[{"id":"pm.kuantitas-dan-aritmetika","nama":"Kuantitas dan Aritmetika","umum":[],"sembunyiKosong":false,"topik":[{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks","nama":"Bilangan dalam Konteks","legacy":["Persen","Perbandingan","Eksponen"],"rel":"inti","desk":"Bilangan, rasio, dan persentase dalam masalah sehari-hari.","sub":[{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.operasi-bilangan-dalam-konteks-nyata","nama":"Operasi bilangan dalam konteks nyata"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.rasio-dan-proporsi-kontekstual","nama":"Rasio dan proporsi kontekstual"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.persentase-dalam-permasalahan-sehari-hari","nama":"Persentase dalam permasalahan sehari-hari"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.perubahan-nilai","nama":"Perubahan nilai"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.perbandingan-beberapa-kondisi","nama":"Perbandingan beberapa kondisi"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.satuan-dan-konversi","nama":"Satuan dan konversi"}]}]},{"id":"pm.aljabar-dan-pemodelan","nama":"Aljabar dan Pemodelan","umum":["Aljabar"],"sembunyiKosong":false,"topik":[{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar","nama":"Pemodelan Aljabar","legacy":["Persamaan Kuadrat","Sistem Persamaan Linear","Program Linear"],"rel":"inti","desk":"Mengubah masalah cerita menjadi model matematika.","sub":[{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.mengubah-masalah-cerita-menjadi-persamaan","nama":"Mengubah masalah cerita menjadi persamaan"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.menentukan-variabel","nama":"Menentukan variabel"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.membuat-model-matematika","nama":"Membuat model matematika"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.persamaan-dalam-konteks-nyata","nama":"Persamaan dalam konteks nyata"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.sistem-persamaan","nama":"Sistem persamaan"}]},{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel","nama":"Fungsi dan Hubungan Variabel","legacy":["Fungsi","Barisan dan Deret","Deret","Logaritma"],"rel":"inti","desk":"Fungsi, grafik, dan pola hubungan antarvariabel.","sub":[{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel.interpretasi-fungsi-dan-grafik","nama":"Interpretasi fungsi dan grafik"},{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel.pola-hubungan-antarvariabel","nama":"Pola hubungan antarvariabel"}]}]},{"id":"pm.geometri-dan-pengukuran","nama":"Geometri dan Pengukuran","umum":["Geometri"],"sembunyiKosong":false,"topik":[{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk","nama":"Pengukuran dan Bentuk","legacy":["Bangun Ruang","Trigonometri","Transformasi Geometri"],"rel":"inti","desk":"Pengukuran dan analisis bentuk dalam konteks nyata.","sub":[{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.pengukuran-dalam-konteks-nyata","nama":"Pengukuran dalam konteks nyata"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.luas-dan-volume-dalam-penerapan","nama":"Luas dan volume dalam penerapan"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.skala-denah-dan-peta","nama":"Skala denah dan peta"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.jarak-dan-koordinat","nama":"Jarak dan koordinat"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.analisis-bentuk-geometris","nama":"Analisis bentuk geometris"}]}]},{"id":"pm.analisis-data-dan-statistika","nama":"Analisis Data dan Statistika","umum":["Statistika"],"sembunyiKosong":false,"topik":[{"id":"pm.analisis-data-dan-statistika.data-dan-statistika","nama":"Data dan Statistika","legacy":[],"rel":"inti","desk":"Membaca, membandingkan, dan menafsirkan data.","sub":[{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membaca-tabel","nama":"Membaca tabel"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membaca-grafik","nama":"Membaca grafik"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membandingkan-data","nama":"Membandingkan data"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menghitung-nilai-statistik","nama":"Menghitung nilai statistik"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menginterpretasikan-perubahan","nama":"Menginterpretasikan perubahan"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menilai-kesimpulan-dari-data","nama":"Menilai kesimpulan dari data"}]}]},{"id":"pm.peluang-dan-pengambilan-keputusan","nama":"Peluang dan Pengambilan Keputusan","umum":[],"sembunyiKosong":false,"topik":[{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan","nama":"Peluang dan Keputusan","legacy":["Peluang","Kaidah Pencacahan","Himpunan"],"rel":"inti","desk":"Kemungkinan kejadian dan keputusan berdasarkan peluang.","sub":[{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.ruang-sampel-dalam-konteks-nyata","nama":"Ruang sampel dalam konteks nyata"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.menghitung-kemungkinan-kejadian","nama":"Menghitung kemungkinan kejadian"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.peluang-gabungan","nama":"Peluang gabungan"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.analisis-beberapa-alternatif","nama":"Analisis beberapa alternatif"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.pengambilan-keputusan-berdasarkan-peluang","nama":"Pengambilan keputusan berdasarkan peluang"}]}]},{"id":"pm.topik-lanjutan","nama":"Topik Lanjutan","umum":[],"sembunyiKosong":true,"topik":[{"id":"pm.topik-lanjutan.limit","nama":"Limit","legacy":["Limit"],"rel":"pengayaan","desk":"Limit fungsi.","sub":[]},{"id":"pm.topik-lanjutan.turunan","nama":"Turunan","legacy":["Turunan"],"rel":"pengayaan","desk":"Turunan fungsi.","sub":[]},{"id":"pm.topik-lanjutan.integral","nama":"Integral","legacy":["Integral"],"rel":"pengayaan","desk":"Integral fungsi.","sub":[]}]}]}};
+(function(){
+  var mt={s:'PK',q:'',f:'semua',sel:null,buka:{},sheet:false},idx={},cache={};
+  var REL={inti:'Inti',pendukung:'Pendukung',pengayaan:'Pengayaan'};
+  Object.keys(TAKSONOMI).forEach(function(k){TAKSONOMI[k].rumpun.forEach(function(r){
+    var lr=r.umum.slice();
+    r.topik.forEach(function(t){
+      t.sub.forEach(function(sb){idx[sb.id]={type:'sub',id:sb.id,nama:sb.nama,s:k,r:r,t:t,legacy:t.legacy,rel:t.rel}});
+      idx[t.id]={type:'topik',id:t.id,nama:t.nama,s:k,r:r,t:t,legacy:t.legacy,rel:t.rel};lr=lr.concat(t.legacy)});
+    idx[r.id+'.umum']={type:'umum',id:r.id+'.umum',nama:'Belum diklasifikasikan ke topik',s:k,r:r,legacy:r.umum};
+    idx[r.id]={type:'rumpun',id:r.id,nama:r.nama,s:k,r:r,legacy:lr}})});
+  function semuaSoal(){return SOAL.concat(BankSoal.ambil())}
+  function cocokSub(x,id){return x.subtopikId===id||(x.subtopikIds||[]).indexOf(id)>-1}
+  function ukur(n){if(cache[n.id])return cache[n.id];
+    var S=semuaSoal().filter(function(x){return x.mataPelajaran===n.s}),ms,rw=Riwayat.ambil().filter(function(x){return x.mapel===n.s});
+    if(n.type==='sub'){ms=S.filter(function(x){return cocokSub(x,n.id)});var ids={};ms.forEach(function(x){ids[String(x.id)]=1});rw=rw.filter(function(x){return ids[String(x.id)]})}
+    else{ms=S.filter(function(x){return n.legacy.indexOf(x.topik)>-1});rw=rw.filter(function(x){return n.legacy.indexOf(x.topik)>-1})}
+    var b=rw.filter(function(x){return x.b}).length;
+    return cache[n.id]={soal:ms.length,n:rw.length,b:b,acc:rw.length?Math.round(b/rw.length*100):null}}
+  function lolos(n){var u=ukur(n);return mt.f==='semua'||(mt.f==='soal'&&u.soal>0)||(mt.f==='belum'&&u.n===0&&u.soal>0)||(mt.f==='sudah'&&u.n>0)||(mt.f==='perlu'&&u.n>=3&&u.acc<75)}
+  function tampakTopik(r,t){var n=idx[t.id];if(r.sembunyiKosong&&!ukur(n).soal)return false;return lolos(n)}
+  var CH='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+  function baris(n,cls,anak,lbl){var u=ukur(n),a=mt.sel===n.id,b=mt.buka[n.id];
+    return '<div class="mt-row'+(a?' aktif':'')+'"><button type="button" class="mt-chev" data-tog="'+n.id+'" aria-expanded="'+(!!b)+'" aria-label="Buka atau tutup '+esc(n.nama)+'"'+(anak?'':' disabled')+'>'+CH+'</button><button type="button" class="mt-nama" data-pilih="'+n.id+'"'+(a?' aria-current="true"':'')+'><span>'+esc(lbl||n.nama)+'</span><span class="mt-n'+(u.soal?'':' nol')+'">'+(u.soal?u.soal+' soal':'0 soal')+'</span></button></div>'}
+  function renderNav(){var el=$('mt-nav'),q=mt.q.trim().toLowerCase(),T=TAKSONOMI[mt.s];
+    if(q){var h=[];T.rumpun.forEach(function(r){
+        if(r.nama.toLowerCase().indexOf(q)>-1)h.push([idx[r.id],r.nama]);
+        r.topik.forEach(function(t){if(r.sembunyiKosong&&!ukur(idx[t.id]).soal)return;
+          if(t.nama.toLowerCase().indexOf(q)>-1)h.push([idx[t.id],r.nama+' → '+t.nama]);
+          t.sub.forEach(function(sb){if(sb.nama.toLowerCase().indexOf(q)>-1)h.push([idx[sb.id],r.nama+' → '+t.nama+' → '+sb.nama])})})});
+      el.innerHTML=h.length?h.map(function(x){return '<button type="button" class="mt-hasil" data-pilih="'+x[0].id+'"><b>'+esc(x[0].nama)+'</b><small>'+esc(x[1])+'</small></button>'}).join(''):'<p class="muted mt-kosong">Tidak ada materi yang cocok dengan &ldquo;'+esc(mt.q)+'&rdquo;.</p>';return}
+    var out='<ul class="mt-tree" role="tree">';
+    T.rumpun.forEach(function(r){var tp=r.topik.filter(function(t){return tampakTopik(r,t)}),um=idx[r.id+'.umum'],umOk=r.umum.length&&ukur(um).soal>0&&lolos(um);
+      if(!tp.length&&!umOk&&mt.f!=='semua')return;if(r.sembunyiKosong&&!tp.length)return;
+      var rn=idx[r.id],ob=mt.buka[r.id];
+      out+='<li class="mt-r" role="treeitem">'+baris(rn,'',true);
+      if(ob){out+='<ul>';tp.forEach(function(t){var tn=idx[t.id],tb=mt.buka[t.id];
+          out+='<li class="mt-t" role="treeitem">'+baris(tn,'',t.sub.length>0);
+          if(tb&&t.sub.length){out+='<ul>'+t.sub.map(function(sb){return '<li class="mt-s">'+baris(idx[sb.id],'',false)+'</li>'}).join('')+'</ul>'}
+          out+='</li>'});
+        if(umOk||(r.umum.length&&mt.f==='semua'&&ukur(um).soal>0))out+='<li class="mt-t">'+baris(um,'',false,'Belum diklasifikasikan')+'</li>';
+        out+='</ul>'}
+      out+='</li>'});
+    el.innerHTML=out+'</ul>'+(out.indexOf('<li')<0?'<p class="muted mt-kosong">Tidak ada materi untuk filter ini.</p>':'')}
+  function statTeks(u){return u.n?u.acc+'%':'–'}
+  function renderDetail(){var el=$('mt-detail'),n=idx[mt.sel];
+    if(!n){el.innerHTML='<div class="card"><p class="muted" style="margin:0">Pilih rumpun, topik, atau subtopik di panel navigasi untuk melihat detailnya.</p></div>';return}
+    var u=ukur(n),p=[];p.push(['PK',null]);
+    var crumb=['<button type="button" data-pilih="'+n.r.id+'">'+esc(TAKSONOMI[n.s].nama)+'</button>'];
+    if(n.type!=='rumpun')crumb.push(n.type==='topik'||n.type==='sub'?'<button type="button" data-pilih="'+n.r.id+'">'+esc(n.r.nama)+'</button>':esc(n.r.nama));else crumb.push(esc(n.r.nama));
+    if(n.type==='sub'){crumb.push('<button type="button" data-pilih="'+n.t.id+'">'+esc(n.t.nama)+'</button>');crumb.push(esc(n.nama))}
+    else if(n.type==='topik'||n.type==='umum')crumb.push(esc(n.nama));
+    var nsub=n.type==='topik'?n.t.sub.length:n.type==='rumpun'?n.r.topik.reduce(function(a,t){return a+t.sub.length},0):'';
+    var h='<button type="button" class="mt-balik" id="mt-balik">&lsaquo; Kembali ke daftar</button><div class="card"><div class="mt-crumb">'+crumb.join(' / ')+'</div><h3 class="mt-judul">'+esc(n.nama)+(n.rel?'<span class="mt-rel">'+REL[n.rel]+'</span>':'')+'</h3>';
+    if(n.type==='topik')h+='<p class="muted" style="margin:0">'+esc(n.t.desk)+'</p>';
+    if(n.type==='umum')h+='<p class="muted" style="margin:0">Soal dari topik lama yang belum dapat dipetakan ke topik atau subtopik secara meyakinkan. Soal tetap bisa dilatih.</p>';
+    h+='<div class="mt-metrik">'+(nsub!==''?'<div><b>'+nsub+'</b><span>Subtopik</span></div>':'')+'<div><b>'+u.soal+'</b><span>Soal tersedia</span></div><div><b>'+u.n+'</b><span>Dikerjakan</span></div><div><b>'+statTeks(u)+'</b><span>Akurasi</span></div></div>';
+    h+=u.soal?'<button type="button" class="btn btn-primary" id="mt-latih">Mulai Latihan</button>':'<button type="button" class="btn btn-primary" disabled>Mulai Latihan</button><p class="muted" style="margin:8px 0 0">Materi ini masih dikembangkan: belum ada soal yang terhubung.</p>';
+    h+='<p class="muted" style="margin:10px 0 0;font-size:.8rem">Akurasi dihitung dari riwayat terbaru (maks. 600 pengerjaan). Struktur materi disusun Nalarin, bukan kisi-kisi resmi SNPMB.</p></div>';
+    var kids=[];
+    if(n.type==='rumpun')kids=n.r.topik.filter(function(t){return tampakTopik(n.r,t)}).map(function(t){return idx[t.id]});
+    if(n.type==='topik')kids=n.t.sub.map(function(sb){return idx[sb.id]});
+    if(kids.length||n.type==='topik'){h+='<div class="card"><b>'+(n.type==='rumpun'?'Topik':'Subtopik')+'</b>';
+      h+=kids.length?'<ul class="mt-daftar">'+kids.map(function(k){var kk=ukur(k);return '<li><button type="button" data-pilih="'+k.id+'" data-buka="1"><span>'+esc(k.nama)+'</span><span class="mt-n'+(kk.soal?'':' nol')+'">'+(kk.soal?kk.soal+' soal':'Belum ada soal')+'</span></button></li>'}).join('')+'</ul>':'<p class="muted" style="margin:6px 0 0">Subtopik untuk topik ini belum disusun.</p>';
+      h+='</div>'}
+    el.innerHTML=h}
+  function filterUI(){var F=[['semua','Semua materi'],['soal','Materi dengan soal'],['belum','Belum dipelajari'],['sudah','Sudah dipelajari'],['perlu','Perlu ditingkatkan']];
+    $('mt-filter').innerHTML=F.map(function(f){return '<label class="chip"><input type="radio" name="mt-f" value="'+f[0]+'"'+(mt.f===f[0]?' checked':'')+'><span>'+f[1]+'</span></label>'}).join('')}
+  function render(){cache={};$('materi').dataset.sheet=mt.sheet?'1':'0';filterUI();renderNav();renderDetail();
+    document.querySelectorAll('#mt-subtes button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.s===mt.s))});
+    if(window.MathJax&&0)0}
+  window.renderMateri=render;
+  function pilih(id,buka){var n=idx[id];if(!n)return;mt.s=n.s;mt.sel=id;mt.q='';$('mt-cari').value='';
+    [n.r&&n.r.id,n.t&&n.t.id].forEach(function(x){if(x&&(x!==id||buka))mt.buka[x]=true});
+    if(n.type==='rumpun'||n.type==='topik')mt.buka[id]=true;mt.sheet=true;render();$('mt-detail').scrollTop=0;if(window.innerWidth<760)window.scrollTo(0,0)}
+  $('materi').addEventListener('click',function(e){
+    var tg=e.target.closest('[data-tog]');if(tg){mt.buka[tg.dataset.tog]=!mt.buka[tg.dataset.tog];renderNav();return}
+    var pl=e.target.closest('[data-pilih]');if(pl){pilih(pl.dataset.pilih,!!pl.dataset.buka);return}
+    if(e.target.closest('#mt-balik')){mt.sheet=false;render();return}
+    var sb=e.target.closest('#mt-subtes [data-s]');if(sb){mt.s=sb.dataset.s;mt.sel=null;mt.sheet=false;mt.q='';$('mt-cari').value='';render();return}
+    if(e.target.closest('#mt-latih'))mulaiMateri(mt.sel)});
+  $('mt-cari').addEventListener('input',function(){mt.q=this.value;renderNav()});
+  $('mt-filter').addEventListener('change',function(e){mt.f=e.target.value;render()});
+  function mulaiMateri(id){var n=idx[id];if(!n)return;
+    window._dariMateri=true;tampil('setup');
+    document.querySelectorAll('input[name="sumber"]').forEach(function(i){i.checked=i.value==='semua'});
+    document.querySelectorAll('input[name="mapel"]').forEach(function(i){i.checked=i.value===n.s});
+    buatTopik();
+    document.querySelectorAll('#pilih-topik input').forEach(function(i){i.checked=n.legacy.indexOf(i.value)>-1});
+    window._subAktif=n.type==='sub'?n.id:null;
+    var si=$('sub-info');si.hidden=!window._subAktif;if(window._subAktif)si.innerHTML='<span>Filter subtopik aktif: <b>'+esc(n.nama)+'</b></span><button type="button" class="tp-link" id="sub-hapus">Hapus filter</button>';
+    document.querySelectorAll('#pilih-topik label').forEach(function(l){l.hidden=false});
+    hitungSoal();ringkasSesi();$('pilih-topik').dispatchEvent(new Event('change',{bubbles:true}))}
+  $('sub-info').addEventListener('click',function(e){if(e.target.id==='sub-hapus'){window._subAktif=null;this.hidden=true;hitungSoal();ringkasSesi()}});
+  document.querySelectorAll('.nav-link[data-hal="materi"]').forEach(function(a){a.addEventListener('click',function(){mt.sheet=false;render();tampil('materi')})});
+  $('btn-materi').addEventListener('click',function(){mt.sheet=false;render();tampil('materi')});
+  window._mt=function(){return {idx:idx,ukur:ukur,mt:mt}};
+})();
 </script>
 </body>
 </html>
