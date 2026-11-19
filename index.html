@@ -5903,7 +5903,7 @@ terapkanTampilan();
     if(u.n<MIN_KUASAI)return 'Baru '+u.n+' percobaan. Dikuasai setelah minimal '+MIN_KUASAI+' percobaan dengan akurasi '+AKU_KUASAI+'% ke atas.';
     if(u.acc<AKU_KUASAI)return 'Akurasi '+u.acc+'%. Capai '+AKU_KUASAI+'% atau lebih untuk dikuasai.';
     return 'Kerjakan lebih banyak soal yang berbeda (baru '+u.uniq+' dari minimal '+Math.min(MIN_UNIK,u.soal)+').'}
-  function topikTampak(r){return r.topik.filter(function(t){return !(r.sembunyiKosong&&!ukur(idx[t.id]).soal)})}
+  function topikTampak(r){return r.topik}
   function subDari(n){var o=[];
     if(n.type==='topik')n.t.sub.forEach(function(sb){o.push(idx[sb.id])});
     else if(n.type==='rumpun')topikTampak(n.r).forEach(function(t){t.sub.forEach(function(sb){o.push(idx[sb.id])})});
@@ -5911,7 +5911,7 @@ terapkanTampilan();
     return o}
   function filterAktif(){return mt.f!=='semua'||!!mt.st}
   function lolos(n){var u=ukur(n);return (mt.f==='semua'||u.soal>0)&&(!mt.st||mt.st===u.status)}
-  function tampakTopik(r,t){return !(r.sembunyiKosong&&!ukur(idx[t.id]).soal)&&lolos(idx[t.id])}
+  function tampakTopik(r,t){return lolos(idx[t.id])}
   var CH='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   function titik(u){return '<span class="mt-dot st-'+u.status+'" role="img" aria-label="Status: '+STATUS[u.status]+'" title="'+STATUS[u.status]+'"></span>'}
   function hitungTeks(u){return u.soal?u.soal+' soal':'0 soal'}
@@ -5942,7 +5942,7 @@ terapkanTampilan();
     lastHasil=[];
     var out='<ul class="mt-tree" role="tree">';
     T.rumpun.forEach(function(r){var tp=r.topik.filter(function(t){return tampakTopik(r,t)}),um=idx[r.id+'.umum'],umOk=r.umum.length&&ukur(um).soal>0&&lolos(um);
-      if(!tp.length&&!umOk&&filterAktif())return;if(r.sembunyiKosong&&!tp.length)return;
+      if(!tp.length&&!umOk&&filterAktif())return;
       var rn=idx[r.id],ob=mt.buka[r.id];
       out+='<li class="mt-r" role="treeitem">'+baris(rn,true);
       if(ob){out+='<ul>';tp.forEach(function(t){var tn=idx[t.id],tb=mt.buka[t.id];
