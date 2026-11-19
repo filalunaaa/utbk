@@ -612,7 +612,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .stat-tile span{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .stat-tile strong{font-size:1.7rem;font-weight:800;line-height:1.25}
 .stat-tile small{font-size:.75rem;color:var(--muted)}
-.bank-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 170px 170px;gap:10px;margin:16px 0 4px}
+.bank-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 150px 150px minmax(0,220px);gap:10px;margin:16px 0 4px}#filter-sub,#f-sub{text-overflow:ellipsis}.sub-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--primary-soft);color:var(--accent);margin-left:6px;vertical-align:middle}
 .state-kosong{text-align:center;padding:32px 16px;border:1.5px dashed var(--border);border-radius:12px;margin-top:14px}
 .state-kosong p{margin:4px 0 0}
 .wadah-folder{border-radius:14px;box-shadow:var(--shadow)}
@@ -627,7 +627,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 #kartu-form{scroll-margin-top:76px}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--warning-soft:#3b2506;--warning:#fbbf24}}
 :root[data-theme="dark"]{--warning-soft:#3b2506;--warning:#fbbf24}
-@media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #cari-soal{grid-column:1/-1}.page-head .btn{width:100%}}
+@media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #cari-soal{grid-column:1/-1}.bank-toolbar #filter-sub{grid-column:1/-1}.page-head .btn{width:100%}}
 @media(max-width:600px){.kartu-soal>summary{flex-wrap:wrap}.pratinjau-soal{flex-basis:100%}}
 
 /* Statistik v2 */
@@ -1175,7 +1175,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     </div>
     <div class="card" id="kartu-form" hidden>
       <h2 id="judul-form">Tambah soal baru</h2>
-      <p class="muted">Ketik seperti di Word. Rumus ditulis di antara tanda $, contoh: $\frac{1}{2}$ atau $x^2 + y^2$.</p>
+      <p class="muted tex2jax_ignore">Ketik seperti di Word. Rumus ditulis di antara tanda $, contoh: $\frac{1}{2}$ atau $x^2 + y^2$.</p>
 
       <p class="label">Mata pelajaran</p>
       <div class="pilihan">
@@ -1186,6 +1186,9 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <p class="label" for="f-topik">Topik</p>
       <input class="input" id="f-topik" placeholder="contoh: Aljabar" role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off">
       <datalist id="daftar-topik"></datalist>
+
+      <p class="label">Subtopik <span class="muted">(opsional, untuk mengelompokkan lebih spesifik)</span></p>
+      <select class="input" id="f-sub" aria-label="Subtopik"></select>
 
       <p class="label">Tingkat kesulitan</p>
       <div class="pilihan">
@@ -1278,6 +1281,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
         <input class="input" id="cari-soal" type="search" placeholder="Cari soal, topik, atau mata pelajaran..." aria-label="Cari soal">
         <select class="input" id="filter-mapel" aria-label="Filter mata pelajaran"><option value="">Semua mapel</option><option value="PK">PK</option><option value="PM">PM</option></select>
         <select class="input" id="filter-sulit" aria-label="Filter tingkat kesulitan"><option value="">Semua tingkat</option><option value="mudah">Mudah</option><option value="sedang">Sedang</option><option value="sulit">Sulit</option></select>
+        <select class="input" id="filter-sub" aria-label="Filter subtopik"></select>
       </div>
       <div id="daftar-custom"></div>
     </div>
@@ -3614,6 +3618,7 @@ function ubahTipeForm() {
     : tipe === 'isian' ? 'Kunci jawaban (bilangan cacah)' : 'Kunci jawaban';
 }
 $('pilih-tipe').addEventListener('change', ubahTipeForm);
+document.querySelectorAll('input[name="f-mapel"]').forEach((i) => i.addEventListener('change', () => renderSubForm('')));
 $('f-isian').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g, ''); });
 function bacaForm() {
   const topik = $('f-topik').value.trim();
@@ -3642,6 +3647,7 @@ function bacaForm() {
     tipe,
     mataPelajaran: nilai('f-mapel'),
     topik,
+    ...($('f-sub').value ? { subtopikId: $('f-sub').value } : {}),
     tingkatKesulitan: nilai('f-level'),
     folderId: $('f-folder').value || null,
     soal: sanitize(getArea('soal').innerHTML),
@@ -3653,6 +3659,7 @@ function bacaForm() {
 function resetForm() {
   if ($('kotak-pratinjau')) { $('kotak-pratinjau').hidden = true; $('btn-pratinjau').textContent = 'Pratinjau'; }
   $('f-topik').value = '';
+  renderSubForm('');
   semuaArea().forEach((a) => (a.innerHTML = ''));
   pilihGambar(null);
   document.querySelector('input[name="f-mapel"][value="PK"]').checked = true;
@@ -3673,6 +3680,7 @@ function resetForm() {
 function isiForm(s) {
   $('f-topik').value = s.topik;
   document.querySelector(`input[name="f-mapel"][value="${s.mataPelajaran}"]`).checked = true;
+  renderSubForm(subDari(s));
   document.querySelector(`input[name="f-level"][value="${s.tingkatKesulitan}"]`).checked = true;
   const tipe = tipeSoal(s);
   document.querySelector(`input[name="f-tipe"][value="${tipe}"]`).checked = true;
@@ -3714,6 +3722,7 @@ function simpanSoal() {
   buatDatalist();
 }
 function bukaForm() {
+  renderSubForm($('f-sub').value);
   const k = $('kartu-form');
   k.hidden = false;
   k.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3745,7 +3754,7 @@ function optionsPindah(terpilih) {
 function itemSoalHTML(s, nomor) {
   const buka = bukaSoal.has(s.id) ? ' open' : '';
   return `<details class="kartu-soal" data-kunci="soal:${esc(s.id)}"${buka}>
-    <summary><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(namaMapel(s.mataPelajaran))} · ${esc(s.topik)} · ${esc(s.tingkatKesulitan)}</span>
+    <summary><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(namaMapel(s.mataPelajaran))} · ${esc(s.topik)} · ${esc(s.tingkatKesulitan)}</span>${namaSub(subDari(s)) ? `<span class="sub-tag">${esc(namaSub(subDari(s)))}</span>` : ''}
       <span class="pratinjau-soal">${nomor}. ${esc(previewTeks(s.soal))}</span></summary>
     <div class="isi-kartu">
       <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
@@ -3755,6 +3764,8 @@ function itemSoalHTML(s, nomor) {
       <div class="aksi-kecil">
         ${modeAdmin ? '' : `<label class="muted">Pindah ke</label>
         <select class="input kecil" data-pindah="${esc(s.id)}">${optionsPindah(s.folderId || '')}</select>`}
+        <label class="muted">Subtopik</label>
+        <select class="input kecil" data-subset="${esc(s.id)}" aria-label="Subtopik soal">${optionsSub(s.mataPelajaran, subDari(s), { depan: '<option value="">Tanpa subtopik</option>' })}</select>
         <button class="btn btn-secondary btn-kecil" data-aksi="pratinjau" data-id="${esc(s.id)}">Pratinjau</button>
         <button class="btn btn-secondary btn-kecil" data-aksi="edit" data-id="${esc(s.id)}">Edit</button>
         <button class="btn btn-bahaya btn-kecil" data-aksi="hapus" data-id="${esc(s.id)}">Hapus</button>
@@ -3787,16 +3798,50 @@ function folderHTML(g, terbuka) {
   </details>`;
 }
 // Pencarian dan filter tampilan bank (tidak memengaruhi isi PDF per folder)
-const FB = { q: '', mapel: '', sulit: '' };
-const filterBankAktif = () => !!(FB.q || FB.mapel || FB.sulit);
+const FB = { q: '', mapel: '', sulit: '', sub: '' };
+const filterBankAktif = () => !!(FB.q || FB.mapel || FB.sulit || FB.sub);
+// Subtopik: pilihan diambil dari taksonomi Jelajahi Materi (satu sumber data)
+function subDari(s) { return s.subtopikId || (s.subtopikIds && s.subtopikIds[0]) || ''; }
+function namaSub(id) {
+  if (!id || typeof TAKSONOMI === 'undefined') return '';
+  for (const k of Object.keys(TAKSONOMI)) for (const r of TAKSONOMI[k].rumpun) for (const tp of r.topik) {
+    const sb = tp.sub.find((x) => x.id === id);
+    if (sb) return sb.nama;
+  }
+  return '';
+}
+function optionsSub(mapel, terpilih, opsi) {
+  if (typeof TAKSONOMI === 'undefined') return '';
+  const semua = BankSoal.ambil();
+  const hit = (id) => semua.filter((s) => (s.subtopikId === id || (s.subtopikIds || []).includes(id))).length;
+  let h = opsi.depan;
+  Object.keys(TAKSONOMI).filter((k) => !mapel || k === mapel).forEach((k) => {
+    TAKSONOMI[k].rumpun.forEach((r) => r.topik.forEach((tp) => {
+      if (!tp.sub.length) return;
+      h += `<optgroup label="${esc((mapel ? '' : k + ' · ') + r.nama + ' › ' + tp.nama)}">` + tp.sub.map((sb) =>
+        `<option value="${esc(sb.id)}"${sb.id === terpilih ? ' selected' : ''}>${esc(sb.nama)}${opsi.hitung ? ' (' + hit(sb.id) + ')' : ''}</option>`).join('') + '</optgroup>';
+    }));
+  });
+  return h;
+}
+function renderSubForm(terpilih) {
+  $('f-sub').innerHTML = optionsSub(nilai('f-mapel'), terpilih || '', { depan: '<option value="">Tanpa subtopik</option>' });
+}
+function renderFilterSub() {
+  const semua = BankSoal.ambil(), kini = FB.sub;
+  const tanpa = semua.filter((s) => !subDari(s)).length;
+  $('filter-sub').innerHTML = optionsSub(FB.mapel, kini, { depan: `<option value="">Semua subtopik</option><option value="__none"${kini === '__none' ? ' selected' : ''}>Tanpa subtopik (${tanpa})</option>`, hitung: true });
+  if (kini && $('filter-sub').value !== kini) { FB.sub = ''; $('filter-sub').value = ''; }
+}
 function teksCari(s) {
   const d = document.createElement('div');
   d.innerHTML = sanitize(s.soal);
-  return `${d.textContent} ${s.topik} ${namaMapel(s.mataPelajaran)} ${s.mataPelajaran}`.toLowerCase();
+  return `${d.textContent} ${s.topik} ${namaSub(subDari(s))} ${namaMapel(s.mataPelajaran)} ${s.mataPelajaran}`.toLowerCase();
 }
 function lolosFilterBank(s) {
   if (FB.mapel && s.mataPelajaran !== FB.mapel) return false;
   if (FB.sulit && s.tingkatKesulitan !== FB.sulit) return false;
+  if (FB.sub === '__none' ? !!subDari(s) : (FB.sub && s.subtopikId !== FB.sub && !(s.subtopikIds || []).includes(FB.sub))) return false;
   return !FB.q || teksCari(s).includes(FB.q);
 }
 function ringkasanBank(semua, tampil) {
@@ -3806,6 +3851,7 @@ function ringkasanBank(semua, tampil) {
 }
 function renderDaftarCustom() {
   const semua = BankSoal.ambil();
+  renderFilterSub();
   $('judul-bank').innerHTML = (modeAdmin ? 'Soal bawaan - semua pengguna' : 'Bank soal saya') + ' (<span id="jumlah-custom">' + semua.length + '</span>)';
   const f = filterBankAktif();
   let html = '', tampil = 0;
@@ -3838,8 +3884,9 @@ $('daftar-custom').addEventListener('toggle', (e) => {
 }, true);
 let tundaCari;
 $('cari-soal').addEventListener('input', (e) => { clearTimeout(tundaCari); tundaCari = setTimeout(() => { FB.q = e.target.value.trim().toLowerCase(); renderDaftarCustom(); }, 150); });
-$('filter-mapel').addEventListener('change', (e) => { FB.mapel = e.target.value; renderDaftarCustom(); });
+$('filter-mapel').addEventListener('change', (e) => { FB.mapel = e.target.value; renderFilterSub(); renderDaftarCustom(); });
 $('filter-sulit').addEventListener('change', (e) => { FB.sulit = e.target.value; renderDaftarCustom(); });
+$('filter-sub').addEventListener('change', (e) => { FB.sub = e.target.value; renderDaftarCustom(); });
 $('btn-ke-form').addEventListener('click', () => {
   if (editId !== null) resetForm();
   pesanForm('', false);
@@ -4216,6 +4263,12 @@ $('daftar-custom').addEventListener('click', (e) => {
   else if (a === 'pratinjau-folder') { const g = grupSoal().find((q) => (q.id || 'none') === b.dataset.folder); if (g) bukaPratinjau(g.items.filter(lolosFilterBank), 'Pratinjau: ' + g.nama); }
 });
 $('daftar-custom').addEventListener('change', (e) => {
+  const ss = e.target.closest('select[data-subset]');
+  if (ss) {
+    const d = BankSoal.ambil(), it = d.find((x) => x.id === ss.dataset.subset);
+    if (it) { if (ss.value) it.subtopikId = ss.value; else delete it.subtopikId; delete it.subtopikIds; BankSoal.simpan(d); renderSemuaBank(); }
+    return;
+  }
   const sel = e.target.closest('select[data-pindah]');
   if (sel) pindahkanSoal(sel.dataset.pindah, sel.value);
 });
