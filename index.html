@@ -677,6 +677,17 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .kartu-rek.kat-sedang{border-left-color:var(--warning)}
 .kartu-rek.kat-sedang .badge-rek{background:var(--warning-soft);color:var(--warning)}
 @media(min-width:700px){.rek-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rek-fokus{margin:0 0 10px;padding:9px 12px;border-radius:10px;font-size:.88rem;line-height:1.45;background:var(--bg);border:1px solid var(--border)}
+.rek-fokus.st-perlu{background:var(--salah-soft);border-color:transparent}.rek-fokus.st-sedang{background:var(--warning-soft);border-color:transparent}.rek-fokus.st-dikuasai{background:var(--benar-soft);border-color:transparent}
+.rek-subs{margin:0 0 12px}.rek-subs>summary{cursor:pointer;font-size:.82rem;font-weight:700;color:var(--accent);padding:2px 0}
+.rek-sublist{list-style:none;margin:6px 0 0;padding:0}
+.rek-sub{padding:9px 0;border-top:1px solid var(--border)}.rek-sub:first-child{border-top:0}
+.rek-sub-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.rek-sub-nama{font-weight:600;font-size:.9rem;overflow-wrap:anywhere}
+.rek-sub-bar{display:flex;align-items:center;gap:10px}.rek-sub-bar .kem-bar{flex:1;margin-top:0}.rek-sub-bar strong{font-size:.85rem;min-width:2.6em;text-align:right;font-variant-numeric:tabular-nums}
+.rek-sub-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px;font-size:.76rem;color:var(--muted)}
+.rek-sub .btn{padding:3px 10px;font-size:.76rem}
+.rek-catatan{margin:6px 0 0;font-size:.76rem;color:var(--muted)}
 @media(min-width:1100px){.rek-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* Atur Latihan dan Review v2 */
@@ -5114,6 +5125,7 @@ function renderBeranda() {
     <p style="margin:0 0 2px"><strong>${esc(lemah.nama)}</strong> <span class="prio ${pr[0]}">${pr[1]}</span></p>
     <div class="rek-baris muted">${mapel ? `<span>${esc(mapel)}</span>` : ''}<span>${lemah.pct}% akurat</span><span>${lemah.total} soal dikerjakan</span></div>
     <div class="progress"><div class="progress-bar" style="width:${lemah.pct}%"></div></div>
+    ${(() => { const rc = rincianSubTopik(lemah.nama, rr && rr.mapel); const f = rc && rc.subs.find((x) => x.k === 'perlu' || x.k === 'sedang'); return f ? `<p class="rek-catatan" style="margin:8px 0 0">Fokus subtopik: <b>${esc(f.n.nama)}</b> (${f.u.acc}%)</p>` : ''; })()}
     <button type="button" class="btn btn-primary btn-kecil" data-latihan="${esc(lemah.nama)}" style="margin-top:8px">Latihan 5 Soal</button>
     <p class="muted" style="margin:10px 0 0">Klik kartu ini untuk rekomendasi lengkap &rsaquo;</p>`;
 }
@@ -5136,6 +5148,8 @@ $('btn-tutup-hitung').addEventListener('click', closeCountdown);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCountdown(); });
 $('btn-kembali-rek').addEventListener('click', () => tampil('menu'));
 $('isi-rekomendasi').addEventListener('click', (e) => {
+  const sb = e.target.closest('button[data-rek-sub]');
+  if (sb) return latihanSubtopik(sb.dataset.rekSub);
   const b = e.target.closest('button[data-latihan]');
   if (b) latihanTopik(b.dataset.latihan);
 });
@@ -5245,6 +5259,60 @@ function closeCountdown() {
   $('overlay-hitung').hidden = true;
 }
 
+// ---------- Rincian subtopik untuk satu topik (dipakai kartu rekomendasi dan beranda) ----------
+const LABEL_REK_SUB = { perlu: 'Perlu penguatan', sedang: 'Berkembang', data: 'Belum cukup data', dikuasai: 'Dikuasai', belum: 'Belum dikerjakan', kosong: 'Belum ada soal' };
+function rincianSubTopik(nama, mapel) {
+  const M = window._mt && window._mt();
+  if (!M) return null;
+  M.reset();
+  const node = Object.keys(M.idx).map((k) => M.idx[k]).find((n) => n.type === 'topik' && n.nama === nama && (!mapel || n.s === mapel));
+  if (!node || !node.t.sub.length) return null;
+  const urut = { perlu: 0, sedang: 1, data: 2, belum: 3, kosong: 4, dikuasai: 5 };
+  const subs = node.t.sub.map((sb) => {
+    const n = M.idx[sb.id], u = M.ukur(n);
+    const k = !u.soal ? 'kosong' : !u.n ? 'belum' : (u.status === 'sedang' && u.n < M.K.MIN_PERLU) ? 'data' : u.status;
+    return { n, u, k };
+  }).sort((a, b) => urut[a.k] - urut[b.k] || (a.u.acc ?? 101) - (b.u.acc ?? 101) || a.n.nama.localeCompare(b.n.nama));
+  return { node, subs, tercatat: subs.reduce((t, x) => t + x.u.n, 0), K: M.K };
+}
+function fokusSubHTML(rc) {
+  const lemah = rc.subs.find((x) => x.k === 'perlu') || rc.subs.find((x) => x.k === 'sedang') || rc.subs.find((x) => x.k === 'data');
+  if (lemah) {
+    const kal = lemah.k === 'perlu' ? 'Paling perlu diperkuat' : lemah.k === 'sedang' ? 'Perlu latihan lagi' : 'Mulai terlihat, tapi datanya masih sedikit';
+    return `<p class="rek-fokus st-${lemah.k === 'data' ? 'belum' : lemah.k}"><b>${kal}:</b> ${esc(lemah.n.nama)}. Akurasi ${lemah.u.acc}% (${lemah.u.b} dari ${lemah.u.n} percobaan).</p>`;
+  }
+  if (rc.subs.some((x) => x.k === 'dikuasai') && !rc.subs.some((x) => x.k === 'belum')) return '<p class="rek-fokus st-dikuasai">Semua subtopik yang punya soal sudah dikuasai.</p>';
+  const baru = rc.subs.find((x) => x.k === 'belum');
+  if (baru) return `<p class="rek-fokus">Belum ada data subtopik. Mulai dari <b>${esc(baru.n.nama)}</b>.</p>`;
+  return '';
+}
+function subTopikRekHTML(r) {
+  const rc = rincianSubTopik(r.nama, r.mapel);
+  if (!rc) return '';
+  const adaData = rc.subs.some((x) => x.u.n > 0);
+  const baris = rc.subs.map(({ n, u, k }) => `<li class="rek-sub">
+      <div class="rek-sub-top"><span class="rek-sub-nama">${esc(n.nama)}</span><span class="mt-badge st-${k}">${LABEL_REK_SUB[k]}</span></div>
+      ${u.n ? `<div class="rek-sub-bar"><div class="kem-bar" aria-hidden="true"><i class="st-${k}" style="width:${Math.max(2, u.acc)}%"></i></div><strong>${u.acc}%</strong></div>` : ''}
+      <div class="rek-sub-meta"><span>${u.soal ? (u.n ? `${u.b} dari ${u.n} percobaan · ${u.uniq} dari ${u.soal} soal berbeda` : `${u.soal} soal tersedia`) : 'Belum ada soal yang ditandai ke subtopik ini'}</span>${u.soal ? `<button type="button" class="btn btn-secondary btn-kecil" data-rek-sub="${esc(n.id)}" aria-label="Latihan ${esc(n.nama)}">Latih</button>` : ''}</div>
+    </li>`).join('');
+  const lepas = r.total - rc.tercatat;
+  return fokusSubHTML(rc) + `<details class="rek-subs"${adaData ? ' open' : ''}><summary>Rincian ${rc.subs.length} subtopik</summary><ul class="rek-sublist">${baris}</ul>`
+    + (lepas > 0 && r.total ? `<p class="rek-catatan">${lepas} dari ${r.total} soal dikerjakan belum terhubung ke subtopik (soalnya belum ditandai subtopik, atau riwayatnya sudah lama).</p>` : '') + '</details>';
+}
+// Latihan langsung untuk satu subtopik: hanya soal yang ditandai subtopik itu
+function latihanSubtopik(id) {
+  const M = window._mt && window._mt();
+  if (!M) return;
+  M.mulai(id);
+  const setRadio = (nm, v) => { const el = document.querySelector(`input[name="${nm}"][value="${v}"]`); if (el) el.checked = true; };
+  setRadio('mode', 'latihan'); setRadio('jumlah', '5');
+  document.querySelectorAll('#pilih-level input').forEach((i) => (i.checked = true));
+  window._subAktif = id;
+  hitungSoal();
+  if (soalTerfilter().length) { window._tanpaRekam = true; mulai(); }
+  window._subAktif = null;
+  const si = $('sub-info'); if (si) si.hidden = true;
+}
 // ---------- Rekomendasi belajar (dari statistik) ----------
 function renderRekomendasi() {
   const d = Penyimpanan.ambil();
@@ -5280,6 +5348,7 @@ function renderRekomendasi() {
       <div class="baris-rek"><span class="badge-rek">${esc(r.judul)}</span><span class="pill-mapel" title="${esc(namaMapel(r.mapel))}">${esc(r.mapel || '-')}</span></div>
       <h3>${esc(r.nama)}</h3>
       ${r.total ? `<div class="rek-akurasi"><div class="progress"><div class="progress-bar" style="width:${r.pct}%;background:${warnaLevel(r.pct)}"></div></div><strong>${r.pct}%</strong></div><p class="muted" style="margin:0 0 8px">${r.total} soal dikerjakan</p>` : '<p class="muted" style="margin:6px 0 8px">Belum ada latihan</p>'}
+      ${subTopikRekHTML(r)}
       <p class="rek-saran">${esc(r.saran)}</p>
       <button class="btn btn-primary btn-kecil" data-latihan="${esc(r.nama)}">Latihan 5 soal</button>
     </div>`;
