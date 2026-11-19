@@ -667,9 +667,9 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .komposisi span{display:block;height:100%}
 .seg-benar{background:var(--benar)}.seg-salah{background:var(--salah)}.seg-kosong{background:var(--muted);opacity:.55}
 .legenda.besar{font-size:.88rem;gap:16px;margin:0 0 16px}
-.rek-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.rek-grid{display:grid;align-items:start;gap:14px;grid-template-columns:minmax(0,1fr)}
 .rek-grid .kartu-rek{margin:0;display:flex;flex-direction:column}
-.rek-grid .kartu-rek .btn{margin-top:auto;align-self:flex-start}
+.rek-grid .kartu-rek>.btn{margin-top:4px;align-self:flex-start}
 .rek-akurasi{display:flex;align-items:center;gap:10px;margin:8px 0 4px}
 .rek-akurasi .progress{flex:1;margin:0}
 .rek-saran{margin:0 0 12px;font-size:.92rem}
@@ -681,7 +681,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .rek-fokus.st-perlu{background:var(--salah-soft);border-color:transparent}.rek-fokus.st-sedang{background:var(--warning-soft);border-color:transparent}.rek-fokus.st-dikuasai{background:var(--benar-soft);border-color:transparent}
 .rek-subs{margin:0 0 12px}.rek-subs>summary{cursor:pointer;font-size:.82rem;font-weight:700;color:var(--accent);padding:2px 0}
 .rek-sublist{list-style:none;margin:6px 0 0;padding:0}
-.rek-sub{padding:9px 0;border-top:1px solid var(--border)}.rek-sub:first-child{border-top:0}
+.rek-sub{padding:7px 0;border-top:1px solid var(--border)}.rek-sub:first-child{border-top:0}
 .rek-sub-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .rek-sub-nama{font-weight:600;font-size:.9rem;overflow-wrap:anywhere}
 .rek-sub-bar{display:flex;align-items:center;gap:10px}.rek-sub-bar .kem-bar{flex:1;margin-top:0}.rek-sub-bar strong{font-size:.85rem;min-width:2.6em;text-align:right;font-variant-numeric:tabular-nums}
@@ -5296,7 +5296,7 @@ function subTopikRekHTML(r) {
       <div class="rek-sub-meta"><span>${u.soal ? (u.n ? `${u.b} dari ${u.n} percobaan · ${u.uniq} dari ${u.soal} soal berbeda` : `${u.soal} soal tersedia`) : 'Belum ada soal yang ditandai ke subtopik ini'}</span>${u.soal ? `<button type="button" class="btn btn-secondary btn-kecil" data-rek-sub="${esc(n.id)}" aria-label="Latihan ${esc(n.nama)}">Latih</button>` : ''}</div>
     </li>`).join('');
   const lepas = r.total - rc.tercatat;
-  return fokusSubHTML(rc) + `<details class="rek-subs"${adaData ? ' open' : ''}><summary>Rincian ${rc.subs.length} subtopik</summary><ul class="rek-sublist">${baris}</ul>`
+  return fokusSubHTML(rc) + `<details class="rek-subs"><summary>Rincian ${rc.subs.length} subtopik</summary><ul class="rek-sublist">${baris}</ul>`
     + (lepas > 0 && r.total ? `<p class="rek-catatan">${lepas} dari ${r.total} soal dikerjakan belum terhubung ke subtopik (soalnya belum ditandai subtopik, atau riwayatnya sudah lama).</p>` : '') + '</details>';
 }
 // Latihan langsung untuk satu subtopik: hanya soal yang ditandai subtopik itu
