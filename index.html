@@ -976,6 +976,23 @@ body #kuis{max-width:var(--w-soal,780px)}
 .pv-chip span{white-space:normal;text-align:left}
 .pv-judul{font-size:.98rem}
 .pv-grup{padding:12px 14px}
+
+/* Pivot topik: kartu topik yang lega dan mudah dibaca */
+.pv-grup{padding:18px 20px;margin-bottom:16px;border-radius:14px}
+.pv-head{gap:10px}
+.pv-judul{font-size:1.02rem}
+.pv-jml{font-size:.85rem}
+.pv-aksi{gap:16px}
+.pv-isi{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:16px}
+.pv-chip{display:flex;align-items:center;gap:12px;min-height:58px;padding:12px 14px;margin:0;border:1.5px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;transition:border-color .15s,background .15s}
+.pv-chip:hover{border-color:var(--primary)}
+.pv-chip span{flex:1;min-width:0;display:block;padding:0;border:0;border-radius:0;background:none;font-size:.95rem;line-height:1.4;color:var(--text);white-space:normal;text-align:left}
+.pv-chip input:checked+span{background:none;border-color:transparent;color:var(--text)}
+.pv-chip em{font-style:normal;flex-shrink:0;min-width:32px;text-align:center;padding:3px 9px;border-radius:999px;background:var(--border);color:var(--text);font-size:.8rem;font-weight:600;margin:0}
+.pv-chip:has(input:checked){border-color:var(--primary);background:var(--primary-soft)}
+.pv-chip:has(input:checked) em{background:var(--primary);color:#fff}
+.pv-chip:has(input:checked)::after{content:"\2713";color:var(--primary);font-weight:800;font-size:1rem}
+.pv-chip input:checked ~ em{color:#fff}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
