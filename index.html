@@ -4333,7 +4333,7 @@ function cariTopikTax(mapel, nama) {
 }
 // Nama topik resmi untuk satu soal. Dipakai di menu, filter, dan statistik supaya nama lama tidak terpisah.
 function namaTopikResmi(s) {
-  const byId = topikTaxById(s.topikId);
+  const byId = topikTaxById(s.topikId) || topikTaxById(s.subtopikId); // subtopikId yang berisi ID topik tetap dikenali
   if (byId) return byId.topik.nama;
   const m = cariTopikTax(s.mataPelajaran, s.topik);
   return m ? m.topik.nama : (s.topik || '');
@@ -5884,6 +5884,8 @@ terapkanTampilan();
     if(x.mataPelajaran!==n.s)return false;
     if(n.type==='subtes')return true;
     if(n.type==='sub')return cocokSub(x,n.id);
+    if(n.type==='topik'&&cocokSub(x,n.id))return true;
+    if(n.type==='rumpun'&&String(x.subtopikId||'').indexOf(n.id+'.')===0)return true;
     if(n.legacy.indexOf(x.topik)>-1)return true;
     return !!n.subIds&&n.subIds.some(function(id){return cocokSub(x,id)})}
   function dasar(){if(base)return base;var S=semuaSoal(),by={};S.forEach(function(x){by[x.mataPelajaran+'|'+x.id]=x});return base={S:S,by:by,R:Riwayat.ambil()}}
