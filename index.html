@@ -702,7 +702,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .rev-sub{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
 .rev-ket{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem;margin:0 0 12px}
 .rev-body .feedback{margin-top:0}
-@media(min-width:900px){
+@media(min-width:1200px){
   .setup-grid{grid-template-columns:minmax(0,1fr) 320px}
   .setup-ringkas{position:sticky;top:24px}
   #setup,#review{max-width:1040px}
@@ -964,6 +964,18 @@ body #kuis{max-width:var(--w-soal,780px)}
 .pv-grup.tutup .pv-isi{display:none}
 .pv-chip em{font-style:normal;margin-left:6px;font-size:.75rem;color:var(--muted)}
 .pv-chip input:checked ~ em{color:#dbeafe}
+
+/* Pivot topik: lebar penuh, tanpa batas tinggi, chip rapi dalam grid */
+.setup-ringkas{position:static}
+@media(min-width:1200px){.setup-ringkas{position:sticky;top:24px}}
+#tp-wadah,#tp-wadah.pendek,#tp-wadah.luas{max-height:none!important;overflow:visible!important}
+#tp-wadah::after{display:none!important}
+#tp-toggle{display:none!important}
+.pv-isi{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.pv-chip{margin:0;min-width:0}
+.pv-chip span{white-space:normal;text-align:left}
+.pv-judul{font-size:.98rem}
+.pv-grup{padding:12px 14px}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -1319,6 +1331,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 
       <p class="label">Folder</p>
       <div class="pilihan" id="chip-folder"></div>
+      <div class="pilihan" id="chip-peta" hidden style="margin-top:8px"><label class="chip"><input type="checkbox" id="f-perlu-peta"><span>Perlu dipetakan (<span id="jml-perlu-peta">0</span>)</span></label></div>
       <div class="baris-opsi" style="margin-top:12px">
         <input class="input" id="folder-baru" placeholder="Nama folder baru" maxlength="40">
         <button class="btn btn-secondary btn-kecil" id="btn-tambah-folder">Tambah folder</button>
@@ -3472,13 +3485,16 @@ function namaFolder(id) {
 }
 // Susun soal per grup: setiap folder (urut dibuat), lalu "Belum dikelompokkan"
 // Hanya grup yang dipilih di filter yang diambil
+let filterPetaAktif = false;
+// Soal yang belum punya padanan di taksonomi (perlu dipetakan oleh admin)
+function perluDipetakan(s) { return !topikTaxById(s.topikId) && !cariTopikTax(s.mataPelajaran, s.topik); }
 function grupSoal() {
   const semua = BankSoal.ambil();
   const folders = BankFolder.ambil();
   let grup = [...folders.map((f) => ({ id: f.id, nama: f.nama })), { id: null, nama: 'Belum dikelompokkan' }];
   if (filterAktif === 'none') grup = grup.filter((g) => g.id === null);
   else if (filterAktif !== 'semua') grup = grup.filter((g) => g.id === filterAktif);
-  return grup.map((g) => ({ ...g, items: semua.filter((s) => (s.folderId || null) === g.id) }));
+  return grup.map((g) => ({ ...g, items: semua.filter((s) => (s.folderId || null) === g.id && (!filterPetaAktif || perluDipetakan(s))) }));
 }
 function renderChipFolder() {
   const folders = BankFolder.ambil();
@@ -4122,6 +4138,11 @@ $('btn-ke-form').addEventListener('click', () => {
 });
 // Muat ulang seluruh tampilan bank (folder, pilihan form, daftar soal, dan sumber di menu latihan)
 function renderSemuaBank() {
+  const chipPeta = $('chip-peta');
+  if (chipPeta) {
+    chipPeta.hidden = !modeAdmin;
+    $('jml-perlu-peta').textContent = BankSoal.ambil().filter(perluDipetakan).length;
+  }
   // Soal bawaan tidak memakai folder, jadi bagian folder disembunyikan di mode admin
   ['f-folder', 'chip-folder', 'folder-baru', 'btn-tambah-folder', 'pesan-folder'].forEach((id) => {
     const el = $(id);
@@ -4499,6 +4520,7 @@ $('daftar-custom').addEventListener('change', (e) => {
   const sel = e.target.closest('select[data-pindah]');
   if (sel) pindahkanSoal(sel.dataset.pindah, sel.value);
 });
+$('f-perlu-peta').addEventListener('change', (e) => { filterPetaAktif = e.target.checked; renderSemuaBank(); });
 $('chip-folder').addEventListener('change', (e) => {
   filterAktif = e.target.value;
   pesanFolder('', false);
