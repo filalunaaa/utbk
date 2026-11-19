@@ -1149,6 +1149,17 @@ table.kem-tabel{width:100%;border-collapse:collapse;font-size:.9rem;min-width:42
   .flt-btn{padding:0 12px}
   .fcombo{width:100%}.fcombo-btn{width:100%}.fcombo-pop{width:100%}
 }
+
+/* Statistik per materi */
+.st-kartu>b{font-size:1rem}
+.st-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--border);margin:12px 0 8px}
+.st-bar i{display:block;height:100%}.st-b{background:var(--benar)}.st-s{background:var(--salah)}.st-k{background:var(--muted);opacity:.5}
+.st-legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.82rem;color:var(--muted);margin-bottom:6px}
+.st-legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--muted)}
+.st-legend .lg-b::before{background:var(--benar)}.st-legend .lg-s::before{background:var(--salah)}
+.st-lv{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:10px;align-items:center;margin:8px 0;font-size:.86rem}
+.st-lv .progress{height:8px}.st-lv small{color:var(--muted);font-weight:500}
+.st-kartu .grafik{margin-bottom:12px}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -5977,6 +5988,54 @@ terapkanTampilan();
     if(n.type==='rumpun'){var k=topikTampak(n.r).map(function(t){return idx[t.id]});var um=idx[n.r.id+'.umum'];if(n.r.umum.length&&ukur(um).soal>0)k.push(um);return k}
     if(n.type==='topik')return n.t.sub.map(function(sb){return idx[sb.id]});
     return []}
+  // ===== Statistik per materi: ringkasan hasil, grafik perkembangan, dan akurasi per tingkat =====
+  mt.gp='30';mt.gm='jumlah';
+  function entriNode(n){var d=dasar();return d.R.filter(function(e){if(e.mapel!==n.s||!isFinite(e.t))return false;var x=d.by[e.mapel+'|'+e.id];
+      return x?anggota(n,x):(n.type==='subtes'||(n.type!=='sub'&&n.legacy.indexOf(e.topik)>-1))}).map(function(e){var x=d.by[e.mapel+'|'+e.id];return {t:e.t,b:!!e.b,k:e.j===null||e.j===undefined,lv:x&&x.tingkatKesulitan}})}
+  function statCard(n){var u=ukur(n),h='<div class="card st-kartu"><b>Statistik</b>';
+    if(!u.soal)return h+'<p class="muted" style="margin:6px 0 0">Statistik muncul setelah materi ini punya soal.</p></div>';
+    var E=entriNode(n);
+    if(!E.length)return h+'<div class="gr-kosong"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><b>Belum ada pengerjaan di materi ini.</b><p class="muted">Kerjakan soalnya dan grafik perkembanganmu akan muncul di sini.</p></div></div>';
+    var tot=E.length,bn=E.filter(function(e){return !e.k&&e.b}).length,sl=E.filter(function(e){return !e.k&&!e.b}).length,ko=E.filter(function(e){return e.k}).length,pc=function(v){return Math.round(v/tot*100)};
+    h+='<div class="st-bar" role="img" aria-label="Benar '+bn+', salah '+sl+', kosong '+ko+'">'+(bn?'<i class="st-b" style="width:'+(bn/tot*100)+'%"></i>':'')+(sl?'<i class="st-s" style="width:'+(sl/tot*100)+'%"></i>':'')+(ko?'<i class="st-k" style="width:'+(ko/tot*100)+'%"></i>':'')+'</div>'
+      +'<div class="st-legend"><span class="lg-b">Benar '+bn+' ('+pc(bn)+'%)</span><span class="lg-s">Salah '+sl+' ('+pc(sl)+'%)</span>'+(ko?'<span class="lg-k">Kosong '+ko+'</span>':'')+'</div>'
+      +'<div class="gr-ctrl"><div class="seg" role="group" aria-label="Periode">'+[['7','7 Hari'],['30','30 Hari'],['semua','Semua Waktu']].map(function(p){return '<button type="button" data-sp="'+p[0]+'" aria-pressed="'+(mt.gp===p[0])+'">'+p[1]+'</button>'}).join('')+'</div>'
+      +'<div class="seg" role="group" aria-label="Metrik">'+[['jumlah','Percobaan'],['akurasi','Akurasi']].map(function(p){return '<button type="button" data-sm="'+p[0]+'" aria-pressed="'+(mt.gm===p[0])+'">'+p[1]+'</button>'}).join('')+'</div></div>'
+      +'<div id="st-grafik" class="grafik"></div>';
+    var lv=['mudah','sedang','sulit'].map(function(k){var a=E.filter(function(e){return e.lv===k});if(!a.length)return '';var b=a.filter(function(e){return !e.k&&e.b}).length,ac=Math.round(b/a.length*100);
+      return '<div class="st-lv"><span>'+k.charAt(0).toUpperCase()+k.slice(1)+'</span><div class="progress" role="progressbar" aria-valuenow="'+ac+'" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width:'+ac+'%"></div></div><b>'+ac+'% <small>('+a.length+')</small></b></div>'}).join('');
+    if(lv)h+='<p class="label" style="margin-bottom:4px">Akurasi per tingkat kesulitan</p>'+lv;
+    return h+'<p class="mt-info-bawah">Dihitung dari riwayat terbaru (maks. 600 percobaan). Angka dalam kurung adalah jumlah percobaan.</p></div>'}
+  function tglKey(d){return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()}
+  function lukisStat(n){var el=$('st-grafik');if(!el||!n)return;var E=entriNode(n);if(!E.length){el.innerHTML='';return}
+    var per={};E.forEach(function(e){var k=tglKey(new Date(e.t)),o=per[k]||(per[k]={n:0,b:0});o.n++;if(!e.k&&e.b)o.b++});
+    var hi=new Date();hi.setHours(0,0,0,0);var aw=new Date(hi);
+    if(mt.gp==='semua'){aw=new Date(Math.min.apply(null,E.map(function(e){return e.t})));aw.setHours(0,0,0,0)}else aw.setDate(aw.getDate()-(Number(mt.gp)-1));
+    var pts=[];for(var d=new Date(aw);d<=hi;d.setDate(d.getDate()+1)){var o=per[tglKey(d)]||{n:0,b:0};pts.push({d:new Date(d),n:o.n,b:o.b,acc:o.n?Math.round(o.b/o.n*100):null})}
+    var m=mt.gm,val=function(p){return m==='jumlah'?p.n:p.acc},ada=pts.filter(function(p){return m==='akurasi'?p.acc!==null:p.n>0});
+    if(!ada.length){el.innerHTML='<p class="muted" style="text-align:center;padding:24px 0">Belum ada pengerjaan di periode ini. Pilih periode yang lebih panjang.</p>';return}
+    var W=Math.max(260,el.clientWidth||320),H=200,pl=32,pr=10,pt=12,pb=26,ymax=m==='akurasi'?100:Math.max(4,Math.ceil(Math.max.apply(null,pts.map(function(p){return p.n}))*1.15));
+    var X=function(i){return pl+(pts.length===1?(W-pl-pr)/2:i*(W-pl-pr)/(pts.length-1))},Y=function(v){return pt+(H-pt-pb)*(1-v/ymax)};
+    var ix=[];pts.forEach(function(p,i){if(m==='akurasi'?p.acc!==null:true)ix.push(i)});
+    var path='';ix.forEach(function(i,k){var x=X(i),y=Y(val(pts[i]));if(!k)path='M'+x+' '+y;else{var px=X(ix[k-1]),py=Y(val(pts[ix[k-1]])),mx=(px+x)/2;path+=' C'+mx+' '+py+' '+mx+' '+y+' '+x+' '+y}});
+    var base=H-pb,area=ix.length>1?path+' L'+X(ix[ix.length-1])+' '+base+' L'+X(ix[0])+' '+base+' Z':'',grid='';
+    for(var g=0;g<=4;g++){var v=ymax*g/4,y=Y(v);grid+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y+'" y2="'+y+'" stroke="var(--border)"/><text x="'+(pl-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10.5" fill="var(--muted)">'+Math.round(v)+(m==='akurasi'?'%':'')+'</text>'}
+    var st=Math.ceil(pts.length/Math.max(2,Math.floor((W-pl-pr)/62))),lb='';
+    pts.forEach(function(p,i){if(i%st===0)lb+='<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+p.d.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+'</text>'});
+    var dots=pts.length<=45?ix.map(function(i){return '<circle cx="'+X(i)+'" cy="'+Y(val(pts[i]))+'" r="3.5" fill="var(--card)" stroke="var(--primary)" stroke-width="2"/>'}).join(''):'';
+    el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Grafik '+(m==='jumlah'?'percobaan':'akurasi')+' per hari untuk '+esc(n.nama)+'">'+grid+(area?'<path d="'+area+'" fill="var(--primary)" fill-opacity=".12"/>':'')+'<path d="'+path+'" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+dots+lb+'<circle id="st-hov" r="5" fill="var(--primary)" stroke="#fff" stroke-width="2" display="none"/></svg><div class="gr-tip" id="st-tip" hidden></div>';
+    var svg=el.querySelector('svg'),tip=$('st-tip'),hov=$('st-hov');
+    var tunjuk=function(ev){var rc=svg.getBoundingClientRect(),x=(ev.clientX-rc.left)/rc.width*W,b=0,jb=1e9;pts.forEach(function(p,i){var j=Math.abs(X(i)-x);if(j<jb){jb=j;b=i}});
+      var p=pts[b];tip.innerHTML='<b>'+p.d.toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short'})+'</b><br>'+(p.n?p.n+' percobaan · '+p.acc+'% benar':'Tidak ada pengerjaan');tip.hidden=false;
+      var v=val(p);if(v!==null){hov.setAttribute('cx',X(b));hov.setAttribute('cy',Y(v));hov.removeAttribute('display')}else hov.setAttribute('display','none');
+      tip.style.left=Math.min(Math.max(X(b)/W*rc.width,70),rc.width-70)+'px'};
+    svg.addEventListener('pointermove',tunjuk);svg.addEventListener('pointerdown',tunjuk);svg.addEventListener('pointerleave',function(){tip.hidden=true;hov.setAttribute('display','none')})}
+  $('mt-detail').addEventListener('click',function(e){var a=e.target.closest('[data-sp]'),b=e.target.closest('[data-sm]');if(!a&&!b)return;
+    if(a)mt.gp=a.dataset.sp;if(b)mt.gm=b.dataset.sm;
+    document.querySelectorAll('#mt-detail [data-sp]').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.sp===mt.gp))});
+    document.querySelectorAll('#mt-detail [data-sm]').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.sm===mt.gm))});
+    lukisStat(idx[mt.sel]||idx['s:'+mt.s])});
+  var _rs=null;window.addEventListener('resize',function(){clearTimeout(_rs);_rs=setTimeout(function(){if(!$('materi').hidden)lukisStat(idx[mt.sel]||idx['s:'+mt.s])},150)});
   function renderDetail(){var el=$('mt-detail'),n=idx[mt.sel]||idx['s:'+mt.s],u=ukur(n);
     var nsub=(n.type==='subtes'||n.type==='rumpun'||n.type==='topik')?subDari(n).length:null,ntop=n.type==='rumpun'?topikTampak(n.r).length:n.type==='subtes'?TAKSONOMI[n.s].rumpun.reduce(function(a,r){return a+topikTampak(r).length},0):null;
     var h='<button type="button" class="mt-balik" id="mt-balik">&lsaquo; Kembali ke daftar materi</button><div class="card"><div class="mt-crumb">'+crumbHTML(n)+'</div>'
@@ -5989,12 +6048,13 @@ terapkanTampilan();
       +distribusi(n)
       +(u.soal?'<button type="button" class="btn btn-primary" id="mt-latih">Mulai Latihan</button>':'<button type="button" class="btn btn-primary" disabled>Mulai Latihan</button><p class="muted" style="margin:8px 0 0">'+(n.type==='sub'?'Belum ada soal yang ditandai untuk subtopik ini.':'Belum ada soal yang terhubung ke materi ini.')+'</p>')
       +'<p class="mt-info-bawah">Statistik dihitung dari riwayat terbaru (maks. 600 percobaan). Struktur materi disusun Nalarin, bukan kisi-kisi resmi SNPMB.</p></div>';
+    h+=statCard(n);
     var kids=anakDari(n);
     if(kids.length){h+='<div class="card"><b>'+(n.type==='subtes'?'Progres per rumpun':n.type==='rumpun'?'Progres per topik':'Progres per subtopik')+'</b><ul class="mt-daftar">'+kids.map(function(k){var kk=ukur(k);
       return '<li><button type="button" class="mt-anak" data-pilih="'+k.id+'" data-buka="1"><span class="mt-anak-nama">'+esc(k.type==='umum'?'Belum diklasifikasikan':k.nama)+'</span><span class="mt-badge st-'+kk.status+'">'+STATUS[kk.status]+'</span><span class="mt-anak-meta">'+(kk.soal?kk.uniq+'/'+kk.soal+' soal dikerjakan'+(kk.n?' · akurasi '+kk.acc+'% ('+kk.n+' percobaan)':''):'Belum ada soal')+'</span>'+(kk.soal?'<span class="progress"><span class="progress-bar" style="width:'+kk.cov+'%"></span></span>':'')+'</button></li>'}).join('')+'</ul></div>'}
     else if(n.type==='topik')h+='<div class="card"><p class="muted" style="margin:0">Subtopik untuk topik ini belum disusun.</p></div>';
     h+='<div class="card mt-cara"><details><summary>Cara status dihitung</summary><ul><li><b>Belum Dipelajari</b>: ada soal, belum pernah dikerjakan.</li><li><b>Berkembang</b>: sudah dikerjakan dan akurasinya cukup, tetapi belum memenuhi kriteria Dikuasai.</li><li><b>Perlu Penguatan</b>: minimal '+MIN_PERLU+' percobaan dengan akurasi di bawah '+AKU_PERLU+'%.</li><li><b>Dikuasai</b>: minimal '+MIN_KUASAI+' percobaan, akurasi '+AKU_KUASAI+'% ke atas, pada minimal '+MIN_UNIK+' soal berbeda.</li><li>Soal unik dan percobaan dihitung terpisah: mengulang soal yang sama menambah percobaan, bukan soal unik.</li></ul></details></div>';
-    el.innerHTML=h}
+    el.innerHTML=h;lukisStat(n)}
   var CAK=[['semua','Semua materi'],['soal','Materi dengan soal']],STF=[['belum','Belum dipelajari'],['sedang','Berkembang'],['perlu','Perlu penguatan'],['dikuasai','Dikuasai']];
   function filterUI(){
     var cak=CAK.map(function(f){return '<button type="button" role="radio" aria-checked="'+(mt.f===f[0])+'" aria-pressed="'+(mt.f===f[0])+'" data-cak="'+f[0]+'">'+f[1]+'</button>'}).join('');
