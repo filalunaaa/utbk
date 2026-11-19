@@ -1051,6 +1051,25 @@ body #kuis{max-width:var(--w-soal,780px)}
 .sb-chip input:checked~em{color:var(--accent)}
 .tp-catatan{margin:0 0 12px}
 .jalur-materi{font-size:.82rem;font-weight:600;color:var(--accent);margin:0 0 6px}
+
+/* Kemampuan per subtopik (Statistik) */
+.kem-ringkas{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.kem-chip{border:1px solid var(--border);background:var(--surface,var(--card,#fff));color:var(--text);border-radius:999px;padding:6px 12px;font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.kem-chip[aria-pressed="true"]{background:var(--primary-soft);color:var(--accent);border-color:var(--accent)}
+.kem-chip b{font-weight:800}
+.kem-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px}
+table.kem-tabel{width:100%;border-collapse:collapse;font-size:.9rem;min-width:420px}
+.kem-tabel th{text-align:left;font-size:.75rem;color:var(--muted);font-weight:700;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.kem-tabel td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.kem-tabel tr:last-child td{border-bottom:0}
+.kem-tabel td small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px}
+.kem-tabel .kem-nama{font-weight:700}
+.kem-pct{font-weight:800;font-variant-numeric:tabular-nums}
+.kem-bar{height:6px;border-radius:999px;background:var(--border);overflow:hidden;margin-top:5px;min-width:70px}
+.kem-bar i{display:block;height:100%;border-radius:999px;background:var(--muted)}
+.kem-bar i.st-sedang{background:var(--primary)}.kem-bar i.st-perlu{background:var(--warning)}.kem-bar i.st-dikuasai{background:var(--benar)}
+.kem-aksi{text-align:right;white-space:nowrap}
+.kem-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;color:var(--muted);font-size:.82rem}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -3075,6 +3094,65 @@ function grafikStatHTML() {
 }
 // Warna solid untuk bar statistik sesuai level nilai (tanpa gradasi)
 function warnaLevel(p) { return p < 50 ? 'var(--salah)' : p < 75 ? 'var(--warning)' : 'var(--benar)'; }
+
+// ---------- Kemampuan per subtopik ----------
+let filterKem = 'semua', batasKem = 12;
+const LABEL_KEM = { perlu: 'Perlu penguatan', sedang: 'Berkembang', data: 'Belum cukup data', dikuasai: 'Dikuasai' };
+function kemampuanSubHTML() {
+  const M = window._mt && window._mt();
+  if (!M) return '';
+  M.reset();
+  const semua = [];
+  Object.keys(M.idx).forEach((id) => {
+    const n = M.idx[id];
+    if (!n || n.type !== 'sub') return;
+    const u = M.ukur(n);
+    if (u.soal) semua.push({ n, u });
+  });
+  const dicoba = semua.filter((x) => x.u.n > 0).map((x) => {
+    x.k = x.u.status === 'sedang' && x.u.n < M.K.MIN_PERLU ? 'data' : x.u.status;
+    return x;
+  });
+  const belum = semua.length - dicoba.length;
+  const urut = { perlu: 0, sedang: 1, data: 2, dikuasai: 3 };
+  dicoba.sort((a, b) => urut[a.k] - urut[b.k] || a.u.acc - b.u.acc || b.u.n - a.u.n || a.n.nama.localeCompare(b.n.nama));
+  const hitung = { semua: dicoba.length, perlu: 0, sedang: 0, data: 0, dikuasai: 0 };
+  dicoba.forEach((x) => { hitung[x.k]++; });
+  let judul = '<p class="label">Kemampuan per subtopik</p>';
+  if (!dicoba.length) {
+    return judul + `<p class="muted">Belum ada data subtopik. Kerjakan soal yang sudah ditandai ke subtopik, nanti akurasi dan statusnya muncul di sini.</p>`
+      + `<div class="kem-foot">${belum ? `<span>${belum} subtopik punya soal tapi belum dikerjakan.</span>` : ''}<button type="button" class="btn btn-secondary btn-kecil" data-kem-materi>Jelajahi materi</button></div>`;
+  }
+  if (filterKem !== 'semua' && !hitung[filterKem]) filterKem = 'semua';
+  const chips = [['semua', 'Semua'], ['perlu', 'Perlu penguatan'], ['sedang', 'Berkembang'], ['dikuasai', 'Dikuasai'], ['data', 'Belum cukup data']]
+    .filter(([k]) => k === 'semua' || hitung[k])
+    .map(([k, l]) => `<button type="button" class="kem-chip" data-kem-filter="${k}" aria-pressed="${filterKem === k}">${l} <b>${hitung[k]}</b></button>`).join('');
+  const terpilih = dicoba.filter((x) => filterKem === 'semua' || x.k === filterKem);
+  const lihat = terpilih.slice(0, batasKem);
+  const baris = lihat.map(({ n, u, k }) => `<tr>
+      <td><span class="kem-nama">${esc(n.nama)}</span><small>${esc((n.r ? n.r.nama : '') + (n.t ? ' › ' + n.t.nama : ''))}</small></td>
+      <td><span class="kem-pct">${u.acc}%</span><div class="kem-bar" aria-hidden="true"><i class="st-${k}" style="width:${Math.max(2, u.acc)}%"></i></div><small>${u.b} dari ${u.n} percobaan</small></td>
+      <td><span class="mt-badge st-${k}">${LABEL_KEM[k]}</span></td>
+      <td class="kem-aksi"><button type="button" class="btn btn-secondary btn-kecil" data-kem-latih="${esc(n.id)}" aria-label="Latihan ${esc(n.nama)}">Latih</button></td>
+    </tr>`).join('');
+  const K = M.K;
+  return judul + `<p class="muted" style="margin:0">Akurasi dihitung dari semua percobaanmu di subtopik tersebut. Urutan teratas adalah yang paling perlu diperkuat.</p>
+    <div class="kem-ringkas">${chips}</div>
+    <div class="kem-wrap"><table class="kem-tabel"><thead><tr><th>Subtopik</th><th>Akurasi</th><th>Status</th><th></th></tr></thead><tbody>${baris}</tbody></table></div>
+    <div class="kem-foot">${terpilih.length > lihat.length ? `<button type="button" class="btn btn-secondary btn-kecil" data-kem-lagi>Tampilkan semua (${terpilih.length})</button>` : ''}
+      ${belum ? `<span>${belum} subtopik lain belum dikerjakan.</span><button type="button" class="tp-link" data-kem-materi>Jelajahi materi</button>` : ''}</div>
+    <p class="muted" style="font-size:.78rem;margin:8px 0 0">Dikuasai: akurasi ${K.AKU_KUASAI}% atau lebih dengan minimal ${K.MIN_KUASAI} percobaan di beberapa soal berbeda. Perlu penguatan: akurasi di bawah ${K.AKU_PERLU}% dengan minimal ${K.MIN_PERLU} percobaan. Di antaranya Berkembang. Kurang dari ${K.MIN_PERLU} percobaan belum cukup data.</p>`;
+}
+$('isi-statistik').addEventListener('click', (e) => {
+  const f = e.target.closest('[data-kem-filter]'), l = e.target.closest('[data-kem-latih]');
+  const g = e.target.closest('[data-kem-lagi]'), m = e.target.closest('[data-kem-materi]');
+  if (!f && !l && !g && !m) return;
+  if (l) { const M = window._mt && window._mt(); if (M) M.mulai(l.dataset.kemLatih); return; }
+  if (m) { const b = $('btn-materi'); if (b) b.click(); return; }
+  if (f) { filterKem = f.dataset.kemFilter; batasKem = 12; } else batasKem = 1e6;
+  $('kemampuan-sub').innerHTML = kemampuanSubHTML();
+});
+
 function renderStatistik() {
   const d = Penyimpanan.ambil();
   const baris = (nama, x) => {
@@ -3136,6 +3214,7 @@ function renderStatistik() {
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   $('isi-statistik').innerHTML =
     `<div class="ringkasan-bank">${[['Soal dikerjakan', d.total, ''], ['Benar', d.benar, 'benar'], ['Salah', d.total - d.benar, 'salah'], ['Akurasi', (d.total ? Math.round((d.benar / d.total) * 100) : 0) + '%', '']].map(([a, v, w]) => `<div class="stat-tile"><span>${a}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`).join('')}</div>` +
+    `<div id="kemampuan-sub" style="margin-bottom:14px">${kemampuanSubHTML()}</div>` +
     `<div id="riwayat-sesi">${riwayatSesiHTML()}</div>` +
     `<div id="grafik-stat">${grafikStatHTML()}</div>` +
     `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + `<div id="analisis-wrap" style="margin-top:14px">${analisisHTML()}</div>`;
@@ -5613,9 +5692,9 @@ terapkanTampilan();
 (function(){
   var mt={s:'PK',q:'',f:'semua',sel:null,buka:{},sheet:false},idx={},cache={},base=null,lastHasil=[];
   var REL={inti:'Inti',pendukung:'Pendukung',pengayaan:'Pengayaan'};
-  var STATUS={belum:'Belum Dipelajari',sedang:'Sedang Dipelajari',perlu:'Perlu Penguatan',dikuasai:'Dikuasai',kosong:'Belum Ada Soal'};
+  var STATUS={belum:'Belum Dipelajari',sedang:'Berkembang',perlu:'Perlu Penguatan',dikuasai:'Dikuasai',kosong:'Belum Ada Soal'};
   // Aturan status (berdasarkan riwayat pengerjaan nyata)
-  var MIN_PERLU=3,AKU_PERLU=70,MIN_KUASAI=5,AKU_KUASAI=80,MIN_UNIK=3;
+  var MIN_PERLU=3,AKU_PERLU=50,MIN_KUASAI=5,AKU_KUASAI=80,MIN_UNIK=3;
   Object.keys(TAKSONOMI).forEach(function(k){
     idx['s:'+k]={type:'subtes',id:'s:'+k,nama:TAKSONOMI[k].nama,s:k,legacy:[]};
     TAKSONOMI[k].rumpun.forEach(function(r){
@@ -5739,9 +5818,9 @@ terapkanTampilan();
     if(kids.length){h+='<div class="card"><b>'+(n.type==='subtes'?'Progres per rumpun':n.type==='rumpun'?'Progres per topik':'Progres per subtopik')+'</b><ul class="mt-daftar">'+kids.map(function(k){var kk=ukur(k);
       return '<li><button type="button" class="mt-anak" data-pilih="'+k.id+'" data-buka="1"><span class="mt-anak-nama">'+esc(k.type==='umum'?'Belum diklasifikasikan':k.nama)+'</span><span class="mt-badge st-'+kk.status+'">'+STATUS[kk.status]+'</span><span class="mt-anak-meta">'+(kk.soal?kk.uniq+'/'+kk.soal+' soal dikerjakan'+(kk.n?' · akurasi '+kk.acc+'% ('+kk.n+' percobaan)':''):'Belum ada soal')+'</span>'+(kk.soal?'<span class="progress"><span class="progress-bar" style="width:'+kk.cov+'%"></span></span>':'')+'</button></li>'}).join('')+'</ul></div>'}
     else if(n.type==='topik')h+='<div class="card"><p class="muted" style="margin:0">Subtopik untuk topik ini belum disusun.</p></div>';
-    h+='<div class="card mt-cara"><details><summary>Cara status dihitung</summary><ul><li><b>Belum Dipelajari</b>: ada soal, belum pernah dikerjakan.</li><li><b>Sedang Dipelajari</b>: sudah dikerjakan, tetapi belum memenuhi kriteria lain.</li><li><b>Perlu Penguatan</b>: minimal '+MIN_PERLU+' percobaan dengan akurasi di bawah '+AKU_PERLU+'%.</li><li><b>Dikuasai</b>: minimal '+MIN_KUASAI+' percobaan, akurasi '+AKU_KUASAI+'% ke atas, pada minimal '+MIN_UNIK+' soal berbeda.</li><li>Soal unik dan percobaan dihitung terpisah: mengulang soal yang sama menambah percobaan, bukan soal unik.</li></ul></details></div>';
+    h+='<div class="card mt-cara"><details><summary>Cara status dihitung</summary><ul><li><b>Belum Dipelajari</b>: ada soal, belum pernah dikerjakan.</li><li><b>Berkembang</b>: sudah dikerjakan dan akurasinya cukup, tetapi belum memenuhi kriteria Dikuasai.</li><li><b>Perlu Penguatan</b>: minimal '+MIN_PERLU+' percobaan dengan akurasi di bawah '+AKU_PERLU+'%.</li><li><b>Dikuasai</b>: minimal '+MIN_KUASAI+' percobaan, akurasi '+AKU_KUASAI+'% ke atas, pada minimal '+MIN_UNIK+' soal berbeda.</li><li>Soal unik dan percobaan dihitung terpisah: mengulang soal yang sama menambah percobaan, bukan soal unik.</li></ul></details></div>';
     el.innerHTML=h}
-  function filterUI(){var F=[['semua','Semua materi'],['soal','Materi dengan soal'],['belum','Belum dipelajari'],['sedang','Sedang dipelajari'],['perlu','Perlu penguatan'],['dikuasai','Dikuasai']];
+  function filterUI(){var F=[['semua','Semua materi'],['soal','Materi dengan soal'],['belum','Belum dipelajari'],['sedang','Berkembang'],['perlu','Perlu penguatan'],['dikuasai','Dikuasai']];
     $('mt-filter').innerHTML=F.map(function(f){return '<label class="chip"><input type="radio" name="mt-f" value="'+f[0]+'"'+(mt.f===f[0]?' checked':'')+'><span>'+f[1]+'</span></label>'}).join('')}
   function render(){cache={};base=null;$('materi').dataset.sheet=mt.sheet?'1':'0';filterUI();renderNav();renderDetail();
     document.querySelectorAll('#mt-subtes button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.s===mt.s))});
@@ -5782,7 +5861,7 @@ terapkanTampilan();
   $('sub-info').addEventListener('click',function(e){if(e.target.id==='sub-hapus'){window._subAktif=null;this.hidden=true;hitungSoal();ringkasSesi()}});
   document.querySelectorAll('.nav-link[data-hal="materi"]').forEach(function(a){a.addEventListener('click',function(){mt.sheet=false;render();tampil('materi')})});
   $('btn-materi').addEventListener('click',function(){mt.sheet=false;render();tampil('materi')});
-  window._mt=function(){return {idx:idx,ukur:ukur,mt:mt}};
+  window._mt=function(){return {idx:idx,ukur:ukur,mt:mt,reset:function(){cache={};base=null},mulai:mulaiMateri,K:{MIN_PERLU:MIN_PERLU,AKU_PERLU:AKU_PERLU,MIN_KUASAI:MIN_KUASAI,AKU_KUASAI:AKU_KUASAI}}};
 })();
 </script>
 </body>
