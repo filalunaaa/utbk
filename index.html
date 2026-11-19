@@ -2051,7 +2051,7 @@ const SYNC = {
   utbk_pengaturan: 'pengaturan'
 };
 // Riwayat dikirim terpisah: kalau server menolaknya, data lain tetap tersinkron
-const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat', utbk_riwayat_sesi: 'riwayat_sesi' };
+const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat', utbk_riwayat_sesi: 'riwayat_sesi', utbk_avatar: 'avatar' };
 // Semua data milik akun yang tersimpan di browser ini. Harus dibersihkan saat keluar atau ganti akun,
 // kalau tidak, data akun sebelumnya tercampur ke akun berikutnya.
 // ---------- Avatar profil ----------
@@ -2106,13 +2106,15 @@ function avatarIsi(nama) {
   return esc((nama || '?').charAt(0).toUpperCase());
 }
 async function simpanAvatar(a) {
-  try { if (a) localStorage.setItem('utbk_avatar', JSON.stringify(a)); else localStorage.removeItem('utbk_avatar'); }
+  // Saat sudah masuk, "tanpa avatar" disimpan sebagai penanda supaya ikut tersinkron ke akun (kalau dihapus saja, avatar lama dari akun muncul lagi)
+  try { if (a) localStorage.setItem('utbk_avatar', JSON.stringify(a)); else if (AkunApp.sesi()) localStorage.setItem('utbk_avatar', JSON.stringify({ tipe: 'kosong' })); else localStorage.removeItem('utbk_avatar'); }
   catch (e) { return false; }
   const prev = $('pf-av-prev');
   if (prev) prev.innerHTML = avatarIsi($('pf-nama') ? $('pf-nama').value.trim() : '');
   document.querySelectorAll('.pilih-av').forEach((b) => b.classList.toggle('aktif', !!a && a.tipe === 'preset' && b.dataset.av === a.id));
   renderSalam();
   if (AVATAR_DI_AKUN && AkunApp.sesi()) { try { await pushProfil(); } catch (e) {} }
+  if (AkunApp.sesi()) sinkron().catch(() => {}); // simpan ke akun sekarang, jangan menunggu logout
   return true;
 }
 function pilihanAvatarHTML() {
@@ -5071,8 +5073,8 @@ function renderBeranda() {
   kh.classList.add('hero');
   const jd = jadwalBerikutnya();
   const hari = hariKeUjian(jd.mulai);
-  if (hari > 0) kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><div class="hero-hari">${hari} hari</div><p class="hero-tgl">${esc(ketJadwal(jd))}</p></div><button type="button" class="btn btn-kecil" id="btn-detail-hitung">Lihat countdown</button>`;
-  else kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><h2>UTBK sedang berlangsung. Semangat!</h2><p class="hero-tgl">${esc(ketJadwal(jd))}</p></div><button type="button" class="btn btn-kecil" id="btn-detail-hitung">Lihat countdown</button>`;
+  if (hari > 0) kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><div class="hero-hari">${hari} hari</div><p class="hero-tgl">${esc(ketJadwal(jd))}</p></div>`;
+  else kh.innerHTML = `<div><p class="hero-lbl">MENUJU UTBK</p><h2>UTBK sedang berlangsung. Semangat!</h2><p class="hero-tgl">${esc(ketJadwal(jd))}</p></div>`;
 
   const ik = (path) => `<span class="sum-ik"><svg viewBox="0 0 24 24">${path}</svg></span>`;
   const kartu = (path, angka, label) => `<button type="button" class="sum-card" aria-label="${label}: ${angka}. Buka statistik lengkap">${ik(path)}<b>${angka}</b><span>${label}</span></button>`;
