@@ -993,6 +993,28 @@ body #kuis{max-width:var(--w-soal,780px)}
 .pv-chip:has(input:checked) em{background:var(--primary);color:#fff}
 .pv-chip:has(input:checked)::after{content:"\2713";color:var(--primary);font-weight:800;font-size:1rem}
 .pv-chip input:checked ~ em{color:#fff}
+
+/* Pivot topik: tampilan pohon seperti Jelajahi Materi */
+.pv-grup{border:none;background:none;padding:0;margin:0 0 4px;border-radius:0;box-shadow:none}
+.pv-head{padding:10px 4px;border-bottom:1px solid var(--border);gap:10px}
+.pv-judul{font-size:1rem;font-weight:700;gap:8px;color:var(--text)}
+.pv-panah{width:14px;color:var(--muted);font-size:.85rem}
+.pv-dot{width:9px;height:9px;border-radius:50%;background:var(--primary);flex-shrink:0}
+.pv-tag{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--border);color:var(--muted);margin-left:4px}
+.pv-jml{font-size:.82rem}
+.pv-aksi{gap:14px}
+.pv-isi{display:flex;flex-direction:column;gap:2px;margin:8px 0 14px 20px;padding-left:14px;border-left:1.5px solid var(--border)}
+.pv-chip{display:flex;align-items:center;gap:12px;min-height:0;padding:9px 10px;margin:0;border:none;border-radius:8px;background:none;cursor:pointer}
+.pv-chip:hover{background:var(--bg);border:none}
+.pv-chip:has(input:checked){border:none;background:var(--primary-soft)}
+.pv-chip::before{content:"";width:16px;height:16px;flex-shrink:0;border:1.5px solid var(--muted);border-radius:4px;background:var(--card)}
+.pv-chip:has(input:checked)::before{background:var(--primary);border-color:var(--primary)}
+.pv-chip span{flex:1;min-width:0;display:block;padding:0;border:0;border-radius:0;background:none;font-size:.95rem;line-height:1.4;color:var(--text);white-space:normal;text-align:left}
+.pv-chip input:checked+span{background:none;border-color:transparent;color:var(--text)}
+.pv-chip em{font-style:normal;flex-shrink:0;padding:0;min-width:0;background:none;color:var(--muted);font-size:.82rem;font-weight:600;margin:0}
+.pv-chip:has(input:checked) em{background:none;color:var(--accent)}
+.pv-chip:has(input:checked)::after{content:none}
+.pv-chip input:checked ~ em{color:var(--accent)}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -2357,7 +2379,8 @@ function buatTopik() {
     const info = peta[n];
     const kunci = info ? info.mapel + '|' + info.rumpun.id : '_lain';
     if (!grup[kunci]) grup[kunci] = {
-      nama: info ? info.mapel + ' · ' + info.rumpun.nama : 'Belum dipetakan ke taksonomi',
+      nama: info ? info.rumpun.nama : 'Belum dipetakan ke taksonomi',
+      mapel: info ? info.mapel : '',
       topik: []
     };
     grup[kunci].topik.push(n);
@@ -2366,11 +2389,12 @@ function buatTopik() {
     const g = grup[kunci];
     g.topik.sort((x, y) => (peta[x] ? peta[x].urut : 999) - (peta[y] ? peta[y].urut : 999) || x.localeCompare(y));
     const totalSoal = g.topik.reduce((t, n) => t + (jumlah[n] || 0), 0);
+    const tag = g.mapel ? `<span class="pv-tag">${esc(g.mapel)}</span>` : '';
     const chips = g.topik.map((n) =>
-      `<label class="chip pv-chip"><input type="checkbox" value="${esc(n)}" checked><span>${esc(n)}</span><em>${jumlah[n] || 0}</em></label>`).join('');
+      `<label class="chip pv-chip"><input type="checkbox" value="${esc(n)}" checked><span>${esc(n)}</span><em>${jumlah[n] || 0} soal</em></label>`).join('');
     return `<div class="pv-grup" data-kunci="${esc(kunci)}">
       <div class="pv-head">
-        <button type="button" class="pv-judul" data-buka aria-expanded="true"><span class="pv-panah">&#9662;</span>${esc(g.nama)}</button>
+        <button type="button" class="pv-judul" data-buka aria-expanded="true"><span class="pv-panah">&#9662;</span><span class="pv-dot"></span>${esc(g.nama)}${tag}</button>
         <span class="pv-jml">${g.topik.length} topik · ${totalSoal} soal</span>
         <span class="pv-aksi"><button type="button" class="tp-link" data-pv="pilih">Semua</button><button type="button" class="tp-link" data-pv="kosong">Kosong</button></span>
       </div>
