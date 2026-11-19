@@ -978,6 +978,34 @@ body #kuis{max-width:var(--w-soal,780px)}
 /* Pivot topik: lebar penuh, tanpa batas tinggi, chip rapi dalam grid */
 .setup-ringkas{position:static}
 @media(min-width:1200px){.setup-ringkas{position:sticky;top:24px}}
+/* Daftar topik Atur Latihan: baris ringkas + kotak centang kecil */
+#pilih-topik .pv-chip,#pilih-topik .sb-chip{display:flex;align-items:center;gap:9px;min-height:0;height:auto;padding:5px 8px;margin:0;border:0;border-radius:7px;background:none;box-shadow:none;cursor:pointer}
+#pilih-topik .pv-chip:hover,#pilih-topik .sb-chip:hover{background:var(--bg)}
+#pilih-topik .pv-chip:has(input:checked),#pilih-topik .sb-chip:has(input:checked){background:none;border:0}
+#pilih-topik .pv-chip::before,#pilih-topik .sb-chip::before{content:"";box-sizing:border-box;width:15px;height:15px;flex:0 0 15px;border:1.5px solid var(--muted);border-radius:4px;background:var(--card) center/10px no-repeat;transition:background-color .12s,border-color .12s}
+#pilih-topik .pv-chip:has(input:checked)::before,#pilih-topik .sb-chip:has(input:checked)::before{background-color:var(--primary);border-color:var(--primary);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.8 5.2l2.2 2.2 4.2-4.6' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+#pilih-topik .pv-chip:has(input:focus-visible)::before,#pilih-topik .sb-chip:has(input:focus-visible)::before{outline:2px solid var(--primary);outline-offset:2px}
+#pilih-topik .pv-chip::after,#pilih-topik .sb-chip::after{content:none}
+#pilih-topik .pv-chip span,#pilih-topik .sb-chip span,#pilih-topik .chip:not(.x) span{display:block;min-height:0;flex:1;min-width:0;padding:0;border:0;background:none;box-shadow:none;font-size:.9rem;line-height:1.3;font-weight:500;color:var(--text)}
+#pilih-topik .pv-chip input:checked+span,#pilih-topik .sb-chip input:checked+span{background:none;color:var(--text);font-weight:600}
+#pilih-topik .pv-chip em,#pilih-topik .sb-chip em{margin:0;padding:0;background:none;font-size:.76rem;font-weight:600;color:var(--muted)}
+#pilih-topik .pv-chip:has(input:checked) em,#pilih-topik .sb-chip:has(input:checked) em{background:none;color:var(--accent)}
+#pilih-topik .tp-blok.nol .pv-chip em,#pilih-topik .sb-chip.nol em{color:var(--muted)}
+#pilih-topik .chip span::before,#pilih-topik .chip input:checked+span::before{content:none;display:none}
+#pilih-topik .sb-toggle{padding:0 8px 3px 40px;font-size:.74rem}
+#pilih-topik .sb-isi{gap:0 6px;margin:0 0 4px 22px}
+#pilih-topik .sb-chip{padding:4px 8px}
+/* Atur Latihan: bilah mulai menempel di bawah pada layar < 1200px */
+@media(max-width:1199px){
+  #setup .setup-ringkas{position:sticky;bottom:12px;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 12px;margin-top:4px;box-shadow:0 6px 24px rgba(0,0,0,.16)}
+  #setup .setup-ringkas .kartu-judul,#setup .setup-ringkas #ringkas-sesi{display:none}
+  #setup .setup-ringkas .info{flex:1 1 100%;margin:0;font-size:.8rem;order:0}
+  #setup .setup-ringkas .info:empty{display:none}
+  #setup .setup-ringkas .btn-besar{flex:1 1 0;width:auto;min-width:0;padding-top:10px;padding-bottom:10px}
+  #setup #btn-mulai{order:2;flex:2 1 0}#setup #btn-kembali-menu{order:1}
+}
+@media(max-width:899px){#setup .setup-ringkas{bottom:calc(var(--nav-h,52px) + 22px + env(safe-area-inset-bottom,0px))}}
+
 #tp-wadah,#tp-wadah.pendek,#tp-wadah.luas{max-height:none!important;overflow:visible!important}
 #tp-wadah::after{display:none!important}
 #tp-toggle{display:none!important}
