@@ -951,6 +951,19 @@ body #kuis{max-width:var(--w-soal,780px)}
 .kotak-cakupan{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--primary-soft)}
 .kartu-meta{margin-top:6px}
 @media(max-width:480px){.baris-dua{grid-template-columns:1fr}}
+
+#pilih-topik{display:block;gap:0}
+.pv-grup{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
+.pv-grup:not(:has(label.pv-chip:not([hidden]))){display:none}
+.pv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pv-judul{background:none;border:none;font:inherit;font-weight:700;color:var(--text);cursor:pointer;padding:0;text-align:left;display:flex;align-items:center;gap:6px}
+.pv-panah{color:var(--muted);font-size:.85rem;width:12px}
+.pv-jml{color:var(--muted);font-size:.8rem}
+.pv-aksi{margin-left:auto;display:flex;gap:10px}
+.pv-isi{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pv-grup.tutup .pv-isi{display:none}
+.pv-chip em{font-style:normal;margin-left:6px;font-size:.75rem;color:var(--muted)}
+.pv-chip input:checked ~ em{color:#dbeafe}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -2298,12 +2311,65 @@ function renderPilihSumber() {
 }
 function buatTopik() {
   const mapel = nilai('mapel');
-  const topik = [...new Set(sumberSoal().filter((s) => mapel === 'semua' || s.mataPelajaran === mapel).map(namaTopikResmi))];
-  $('pilih-topik').innerHTML = topik
-    .map((t) => `<label class="chip"><input type="checkbox" value="${esc(t)}" checked><span>${esc(t)}</span></label>`)
-    .join('');
+  const soalPilih = sumberSoal().filter((s) => mapel === 'semua' || s.mataPelajaran === mapel);
+  const jumlah = {};
+  soalPilih.forEach((s) => { const n = namaTopikResmi(s); jumlah[n] = (jumlah[n] || 0) + 1; });
+  // Peta topik resmi -> mapel, rumpun, dan urutan di taksonomi
+  const peta = {};
+  const urutanKunci = [];
+  Object.keys(TAKSONOMI).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => {
+    urutanKunci.push(k + '|' + r.id);
+    r.topik.forEach((tp, i) => { if (!peta[tp.nama]) peta[tp.nama] = { mapel: k, rumpun: r, urut: i }; });
+  }));
+  urutanKunci.push('_lain');
+  const grup = {};
+  [...new Set(soalPilih.map(namaTopikResmi))].forEach((n) => {
+    const info = peta[n];
+    const kunci = info ? info.mapel + '|' + info.rumpun.id : '_lain';
+    if (!grup[kunci]) grup[kunci] = {
+      nama: info ? info.mapel + ' · ' + info.rumpun.nama : 'Belum dipetakan ke taksonomi',
+      topik: []
+    };
+    grup[kunci].topik.push(n);
+  });
+  const html = urutanKunci.filter((k) => grup[k]).map((kunci) => {
+    const g = grup[kunci];
+    g.topik.sort((x, y) => (peta[x] ? peta[x].urut : 999) - (peta[y] ? peta[y].urut : 999) || x.localeCompare(y));
+    const totalSoal = g.topik.reduce((t, n) => t + (jumlah[n] || 0), 0);
+    const chips = g.topik.map((n) =>
+      `<label class="chip pv-chip"><input type="checkbox" value="${esc(n)}" checked><span>${esc(n)}</span><em>${jumlah[n] || 0}</em></label>`).join('');
+    return `<div class="pv-grup" data-kunci="${esc(kunci)}">
+      <div class="pv-head">
+        <button type="button" class="pv-judul" data-buka aria-expanded="true"><span class="pv-panah">&#9662;</span>${esc(g.nama)}</button>
+        <span class="pv-jml">${g.topik.length} topik · ${totalSoal} soal</span>
+        <span class="pv-aksi"><button type="button" class="tp-link" data-pv="pilih">Semua</button><button type="button" class="tp-link" data-pv="kosong">Kosong</button></span>
+      </div>
+      <div class="pv-isi">${chips}</div>
+    </div>`;
+  }).join('');
+  $('pilih-topik').innerHTML = html;
   hitungSoal();
 }
+// Aksi di dalam pivot: pilih/kosongkan per rumpun, dan buka/tutup rumpun
+$('pilih-topik').addEventListener('click', (e) => {
+  const aksi = e.target.closest('[data-pv]');
+  if (aksi) {
+    const v = aksi.dataset.pv === 'pilih';
+    aksi.closest('.pv-grup').querySelectorAll('label.pv-chip').forEach((l) => {
+      if (!l.hidden) l.querySelector('input').checked = v;
+    });
+    $('pilih-topik').dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+  const bk = e.target.closest('[data-buka]');
+  if (bk) {
+    const g = bk.closest('.pv-grup');
+    g.classList.toggle('tutup');
+    const tutup = g.classList.contains('tutup');
+    bk.setAttribute('aria-expanded', String(!tutup));
+    bk.querySelector('.pv-panah').innerHTML = tutup ? '&#9656;' : '&#9662;';
+  }
+});
 function soalTerfilter() {
   const mapel = nilai('mapel'), topik = centang('pilih-topik'), level = centang('pilih-level');
   return sumberSoal().filter((s) =>
@@ -5565,7 +5631,7 @@ var TAKSONOMI={"PK":{"nama":"Pengetahuan Kuantitatif","rumpun":[{"id":"pk.bilang
     document.querySelectorAll('input[name="sumber"]').forEach(function(i){i.checked=i.value==='semua'});
     document.querySelectorAll('input[name="mapel"]').forEach(function(i){i.checked=i.value===n.s});
     buatTopik();
-    document.querySelectorAll('#pilih-topik input').forEach(function(i){i.checked=n.type==='subtes'?true:n.legacy.indexOf(i.value)>-1});
+    document.querySelectorAll('#pilih-topik input').forEach(function(i){i.checked=n.type==='subtes'?true:(i.value===n.nama||n.legacy.indexOf(i.value)>-1)});
     window._subAktif=n.type==='sub'?n.id:null;
     var si=$('sub-info');si.hidden=!window._subAktif;if(window._subAktif)si.innerHTML='<span>Filter subtopik aktif: <b>'+esc(n.nama)+'</b></span><button type="button" class="tp-link" id="sub-hapus">Hapus filter</button>';
     document.querySelectorAll('#pilih-topik label').forEach(function(l){l.hidden=false});
