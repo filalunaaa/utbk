@@ -1033,6 +1033,23 @@ body #kuis{max-width:var(--w-soal,780px)}
 .pub-hero *{color:inherit}
 .opsi.benar,.badge.benar{color:var(--benar)}
 .opsi.salah,.badge.salah{color:var(--salah)}
+
+/* Hierarki materi di Atur Latihan: Rumpun > Topik > Subtopik */
+.tp-blok{min-width:0}
+.tp-blok.nol .pv-chip,.sb-chip.nol{opacity:.6}
+.tp-blok.buka{grid-column:1/-1}
+.sb-toggle{display:block;border:0;background:none;color:var(--accent);font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;padding:4px 2px 0 6px}
+.sb-toggle::before{content:"\25B8 "}
+.tp-blok.buka .sb-toggle::before{content:"\25BE "}
+.sb-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+.sb-isi{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px 14px;padding-left:12px;border-left:2px solid var(--border)}
+.sb-isi[hidden]{display:none}
+.sb-chip{margin:0}
+#pilih-topik .sb-chip span{padding:4px 10px;font-size:.8rem}
+.sb-chip em{font-style:normal;margin-left:6px;font-size:.72rem;color:var(--muted)}
+.sb-chip input:checked~em{color:var(--accent)}
+.tp-catatan{margin:0 0 12px}
+.jalur-materi{font-size:.82rem;font-weight:600;color:var(--accent);margin:0 0 6px}
 </style>
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
@@ -1115,8 +1132,8 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
           </div>
           <div class="dd-info sub-info" id="sub-info" hidden></div>
           <div class="tp-head"><p class="label" style="margin:0">Topik <span class="tp-hitung" id="tp-hitung"></span></p><div class="tp-aksi"><button type="button" class="tp-link" id="tp-semua">Pilih semua</button><button type="button" class="tp-link" id="tp-kosong">Kosongkan</button></div></div>
-          <input class="input tp-cari" id="tp-cari" type="search" placeholder="Cari topik..." autocomplete="off" aria-label="Cari topik">
-          <div class="tp-wadah" id="tp-wadah"><div class="pilihan" id="pilih-topik"></div><p class="muted" id="tp-nihil" hidden style="margin:6px 0 0">Tidak ada topik yang cocok.</p></div>
+          <input class="input tp-cari" id="tp-cari" type="search" placeholder="Cari rumpun, topik, atau subtopik..." autocomplete="off" aria-label="Cari topik">
+          <div class="tp-wadah" id="tp-wadah"><div class="pilihan" id="pilih-topik"></div><p class="muted" id="tp-nihil" hidden style="margin:6px 0 0">Tidak ada topik atau subtopik yang cocok dengan pencarian.</p></div>
           <button type="button" class="tp-link tp-toggle" id="tp-toggle" aria-expanded="false" hidden>Tampilkan semua topik</button>
         </div>
         <div class="card">
@@ -1460,6 +1477,10 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   </div>
 </div>
 
+<script>
+/* Taksonomi materi: Subtes > Rumpun > Topik > Subtopik. Harus dimuat lebih dulu dari skrip utama. */
+var TAKSONOMI={"PK":{"nama":"Pengetahuan Kuantitatif","rumpun":[{"id":"pk.bilangan-dan-operasi","nama":"Bilangan dan Operasi","umum":[],"sembunyiKosong":false,"topik":[{"id":"pk.bilangan-dan-operasi.operasi-bilangan","nama":"Operasi Bilangan","legacy":[],"rel":"inti","desk":"Operasi hitung pada bilangan bulat, pecahan, dan desimal.","sub":[{"id":"pk.bilangan-dan-operasi.operasi-bilangan.bilangan-bulat","nama":"Bilangan bulat"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.pecahan","nama":"Pecahan"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.desimal","nama":"Desimal"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.operasi-campuran","nama":"Operasi campuran"}]},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan","nama":"Rasio dan Perbandingan","legacy":["Perbandingan"],"rel":"inti","desk":"Perbandingan senilai, berbalik nilai, rasio, dan proporsi.","sub":[{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.perbandingan-senilai","nama":"Perbandingan senilai"},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.perbandingan-berbalik-nilai","nama":"Perbandingan berbalik nilai"},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.rasio-dan-proporsi","nama":"Rasio dan proporsi"}]},{"id":"pk.bilangan-dan-operasi.persentase","nama":"Persentase","legacy":["Persen"],"rel":"inti","desk":"Persentase dan perubahannya.","sub":[{"id":"pk.bilangan-dan-operasi.persentase.persentase","nama":"Persentase"},{"id":"pk.bilangan-dan-operasi.persentase.perubahan-persentase","nama":"Perubahan persentase"}]},{"id":"pk.bilangan-dan-operasi.pangkat-dan-bentuk-akar","nama":"Pangkat dan Bentuk Akar","legacy":["Eksponen","Logaritma"],"rel":"pendukung","desk":"Sifat pangkat, bentuk akar, dan logaritma dasar.","sub":[]}]},{"id":"pk.aljabar","nama":"Aljabar","umum":["Aljabar"],"sembunyiKosong":false,"topik":[{"id":"pk.aljabar.bentuk-aljabar","nama":"Bentuk Aljabar","legacy":[],"rel":"inti","desk":"Operasi, pemfaktoran, dan identitas aljabar.","sub":[{"id":"pk.aljabar.bentuk-aljabar.operasi-bentuk-aljabar","nama":"Operasi bentuk aljabar"},{"id":"pk.aljabar.bentuk-aljabar.pemfaktoran","nama":"Pemfaktoran"},{"id":"pk.aljabar.bentuk-aljabar.identitas-aljabar","nama":"Identitas aljabar"}]},{"id":"pk.aljabar.persamaan-linear","nama":"Persamaan Linear","legacy":[],"rel":"inti","desk":"Persamaan linear satu variabel.","sub":[{"id":"pk.aljabar.persamaan-linear.persamaan-linear-satu-variabel","nama":"Persamaan linear satu variabel"}]},{"id":"pk.aljabar.pertidaksamaan","nama":"Pertidaksamaan","legacy":["Program Linear"],"rel":"inti","desk":"Pertidaksamaan linear dan penerapannya, termasuk program linear.","sub":[{"id":"pk.aljabar.pertidaksamaan.pertidaksamaan-linear","nama":"Pertidaksamaan linear"}]},{"id":"pk.aljabar.sistem-persamaan","nama":"Sistem Persamaan","legacy":["Sistem Persamaan Linear"],"rel":"inti","desk":"Sistem persamaan linear dua variabel.","sub":[{"id":"pk.aljabar.sistem-persamaan.sistem-persamaan-linear-dua-variabel","nama":"Sistem Persamaan Linear Dua Variabel"}]},{"id":"pk.aljabar.persamaan-kuadrat","nama":"Persamaan Kuadrat","legacy":["Persamaan Kuadrat"],"rel":"inti","desk":"Akar, diskriminan, dan hubungan akar dengan koefisien.","sub":[{"id":"pk.aljabar.persamaan-kuadrat.akar-persamaan-kuadrat","nama":"Akar persamaan kuadrat"},{"id":"pk.aljabar.persamaan-kuadrat.diskriminan","nama":"Diskriminan"},{"id":"pk.aljabar.persamaan-kuadrat.hubungan-akar-dan-koefisien","nama":"Hubungan akar dan koefisien"}]},{"id":"pk.aljabar.fungsi","nama":"Fungsi","legacy":["Fungsi"],"rel":"inti","desk":"Fungsi linear, kuadrat, grafik, komposisi, dan invers.","sub":[{"id":"pk.aljabar.fungsi.fungsi-linear","nama":"Fungsi linear"},{"id":"pk.aljabar.fungsi.fungsi-kuadrat","nama":"Fungsi kuadrat"},{"id":"pk.aljabar.fungsi.grafik-fungsi","nama":"Grafik fungsi"},{"id":"pk.aljabar.fungsi.fungsi-komposisi","nama":"Fungsi komposisi"},{"id":"pk.aljabar.fungsi.fungsi-invers","nama":"Fungsi invers"}]},{"id":"pk.aljabar.pola-barisan-dan-deret","nama":"Pola, Barisan, dan Deret","legacy":["Barisan dan Deret","Deret"],"rel":"inti","desk":"Pola bilangan, barisan, dan deret aritmetika serta geometri.","sub":[{"id":"pk.aljabar.pola-barisan-dan-deret.barisan-aritmetika","nama":"Barisan aritmetika"},{"id":"pk.aljabar.pola-barisan-dan-deret.barisan-geometri","nama":"Barisan geometri"},{"id":"pk.aljabar.pola-barisan-dan-deret.deret-aritmetika","nama":"Deret aritmetika"},{"id":"pk.aljabar.pola-barisan-dan-deret.deret-geometri","nama":"Deret geometri"},{"id":"pk.aljabar.pola-barisan-dan-deret.pola-bilangan","nama":"Pola bilangan"}]}]},{"id":"pk.geometri-dan-pengukuran","nama":"Geometri dan Pengukuran","umum":["Geometri"],"sembunyiKosong":false,"topik":[{"id":"pk.geometri-dan-pengukuran.bangun-datar","nama":"Bangun Datar","legacy":[],"rel":"inti","desk":"Segitiga, segiempat, poligon, lingkaran, keliling, dan luas.","sub":[{"id":"pk.geometri-dan-pengukuran.bangun-datar.segitiga","nama":"Segitiga"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.segiempat","nama":"Segiempat"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.poligon","nama":"Poligon"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.lingkaran","nama":"Lingkaran"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.keliling-dan-luas-bangun-datar","nama":"Keliling dan luas bangun datar"}]},{"id":"pk.geometri-dan-pengukuran.bangun-ruang","nama":"Bangun Ruang","legacy":["Bangun Ruang"],"rel":"inti","desk":"Kubus, balok, prisma, limas, tabung, kerucut, bola, volume, dan luas permukaan.","sub":[{"id":"pk.geometri-dan-pengukuran.bangun-ruang.kubus-dan-balok","nama":"Kubus dan balok"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.prisma-dan-limas","nama":"Prisma dan limas"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.tabung-kerucut-dan-bola","nama":"Tabung, kerucut, dan bola"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.volume","nama":"Volume"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.luas-permukaan","nama":"Luas permukaan"}]},{"id":"pk.geometri-dan-pengukuran.geometri-koordinat","nama":"Geometri Koordinat","legacy":["Transformasi Geometri"],"rel":"inti","desk":"Jarak antartitik, koordinat Kartesius, dan transformasi.","sub":[{"id":"pk.geometri-dan-pengukuran.geometri-koordinat.jarak-antar-titik","nama":"Jarak antar titik"},{"id":"pk.geometri-dan-pengukuran.geometri-koordinat.koordinat-kartesius","nama":"Koordinat Kartesius"}]},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan","nama":"Kesebangunan dan Kekongruenan","legacy":[],"rel":"inti","desk":"Perbandingan sisi, kesebangunan, dan kekongruenan.","sub":[{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.perbandingan-sisi","nama":"Perbandingan sisi"},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.kesebangunan","nama":"Kesebangunan"},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.kekongruenan","nama":"Kekongruenan"}]},{"id":"pk.geometri-dan-pengukuran.pengukuran","nama":"Pengukuran","legacy":[],"rel":"inti","desk":"Satuan panjang, luas, dan volume.","sub":[{"id":"pk.geometri-dan-pengukuran.pengukuran.satuan-panjang-luas-dan-volume","nama":"Satuan panjang, luas, dan volume"}]},{"id":"pk.geometri-dan-pengukuran.trigonometri","nama":"Trigonometri","legacy":["Trigonometri"],"rel":"pengayaan","desk":"Perbandingan trigonometri dasar.","sub":[]}]},{"id":"pk.analisis-data-dan-statistika","nama":"Analisis Data dan Statistika","umum":["Statistika"],"sembunyiKosong":false,"topik":[{"id":"pk.analisis-data-dan-statistika.penyajian-data","nama":"Penyajian Data","legacy":[],"rel":"inti","desk":"Tabel dan diagram batang, garis, serta lingkaran.","sub":[{"id":"pk.analisis-data-dan-statistika.penyajian-data.tabel","nama":"Tabel"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-batang","nama":"Diagram batang"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-garis","nama":"Diagram garis"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-lingkaran","nama":"Diagram lingkaran"}]},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan","nama":"Ukuran Pemusatan","legacy":[],"rel":"inti","desk":"Mean, median, dan modus.","sub":[{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.mean","nama":"Mean"},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.median","nama":"Median"},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.modus","nama":"Modus"}]},{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran","nama":"Ukuran Penyebaran","legacy":[],"rel":"inti","desk":"Jangkauan dan kuartil.","sub":[{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran.jangkauan","nama":"Jangkauan"},{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran.kuartil","nama":"Kuartil"}]},{"id":"pk.analisis-data-dan-statistika.interpretasi-data","nama":"Interpretasi Data","legacy":[],"rel":"inti","desk":"Membaca grafik, membandingkan data, dan menarik kesimpulan.","sub":[{"id":"pk.analisis-data-dan-statistika.interpretasi-data.interpretasi-grafik","nama":"Interpretasi grafik"},{"id":"pk.analisis-data-dan-statistika.interpretasi-data.perbandingan-data","nama":"Perbandingan data"},{"id":"pk.analisis-data-dan-statistika.interpretasi-data.penarikan-kesimpulan","nama":"Penarikan kesimpulan"}]}]},{"id":"pk.peluang-dan-kombinatorika","nama":"Peluang dan Kombinatorika","umum":[],"sembunyiKosong":false,"topik":[{"id":"pk.peluang-dan-kombinatorika.dasar-peluang","nama":"Dasar Peluang","legacy":["Peluang"],"rel":"inti","desk":"Ruang sampel, kejadian, peluang sederhana, dan komplemen.","sub":[{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.ruang-sampel","nama":"Ruang sampel"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.titik-sampel","nama":"Titik sampel"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.kejadian","nama":"Kejadian"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.peluang-sederhana","nama":"Peluang sederhana"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.peluang-komplemen","nama":"Peluang komplemen"}]},{"id":"pk.peluang-dan-kombinatorika.peluang-gabungan","nama":"Peluang Gabungan","legacy":[],"rel":"inti","desk":"Gabungan kejadian.","sub":[{"id":"pk.peluang-dan-kombinatorika.peluang-gabungan.gabungan-kejadian","nama":"Gabungan kejadian"}]},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan","nama":"Kaidah Pencacahan","legacy":["Kaidah Pencacahan"],"rel":"inti","desk":"Aturan penjumlahan, perkalian, permutasi, dan kombinasi.","sub":[{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.aturan-penjumlahan","nama":"Aturan penjumlahan"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.aturan-perkalian","nama":"Aturan perkalian"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.permutasi","nama":"Permutasi"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.kombinasi","nama":"Kombinasi"}]}]}]},"PM":{"nama":"Penalaran Matematika","rumpun":[{"id":"pm.kuantitas-dan-aritmetika","nama":"Kuantitas dan Aritmetika","umum":[],"sembunyiKosong":false,"topik":[{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks","nama":"Bilangan dalam Konteks","legacy":["Persen","Perbandingan","Eksponen"],"rel":"inti","desk":"Bilangan, rasio, dan persentase dalam masalah sehari-hari.","sub":[{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.operasi-bilangan-dalam-konteks-nyata","nama":"Operasi bilangan dalam konteks nyata"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.rasio-dan-proporsi-kontekstual","nama":"Rasio dan proporsi kontekstual"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.persentase-dalam-permasalahan-sehari-hari","nama":"Persentase dalam permasalahan sehari-hari"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.perubahan-nilai","nama":"Perubahan nilai"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.perbandingan-beberapa-kondisi","nama":"Perbandingan beberapa kondisi"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.satuan-dan-konversi","nama":"Satuan dan konversi"}]}]},{"id":"pm.aljabar-dan-pemodelan","nama":"Aljabar dan Pemodelan","umum":["Aljabar"],"sembunyiKosong":false,"topik":[{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar","nama":"Pemodelan Aljabar","legacy":["Persamaan Kuadrat","Sistem Persamaan Linear","Program Linear"],"rel":"inti","desk":"Mengubah masalah cerita menjadi model matematika.","sub":[{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.mengubah-masalah-cerita-menjadi-persamaan","nama":"Mengubah masalah cerita menjadi persamaan"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.menentukan-variabel","nama":"Menentukan variabel"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.membuat-model-matematika","nama":"Membuat model matematika"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.persamaan-dalam-konteks-nyata","nama":"Persamaan dalam konteks nyata"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.sistem-persamaan","nama":"Sistem persamaan"}]},{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel","nama":"Fungsi dan Hubungan Variabel","legacy":["Fungsi","Barisan dan Deret","Deret","Logaritma"],"rel":"inti","desk":"Fungsi, grafik, dan pola hubungan antarvariabel.","sub":[{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel.interpretasi-fungsi-dan-grafik","nama":"Interpretasi fungsi dan grafik"},{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel.pola-hubungan-antarvariabel","nama":"Pola hubungan antarvariabel"}]}]},{"id":"pm.geometri-dan-pengukuran","nama":"Geometri dan Pengukuran","umum":["Geometri"],"sembunyiKosong":false,"topik":[{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk","nama":"Pengukuran dan Bentuk","legacy":["Bangun Ruang","Trigonometri","Transformasi Geometri"],"rel":"inti","desk":"Pengukuran dan analisis bentuk dalam konteks nyata.","sub":[{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.pengukuran-dalam-konteks-nyata","nama":"Pengukuran dalam konteks nyata"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.luas-dan-volume-dalam-penerapan","nama":"Luas dan volume dalam penerapan"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.skala-denah-dan-peta","nama":"Skala denah dan peta"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.jarak-dan-koordinat","nama":"Jarak dan koordinat"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.analisis-bentuk-geometris","nama":"Analisis bentuk geometris"}]}]},{"id":"pm.analisis-data-dan-statistika","nama":"Analisis Data dan Statistika","umum":["Statistika"],"sembunyiKosong":false,"topik":[{"id":"pm.analisis-data-dan-statistika.data-dan-statistika","nama":"Data dan Statistika","legacy":[],"rel":"inti","desk":"Membaca, membandingkan, dan menafsirkan data.","sub":[{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membaca-tabel","nama":"Membaca tabel"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membaca-grafik","nama":"Membaca grafik"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membandingkan-data","nama":"Membandingkan data"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menghitung-nilai-statistik","nama":"Menghitung nilai statistik"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menginterpretasikan-perubahan","nama":"Menginterpretasikan perubahan"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menilai-kesimpulan-dari-data","nama":"Menilai kesimpulan dari data"}]}]},{"id":"pm.peluang-dan-pengambilan-keputusan","nama":"Peluang dan Pengambilan Keputusan","umum":[],"sembunyiKosong":false,"topik":[{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan","nama":"Peluang dan Keputusan","legacy":["Peluang","Kaidah Pencacahan","Himpunan"],"rel":"inti","desk":"Kemungkinan kejadian dan keputusan berdasarkan peluang.","sub":[{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.ruang-sampel-dalam-konteks-nyata","nama":"Ruang sampel dalam konteks nyata"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.menghitung-kemungkinan-kejadian","nama":"Menghitung kemungkinan kejadian"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.peluang-gabungan","nama":"Peluang gabungan"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.analisis-beberapa-alternatif","nama":"Analisis beberapa alternatif"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.pengambilan-keputusan-berdasarkan-peluang","nama":"Pengambilan keputusan berdasarkan peluang"}]}]},{"id":"pm.topik-lanjutan","nama":"Topik Lanjutan","umum":[],"sembunyiKosong":true,"topik":[{"id":"pm.topik-lanjutan.limit","nama":"Limit","legacy":["Limit"],"rel":"pengayaan","desk":"Limit fungsi.","sub":[]},{"id":"pm.topik-lanjutan.turunan","nama":"Turunan","legacy":["Turunan"],"rel":"pengayaan","desk":"Turunan fungsi.","sub":[]},{"id":"pm.topik-lanjutan.integral","nama":"Integral","legacy":["Integral"],"rel":"pengayaan","desk":"Integral fungsi.","sub":[]}]}]}};
+</script>
 <script>
 // Simpan & baca statistik di localStorage
 const Penyimpanan = {
@@ -2379,58 +2400,82 @@ function renderPilihSumber() {
     `<label class="chip"><input type="radio" name="sumber" value="${esc(v)}" ${v === val ? 'checked' : ''}><span>${esc(t)}</span></label>`).join('');
   buatTopik();
 }
+// Subtopik satu soal (bisa lebih dari satu), dari subtopikId / subtopikIds
+function idSub(s) { return [...new Set([s.subtopikId, ...(s.subtopikIds || [])].filter(Boolean))]; }
+const topikDipilih = () => [...document.querySelectorAll('#pilih-topik input[data-tp]:checked')].map((i) => i.value);
+const subDikecualikan = () => new Set([...document.querySelectorAll('#pilih-topik input[data-sub]:not(:checked)')].map((i) => i.dataset.sub));
+function lolosSub(s, ex) { const ids = idSub(s); return !ex.size || !ids.length || ids.some((id) => !ex.has(id)); }
+function labelSub(blok) {
+  const t = blok.querySelector('[data-sb]');
+  if (!t) return;
+  const a = [...blok.querySelectorAll('input[data-sub]')], c = a.filter((i) => i.checked).length;
+  t.textContent = c === a.length ? `${a.length} subtopik` : `${c} dari ${a.length} subtopik`;
+}
+function ringkasTopik() {
+  const t = document.querySelectorAll('#pilih-topik input[data-tp]'), subs = [...document.querySelectorAll('#pilih-topik input[data-sub]')];
+  const sebagian = subs.some((i) => !i.checked && i.closest('.tp-blok').querySelector('input[data-tp]').checked);
+  return `${topikDipilih().length} dari ${t.length}` + (sebagian ? ` · ${subs.filter((i) => i.checked).length} dari ${subs.length} subtopik` : '');
+}
+// Daftar topik dibangun dari taksonomi (sama dengan Jelajahi Materi), bukan dari soal yang ada,
+// supaya hierarki tetap tampil walau sumber soal masih kosong atau belum termuat.
 function buatTopik() {
   const mapel = nilai('mapel');
-  const soalPilih = sumberSoal().filter((s) => mapel === 'semua' || s.mataPelajaran === mapel);
-  const jumlah = {};
-  soalPilih.forEach((s) => { const n = namaTopikResmi(s); jumlah[n] = (jumlah[n] || 0) + 1; });
-  // Peta topik resmi -> mapel, rumpun, dan urutan di taksonomi
-  const peta = {};
-  const urutanKunci = [];
-  Object.keys(TAKSONOMI).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => {
-    urutanKunci.push(k + '|' + r.id);
-    r.topik.forEach((tp, i) => { if (!peta[tp.nama]) peta[tp.nama] = { mapel: k, rumpun: r, urut: i }; });
-  }));
-  urutanKunci.push('_lain');
-  const grup = {};
-  [...new Set(soalPilih.map(namaTopikResmi))].forEach((n) => {
-    const info = peta[n];
-    const kunci = info ? info.mapel + '|' + info.rumpun.id : '_lain';
-    if (!grup[kunci]) grup[kunci] = {
-      nama: info ? info.rumpun.nama : 'Belum dipetakan ke taksonomi',
-      mapel: info ? info.mapel : '',
-      topik: []
-    };
-    grup[kunci].topik.push(n);
+  const soalPilih = sumberSoal().filter((s) => (mapel === 'semua' || s.mataPelajaran === mapel) && (modeAdmin || s.status !== 'draf'));
+  const jTopik = {}, jSub = {};
+  soalPilih.forEach((s) => {
+    const n = namaTopikResmi(s);
+    jTopik[n] = (jTopik[n] || 0) + 1;
+    idSub(s).forEach((id) => { jSub[id] = (jSub[id] || 0) + 1; });
   });
-  const html = urutanKunci.filter((k) => grup[k]).map((kunci) => {
-    const g = grup[kunci];
-    g.topik.sort((x, y) => (peta[x] ? peta[x].urut : 999) - (peta[y] ? peta[y].urut : 999) || x.localeCompare(y));
-    const totalSoal = g.topik.reduce((t, n) => t + (jumlah[n] || 0), 0);
+  const dikenal = new Set(), grup = [];
+  Object.keys(TAKSONOMI).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => {
+    r.topik.forEach((tp) => dikenal.add(tp.nama));
+    if (mapel !== 'semua' && k !== mapel) return;
+    const topik = r.topik.filter((tp) => !(r.sembunyiKosong && !jTopik[tp.nama]));
+    if (topik.length) grup.push({ kunci: k + '|' + r.id, nama: r.nama, mapel: k, topik });
+  }));
+  const lain = Object.keys(jTopik).filter((n) => !dikenal.has(n)).sort((x, y) => x.localeCompare(y));
+  if (lain.length) grup.push({ kunci: '_lain', nama: 'Belum dipetakan ke taksonomi', mapel: '', topik: lain.map((n) => ({ nama: n, sub: [] })) });
+  const blok = (tp) => {
+    const n = jTopik[tp.nama] || 0, subs = tp.sub || [];
+    return `<div class="tp-blok${n ? '' : ' nol'}">
+      <label class="chip pv-chip"><input type="checkbox" value="${esc(tp.nama)}" data-tp checked><span>${esc(tp.nama)}</span><em>${n} soal</em></label>
+      ${subs.length ? `<button type="button" class="sb-toggle" data-sb aria-expanded="false">${subs.length} subtopik</button>
+      <div class="sb-isi" hidden>${subs.map((sb) => `<label class="chip sb-chip${jSub[sb.id] ? '' : ' nol'}"><input type="checkbox" data-sub="${esc(sb.id)}" checked><span>${esc(sb.nama)}</span><em>${jSub[sb.id] || 0}</em></label>`).join('')}</div>` : ''}
+    </div>`;
+  };
+  const html = grup.map((g) => {
+    const totalSoal = g.topik.reduce((t, tp) => t + (jTopik[tp.nama] || 0), 0);
+    const jmlSub = g.topik.reduce((t, tp) => t + (tp.sub || []).length, 0);
     const tag = g.mapel ? `<span class="pv-tag">${esc(g.mapel)}</span>` : '';
-    const chips = g.topik.map((n) =>
-      `<label class="chip pv-chip"><input type="checkbox" value="${esc(n)}" checked><span>${esc(n)}</span><em>${jumlah[n] || 0} soal</em></label>`).join('');
-    return `<div class="pv-grup" data-kunci="${esc(kunci)}">
+    return `<div class="pv-grup" data-kunci="${esc(g.kunci)}">
       <div class="pv-head">
         <button type="button" class="pv-judul" data-buka aria-expanded="true"><span class="pv-panah">&#9662;</span><span class="pv-dot"></span>${esc(g.nama)}${tag}</button>
-        <span class="pv-jml">${g.topik.length} topik · ${totalSoal} soal</span>
+        <span class="pv-jml">${g.topik.length} topik${jmlSub ? ' · ' + jmlSub + ' subtopik' : ''} · ${totalSoal} soal</span>
         <span class="pv-aksi"><button type="button" class="tp-link" data-pv="pilih">Semua</button><button type="button" class="tp-link" data-pv="kosong">Kosong</button></span>
       </div>
-      <div class="pv-isi">${chips}</div>
+      <div class="pv-isi">${g.topik.map(blok).join('')}</div>
     </div>`;
   }).join('');
-  $('pilih-topik').innerHTML = html;
+  const catatan = soalPilih.length ? '' : '<p class="tp-catatan muted">Belum ada soal pada sumber ini. Struktur materi tetap ditampilkan; tambahkan soal lewat Bank Soal.</p>';
+  $('pilih-topik').innerHTML = catatan + html;
   hitungSoal();
 }
-// Aksi di dalam pivot: pilih/kosongkan per rumpun, dan buka/tutup rumpun
+// Aksi di dalam pemilih: pilih/kosongkan per rumpun, buka subtopik, buka/tutup rumpun
 $('pilih-topik').addEventListener('click', (e) => {
   const aksi = e.target.closest('[data-pv]');
   if (aksi) {
     const v = aksi.dataset.pv === 'pilih';
-    aksi.closest('.pv-grup').querySelectorAll('label.pv-chip').forEach((l) => {
-      if (!l.hidden) l.querySelector('input').checked = v;
-    });
+    aksi.closest('.pv-grup').querySelectorAll('.tp-blok:not([hidden])').forEach((b) => { b.querySelectorAll('input').forEach((i) => (i.checked = v)); labelSub(b); });
     $('pilih-topik').dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+  const sb = e.target.closest('[data-sb]');
+  if (sb) {
+    const b = sb.closest('.tp-blok'), buka = !b.classList.contains('buka');
+    b.classList.toggle('buka', buka);
+    b.querySelector('.sb-isi').hidden = !buka;
+    sb.setAttribute('aria-expanded', String(buka));
     return;
   }
   const bk = e.target.closest('[data-buka]');
@@ -2442,10 +2487,19 @@ $('pilih-topik').addEventListener('click', (e) => {
     bk.querySelector('.pv-panah').innerHTML = tutup ? '&#9656;' : '&#9662;';
   }
 });
+// Topik dan subtopiknya selalu sinkron: centang topik = semua subtopik ikut, hapus semua subtopik = topik ikut terhapus
+$('pilih-topik').addEventListener('change', (e) => {
+  const t = e.target, b = t.closest('.tp-blok');
+  if (!b) return;
+  const subs = [...b.querySelectorAll('input[data-sub]')];
+  if (t.matches('[data-tp]')) subs.forEach((i) => (i.checked = t.checked));
+  else if (t.matches('[data-sub]')) b.querySelector('input[data-tp]').checked = subs.some((i) => i.checked);
+  labelSub(b);
+});
 function soalTerfilter() {
-  const mapel = nilai('mapel'), topik = centang('pilih-topik'), level = centang('pilih-level');
+  const mapel = nilai('mapel'), topik = topikDipilih(), level = centang('pilih-level'), ex = subDikecualikan();
   return sumberSoal().filter((s) =>
-    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(namaTopikResmi(s)) && level.includes(s.tingkatKesulitan) && (modeAdmin || s.status !== 'draf') && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
+    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(namaTopikResmi(s)) && lolosSub(s, ex) && level.includes(s.tingkatKesulitan) && (modeAdmin || s.status !== 'draf') && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
 }
 function ringkasSesi() {
   const teks = (nm) => { const i = document.querySelector(`input[name="${nm}"]:checked`); return i && i.nextElementSibling ? i.nextElementSibling.textContent : '-'; };
@@ -2456,7 +2510,7 @@ function ringkasSesi() {
   const b = (a, v) => `<div class="ringkas-baris"><span>${a}</span><b>${v}</b></div>`;
   $('ringkas-sesi').innerHTML = b('Sumber', esc(teks('sumber'))) + b('Mata pelajaran', esc(teks('mapel'))) +
     b('Mode', mode === 'tryout' ? `Try Out · ${waktu} dtk/soal` : 'Latihan') + b('Jumlah soal', n ? jml : 0) +
-    b('Topik', `${centang('pilih-topik').length} dari ${document.querySelectorAll('#pilih-topik input').length}`) + b('Kesulitan', esc(lv)) +
+    b('Topik', ringkasTopik()) + b('Kesulitan', esc(lv)) +
     (mode === 'tryout' && n ? b('Estimasi durasi', `± ${Math.ceil((jml * waktu) / 60)} menit`) : '');
 }
 function hitungSoal() {
@@ -3971,7 +4025,7 @@ function itemSoalHTML(s, nomor) {
         ${modeAdmin ? '' : `<label class="muted">Pindah ke</label>
         <select class="input kecil" data-pindah="${esc(s.id)}">${optionsPindah(s.folderId || '')}</select>`}
         <label class="muted">Subtopik</label>
-        <select class="input kecil" data-subset="${esc(s.id)}" aria-label="Subtopik soal">${optionsSub(s.mataPelajaran, subDari(s), { depan: '<option value="">Tanpa subtopik</option>' })}</select>
+        <select class="input kecil" data-subset="${esc(s.id)}" aria-label="Subtopik soal">${optionsSub(s.mataPelajaran, subDari(s), { depan: '<option value="">Tanpa subtopik</option>', topik: namaTopikResmi(s) })}</select>
         <button class="btn btn-secondary btn-kecil" data-aksi="pratinjau" data-id="${esc(s.id)}">Pratinjau</button>
         <button class="btn btn-secondary btn-kecil" data-aksi="edit" data-id="${esc(s.id)}">Edit</button>
         <button class="btn btn-bahaya btn-kecil" data-aksi="hapus" data-id="${esc(s.id)}">Hapus</button>
@@ -4057,13 +4111,15 @@ function renderCascade(p) {
   renderTopikForm(p.rumpun || '', p.topik || '');
   renderSubForm(p.sub || '');
 }
+renderCascade({}); // isi dropdown Rumpun/Topik/Subtopik sejak halaman dimuat
 // Deskripsi cakupan: topik punya deskripsi di taksonomi; subtopik belum punya, jadi ditandai jelas
 function tampilCakupan(tp) {
   const kot = $('kotak-cakupan');
   if (!tp) { kot.hidden = true; kot.innerHTML = ''; return; }
   const sb = tp.topik.sub.find((x) => x.id === $('f-sub').value);
   kot.hidden = false;
-  kot.innerHTML = `<p class="label" style="margin-top:0">Cakupan kompetensi</p>
+  const jalur = [tp.mapel, tp.rumpun.nama, tp.topik.nama].concat(sb ? [sb.nama] : []).map(esc).join(' &rsaquo; ');
+  kot.innerHTML = `<p class="jalur-materi">${jalur}</p><p class="label" style="margin-top:0">Cakupan kompetensi</p>
     <p>${esc(tp.topik.desk || 'Deskripsi topik belum tersedia.')}</p>
     ${sb ? `<p class="muted">${esc(sb.desk || 'Deskripsi subtopik belum tersedia.')}</p>` : ''}`;
 }
@@ -4121,15 +4177,12 @@ function optionsSub(mapel, terpilih, opsi) {
   let h = opsi.depan;
   Object.keys(TAKSONOMI).filter((k) => !mapel || k === mapel).forEach((k) => {
     TAKSONOMI[k].rumpun.forEach((r) => r.topik.forEach((tp) => {
-      if (!tp.sub.length) return;
+      if (!tp.sub.length || (opsi.topik && tp.nama !== opsi.topik)) return;
       h += `<optgroup label="${esc((mapel ? '' : k + ' · ') + r.nama + ' › ' + tp.nama)}">` + tp.sub.map((sb) =>
         `<option value="${esc(sb.id)}"${sb.id === terpilih ? ' selected' : ''}>${esc(sb.nama)}${opsi.hitung ? ' (' + hit(sb.id) + ')' : ''}</option>`).join('') + '</optgroup>';
     }));
   });
   return h;
-}
-function renderSubForm(terpilih) {
-  $('f-sub').innerHTML = optionsSub(nilai('f-mapel'), terpilih || '', { depan: '<option value="">Tanpa subtopik</option>' });
 }
 function renderFilterSub() {
   const semua = BankSoal.ambil(), kini = FB.sub;
@@ -4833,7 +4886,7 @@ function latihanTopik(nama) {
   setRadio('jumlah', '5');
   document.querySelectorAll('#pilih-level input').forEach((i) => (i.checked = true));
   buatTopik();
-  document.querySelectorAll('#pilih-topik input').forEach((i) => (i.checked = i.value === nama));
+  document.querySelectorAll('#pilih-topik input[data-tp]').forEach((i) => (i.checked = i.value === nama));
   hitungSoal();
   if (soalTerfilter().length) { window._tanpaRekam = true; mulai(); }
   else tampil('setup');
@@ -5536,13 +5589,13 @@ $('set-lokal').addEventListener('click',function(){konfirmUjian('Hapus data loka
 document.getElementById('dash-pengaturan').addEventListener('click',function(){document.querySelector('.side-nav [data-hal="pengaturan"]').click()});
 
 (function(){var box=$('pilih-topik'),wad=$('tp-wadah'),tg=$('tp-toggle'),cari=$('tp-cari');
-  function labels(){return [].slice.call(box.querySelectorAll('label'))}
+  function labels(){return [].slice.call(box.querySelectorAll('label.pv-chip'))}
   function ukur(){var luas=wad.classList.contains('luas');wad.classList.remove('pendek');
     var perlu=box.scrollHeight>132;if(!perlu&&!luas)wad.classList.add('pendek');tg.hidden=!perlu&&!luas;
     tg.textContent=luas?'Ringkas daftar topik':'Tampilkan semua topik ('+labels().filter(function(l){return !l.hidden}).length+')';tg.setAttribute('aria-expanded',String(luas))}
-  function filter(){var q=cari.value.trim().toLowerCase(),n=0;labels().forEach(function(l){var ok=!q||l.textContent.toLowerCase().indexOf(q)>-1;l.hidden=!ok;if(ok)n++});$('tp-nihil').hidden=n>0||!labels().length;if(q)wad.classList.add('luas');ukur()}
+  function filter(){var q=cari.value.trim().toLowerCase(),n=0;labels().forEach(function(l){var bl=l.closest('.tp-blok'),ok=!q||(bl?bl.textContent:l.textContent).toLowerCase().indexOf(q)>-1;l.hidden=!ok;if(bl){bl.hidden=!ok;if(q&&ok&&l.textContent.toLowerCase().indexOf(q)<0){bl.classList.add('buka');var si=bl.querySelector('.sb-isi');if(si)si.hidden=false}}if(ok)n++});$('tp-nihil').hidden=n>0||!labels().length;if(q)wad.classList.add('luas');ukur()}
   function hitung(){var a=labels(),c=a.filter(function(l){return l.querySelector('input').checked}).length;$('tp-hitung').textContent=a.length?'· '+c+' dari '+a.length+' dipilih':''}
-  function semua(v){labels().forEach(function(l){if(!l.hidden)l.querySelector('input').checked=v});hitung();if(typeof hitungSoal==='function')hitungSoal();box.dispatchEvent(new Event('change',{bubbles:true}))}
+  function semua(v){labels().forEach(function(l){if(!l.hidden){l.querySelector('input').checked=v;var bl=l.closest('.tp-blok');if(bl){[].forEach.call(bl.querySelectorAll('input[data-sub]'),function(i){i.checked=v});labelSub(bl)}}});hitung();if(typeof hitungSoal==='function')hitungSoal();box.dispatchEvent(new Event('change',{bubbles:true}))}
   $('tp-semua').addEventListener('click',function(){semua(true)});
   $('tp-kosong').addEventListener('click',function(){semua(false)});
   tg.addEventListener('click',function(){wad.classList.toggle('luas');ukur()});
@@ -5555,7 +5608,7 @@ terapkanTampilan();
 </script>
 <script>
 // ===== Jelajahi Materi: taksonomi bertingkat Subtes > Rumpun > Topik > Subtopik =====
-var TAKSONOMI={"PK":{"nama":"Pengetahuan Kuantitatif","rumpun":[{"id":"pk.bilangan-dan-operasi","nama":"Bilangan dan Operasi","umum":[],"sembunyiKosong":false,"topik":[{"id":"pk.bilangan-dan-operasi.operasi-bilangan","nama":"Operasi Bilangan","legacy":[],"rel":"inti","desk":"Operasi hitung pada bilangan bulat, pecahan, dan desimal.","sub":[{"id":"pk.bilangan-dan-operasi.operasi-bilangan.bilangan-bulat","nama":"Bilangan bulat"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.pecahan","nama":"Pecahan"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.desimal","nama":"Desimal"},{"id":"pk.bilangan-dan-operasi.operasi-bilangan.operasi-campuran","nama":"Operasi campuran"}]},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan","nama":"Rasio dan Perbandingan","legacy":["Perbandingan"],"rel":"inti","desk":"Perbandingan senilai, berbalik nilai, rasio, dan proporsi.","sub":[{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.perbandingan-senilai","nama":"Perbandingan senilai"},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.perbandingan-berbalik-nilai","nama":"Perbandingan berbalik nilai"},{"id":"pk.bilangan-dan-operasi.rasio-dan-perbandingan.rasio-dan-proporsi","nama":"Rasio dan proporsi"}]},{"id":"pk.bilangan-dan-operasi.persentase","nama":"Persentase","legacy":["Persen"],"rel":"inti","desk":"Persentase dan perubahannya.","sub":[{"id":"pk.bilangan-dan-operasi.persentase.persentase","nama":"Persentase"},{"id":"pk.bilangan-dan-operasi.persentase.perubahan-persentase","nama":"Perubahan persentase"}]},{"id":"pk.bilangan-dan-operasi.pangkat-dan-bentuk-akar","nama":"Pangkat dan Bentuk Akar","legacy":["Eksponen","Logaritma"],"rel":"pendukung","desk":"Sifat pangkat, bentuk akar, dan logaritma dasar.","sub":[]}]},{"id":"pk.aljabar","nama":"Aljabar","umum":["Aljabar"],"sembunyiKosong":false,"topik":[{"id":"pk.aljabar.bentuk-aljabar","nama":"Bentuk Aljabar","legacy":[],"rel":"inti","desk":"Operasi, pemfaktoran, dan identitas aljabar.","sub":[{"id":"pk.aljabar.bentuk-aljabar.operasi-bentuk-aljabar","nama":"Operasi bentuk aljabar"},{"id":"pk.aljabar.bentuk-aljabar.pemfaktoran","nama":"Pemfaktoran"},{"id":"pk.aljabar.bentuk-aljabar.identitas-aljabar","nama":"Identitas aljabar"}]},{"id":"pk.aljabar.persamaan-linear","nama":"Persamaan Linear","legacy":[],"rel":"inti","desk":"Persamaan linear satu variabel.","sub":[{"id":"pk.aljabar.persamaan-linear.persamaan-linear-satu-variabel","nama":"Persamaan linear satu variabel"}]},{"id":"pk.aljabar.pertidaksamaan","nama":"Pertidaksamaan","legacy":["Program Linear"],"rel":"inti","desk":"Pertidaksamaan linear dan penerapannya, termasuk program linear.","sub":[{"id":"pk.aljabar.pertidaksamaan.pertidaksamaan-linear","nama":"Pertidaksamaan linear"}]},{"id":"pk.aljabar.sistem-persamaan","nama":"Sistem Persamaan","legacy":["Sistem Persamaan Linear"],"rel":"inti","desk":"Sistem persamaan linear dua variabel.","sub":[{"id":"pk.aljabar.sistem-persamaan.sistem-persamaan-linear-dua-variabel","nama":"Sistem Persamaan Linear Dua Variabel"}]},{"id":"pk.aljabar.persamaan-kuadrat","nama":"Persamaan Kuadrat","legacy":["Persamaan Kuadrat"],"rel":"inti","desk":"Akar, diskriminan, dan hubungan akar dengan koefisien.","sub":[{"id":"pk.aljabar.persamaan-kuadrat.akar-persamaan-kuadrat","nama":"Akar persamaan kuadrat"},{"id":"pk.aljabar.persamaan-kuadrat.diskriminan","nama":"Diskriminan"},{"id":"pk.aljabar.persamaan-kuadrat.hubungan-akar-dan-koefisien","nama":"Hubungan akar dan koefisien"}]},{"id":"pk.aljabar.fungsi","nama":"Fungsi","legacy":["Fungsi"],"rel":"inti","desk":"Fungsi linear, kuadrat, grafik, komposisi, dan invers.","sub":[{"id":"pk.aljabar.fungsi.fungsi-linear","nama":"Fungsi linear"},{"id":"pk.aljabar.fungsi.fungsi-kuadrat","nama":"Fungsi kuadrat"},{"id":"pk.aljabar.fungsi.grafik-fungsi","nama":"Grafik fungsi"},{"id":"pk.aljabar.fungsi.fungsi-komposisi","nama":"Fungsi komposisi"},{"id":"pk.aljabar.fungsi.fungsi-invers","nama":"Fungsi invers"}]},{"id":"pk.aljabar.pola-barisan-dan-deret","nama":"Pola, Barisan, dan Deret","legacy":["Barisan dan Deret","Deret"],"rel":"inti","desk":"Pola bilangan, barisan, dan deret aritmetika serta geometri.","sub":[{"id":"pk.aljabar.pola-barisan-dan-deret.barisan-aritmetika","nama":"Barisan aritmetika"},{"id":"pk.aljabar.pola-barisan-dan-deret.barisan-geometri","nama":"Barisan geometri"},{"id":"pk.aljabar.pola-barisan-dan-deret.deret-aritmetika","nama":"Deret aritmetika"},{"id":"pk.aljabar.pola-barisan-dan-deret.deret-geometri","nama":"Deret geometri"},{"id":"pk.aljabar.pola-barisan-dan-deret.pola-bilangan","nama":"Pola bilangan"}]}]},{"id":"pk.geometri-dan-pengukuran","nama":"Geometri dan Pengukuran","umum":["Geometri"],"sembunyiKosong":false,"topik":[{"id":"pk.geometri-dan-pengukuran.bangun-datar","nama":"Bangun Datar","legacy":[],"rel":"inti","desk":"Segitiga, segiempat, poligon, lingkaran, keliling, dan luas.","sub":[{"id":"pk.geometri-dan-pengukuran.bangun-datar.segitiga","nama":"Segitiga"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.segiempat","nama":"Segiempat"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.poligon","nama":"Poligon"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.lingkaran","nama":"Lingkaran"},{"id":"pk.geometri-dan-pengukuran.bangun-datar.keliling-dan-luas-bangun-datar","nama":"Keliling dan luas bangun datar"}]},{"id":"pk.geometri-dan-pengukuran.bangun-ruang","nama":"Bangun Ruang","legacy":["Bangun Ruang"],"rel":"inti","desk":"Kubus, balok, prisma, limas, tabung, kerucut, bola, volume, dan luas permukaan.","sub":[{"id":"pk.geometri-dan-pengukuran.bangun-ruang.kubus-dan-balok","nama":"Kubus dan balok"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.prisma-dan-limas","nama":"Prisma dan limas"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.tabung-kerucut-dan-bola","nama":"Tabung, kerucut, dan bola"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.volume","nama":"Volume"},{"id":"pk.geometri-dan-pengukuran.bangun-ruang.luas-permukaan","nama":"Luas permukaan"}]},{"id":"pk.geometri-dan-pengukuran.geometri-koordinat","nama":"Geometri Koordinat","legacy":["Transformasi Geometri"],"rel":"inti","desk":"Jarak antartitik, koordinat Kartesius, dan transformasi.","sub":[{"id":"pk.geometri-dan-pengukuran.geometri-koordinat.jarak-antar-titik","nama":"Jarak antar titik"},{"id":"pk.geometri-dan-pengukuran.geometri-koordinat.koordinat-kartesius","nama":"Koordinat Kartesius"}]},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan","nama":"Kesebangunan dan Kekongruenan","legacy":[],"rel":"inti","desk":"Perbandingan sisi, kesebangunan, dan kekongruenan.","sub":[{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.perbandingan-sisi","nama":"Perbandingan sisi"},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.kesebangunan","nama":"Kesebangunan"},{"id":"pk.geometri-dan-pengukuran.kesebangunan-dan-kekongruenan.kekongruenan","nama":"Kekongruenan"}]},{"id":"pk.geometri-dan-pengukuran.pengukuran","nama":"Pengukuran","legacy":[],"rel":"inti","desk":"Satuan panjang, luas, dan volume.","sub":[{"id":"pk.geometri-dan-pengukuran.pengukuran.satuan-panjang-luas-dan-volume","nama":"Satuan panjang, luas, dan volume"}]},{"id":"pk.geometri-dan-pengukuran.trigonometri","nama":"Trigonometri","legacy":["Trigonometri"],"rel":"pengayaan","desk":"Perbandingan trigonometri dasar.","sub":[]}]},{"id":"pk.analisis-data-dan-statistika","nama":"Analisis Data dan Statistika","umum":["Statistika"],"sembunyiKosong":false,"topik":[{"id":"pk.analisis-data-dan-statistika.penyajian-data","nama":"Penyajian Data","legacy":[],"rel":"inti","desk":"Tabel dan diagram batang, garis, serta lingkaran.","sub":[{"id":"pk.analisis-data-dan-statistika.penyajian-data.tabel","nama":"Tabel"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-batang","nama":"Diagram batang"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-garis","nama":"Diagram garis"},{"id":"pk.analisis-data-dan-statistika.penyajian-data.diagram-lingkaran","nama":"Diagram lingkaran"}]},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan","nama":"Ukuran Pemusatan","legacy":[],"rel":"inti","desk":"Mean, median, dan modus.","sub":[{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.mean","nama":"Mean"},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.median","nama":"Median"},{"id":"pk.analisis-data-dan-statistika.ukuran-pemusatan.modus","nama":"Modus"}]},{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran","nama":"Ukuran Penyebaran","legacy":[],"rel":"inti","desk":"Jangkauan dan kuartil.","sub":[{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran.jangkauan","nama":"Jangkauan"},{"id":"pk.analisis-data-dan-statistika.ukuran-penyebaran.kuartil","nama":"Kuartil"}]},{"id":"pk.analisis-data-dan-statistika.interpretasi-data","nama":"Interpretasi Data","legacy":[],"rel":"inti","desk":"Membaca grafik, membandingkan data, dan menarik kesimpulan.","sub":[{"id":"pk.analisis-data-dan-statistika.interpretasi-data.interpretasi-grafik","nama":"Interpretasi grafik"},{"id":"pk.analisis-data-dan-statistika.interpretasi-data.perbandingan-data","nama":"Perbandingan data"},{"id":"pk.analisis-data-dan-statistika.interpretasi-data.penarikan-kesimpulan","nama":"Penarikan kesimpulan"}]}]},{"id":"pk.peluang-dan-kombinatorika","nama":"Peluang dan Kombinatorika","umum":[],"sembunyiKosong":false,"topik":[{"id":"pk.peluang-dan-kombinatorika.dasar-peluang","nama":"Dasar Peluang","legacy":["Peluang"],"rel":"inti","desk":"Ruang sampel, kejadian, peluang sederhana, dan komplemen.","sub":[{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.ruang-sampel","nama":"Ruang sampel"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.titik-sampel","nama":"Titik sampel"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.kejadian","nama":"Kejadian"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.peluang-sederhana","nama":"Peluang sederhana"},{"id":"pk.peluang-dan-kombinatorika.dasar-peluang.peluang-komplemen","nama":"Peluang komplemen"}]},{"id":"pk.peluang-dan-kombinatorika.peluang-gabungan","nama":"Peluang Gabungan","legacy":[],"rel":"inti","desk":"Gabungan kejadian.","sub":[{"id":"pk.peluang-dan-kombinatorika.peluang-gabungan.gabungan-kejadian","nama":"Gabungan kejadian"}]},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan","nama":"Kaidah Pencacahan","legacy":["Kaidah Pencacahan"],"rel":"inti","desk":"Aturan penjumlahan, perkalian, permutasi, dan kombinasi.","sub":[{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.aturan-penjumlahan","nama":"Aturan penjumlahan"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.aturan-perkalian","nama":"Aturan perkalian"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.permutasi","nama":"Permutasi"},{"id":"pk.peluang-dan-kombinatorika.kaidah-pencacahan.kombinasi","nama":"Kombinasi"}]}]}]},"PM":{"nama":"Penalaran Matematika","rumpun":[{"id":"pm.kuantitas-dan-aritmetika","nama":"Kuantitas dan Aritmetika","umum":[],"sembunyiKosong":false,"topik":[{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks","nama":"Bilangan dalam Konteks","legacy":["Persen","Perbandingan","Eksponen"],"rel":"inti","desk":"Bilangan, rasio, dan persentase dalam masalah sehari-hari.","sub":[{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.operasi-bilangan-dalam-konteks-nyata","nama":"Operasi bilangan dalam konteks nyata"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.rasio-dan-proporsi-kontekstual","nama":"Rasio dan proporsi kontekstual"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.persentase-dalam-permasalahan-sehari-hari","nama":"Persentase dalam permasalahan sehari-hari"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.perubahan-nilai","nama":"Perubahan nilai"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.perbandingan-beberapa-kondisi","nama":"Perbandingan beberapa kondisi"},{"id":"pm.kuantitas-dan-aritmetika.bilangan-dalam-konteks.satuan-dan-konversi","nama":"Satuan dan konversi"}]}]},{"id":"pm.aljabar-dan-pemodelan","nama":"Aljabar dan Pemodelan","umum":["Aljabar"],"sembunyiKosong":false,"topik":[{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar","nama":"Pemodelan Aljabar","legacy":["Persamaan Kuadrat","Sistem Persamaan Linear","Program Linear"],"rel":"inti","desk":"Mengubah masalah cerita menjadi model matematika.","sub":[{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.mengubah-masalah-cerita-menjadi-persamaan","nama":"Mengubah masalah cerita menjadi persamaan"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.menentukan-variabel","nama":"Menentukan variabel"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.membuat-model-matematika","nama":"Membuat model matematika"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.persamaan-dalam-konteks-nyata","nama":"Persamaan dalam konteks nyata"},{"id":"pm.aljabar-dan-pemodelan.pemodelan-aljabar.sistem-persamaan","nama":"Sistem persamaan"}]},{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel","nama":"Fungsi dan Hubungan Variabel","legacy":["Fungsi","Barisan dan Deret","Deret","Logaritma"],"rel":"inti","desk":"Fungsi, grafik, dan pola hubungan antarvariabel.","sub":[{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel.interpretasi-fungsi-dan-grafik","nama":"Interpretasi fungsi dan grafik"},{"id":"pm.aljabar-dan-pemodelan.fungsi-dan-hubungan-variabel.pola-hubungan-antarvariabel","nama":"Pola hubungan antarvariabel"}]}]},{"id":"pm.geometri-dan-pengukuran","nama":"Geometri dan Pengukuran","umum":["Geometri"],"sembunyiKosong":false,"topik":[{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk","nama":"Pengukuran dan Bentuk","legacy":["Bangun Ruang","Trigonometri","Transformasi Geometri"],"rel":"inti","desk":"Pengukuran dan analisis bentuk dalam konteks nyata.","sub":[{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.pengukuran-dalam-konteks-nyata","nama":"Pengukuran dalam konteks nyata"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.luas-dan-volume-dalam-penerapan","nama":"Luas dan volume dalam penerapan"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.skala-denah-dan-peta","nama":"Skala denah dan peta"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.jarak-dan-koordinat","nama":"Jarak dan koordinat"},{"id":"pm.geometri-dan-pengukuran.pengukuran-dan-bentuk.analisis-bentuk-geometris","nama":"Analisis bentuk geometris"}]}]},{"id":"pm.analisis-data-dan-statistika","nama":"Analisis Data dan Statistika","umum":["Statistika"],"sembunyiKosong":false,"topik":[{"id":"pm.analisis-data-dan-statistika.data-dan-statistika","nama":"Data dan Statistika","legacy":[],"rel":"inti","desk":"Membaca, membandingkan, dan menafsirkan data.","sub":[{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membaca-tabel","nama":"Membaca tabel"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membaca-grafik","nama":"Membaca grafik"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.membandingkan-data","nama":"Membandingkan data"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menghitung-nilai-statistik","nama":"Menghitung nilai statistik"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menginterpretasikan-perubahan","nama":"Menginterpretasikan perubahan"},{"id":"pm.analisis-data-dan-statistika.data-dan-statistika.menilai-kesimpulan-dari-data","nama":"Menilai kesimpulan dari data"}]}]},{"id":"pm.peluang-dan-pengambilan-keputusan","nama":"Peluang dan Pengambilan Keputusan","umum":[],"sembunyiKosong":false,"topik":[{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan","nama":"Peluang dan Keputusan","legacy":["Peluang","Kaidah Pencacahan","Himpunan"],"rel":"inti","desk":"Kemungkinan kejadian dan keputusan berdasarkan peluang.","sub":[{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.ruang-sampel-dalam-konteks-nyata","nama":"Ruang sampel dalam konteks nyata"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.menghitung-kemungkinan-kejadian","nama":"Menghitung kemungkinan kejadian"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.peluang-gabungan","nama":"Peluang gabungan"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.analisis-beberapa-alternatif","nama":"Analisis beberapa alternatif"},{"id":"pm.peluang-dan-pengambilan-keputusan.peluang-dan-keputusan.pengambilan-keputusan-berdasarkan-peluang","nama":"Pengambilan keputusan berdasarkan peluang"}]}]},{"id":"pm.topik-lanjutan","nama":"Topik Lanjutan","umum":[],"sembunyiKosong":true,"topik":[{"id":"pm.topik-lanjutan.limit","nama":"Limit","legacy":["Limit"],"rel":"pengayaan","desk":"Limit fungsi.","sub":[]},{"id":"pm.topik-lanjutan.turunan","nama":"Turunan","legacy":["Turunan"],"rel":"pengayaan","desk":"Turunan fungsi.","sub":[]},{"id":"pm.topik-lanjutan.integral","nama":"Integral","legacy":["Integral"],"rel":"pengayaan","desk":"Integral fungsi.","sub":[]}]}]}};
+// TAKSONOMI dipindahkan ke skrip sebelum skrip utama (dipakai saat inisialisasi)
 (function(){
   var mt={s:'PK',q:'',f:'semua',sel:null,buka:{},sheet:false},idx={},cache={},base=null,lastHasil=[];
   var REL={inti:'Inti',pendukung:'Pendukung',pengayaan:'Pengayaan'};
@@ -5714,10 +5767,16 @@ var TAKSONOMI={"PK":{"nama":"Pengetahuan Kuantitatif","rumpun":[{"id":"pk.bilang
     document.querySelectorAll('input[name="sumber"]').forEach(function(i){i.checked=i.value==='semua'});
     document.querySelectorAll('input[name="mapel"]').forEach(function(i){i.checked=i.value===n.s});
     buatTopik();
-    document.querySelectorAll('#pilih-topik input').forEach(function(i){i.checked=n.type==='subtes'?true:(i.value===n.nama||n.legacy.indexOf(i.value)>-1)});
-    window._subAktif=n.type==='sub'?n.id:null;
+    document.querySelectorAll('#pilih-topik input[data-tp]').forEach(function(i){i.checked=n.type==='subtes'?true:(i.value===n.nama||n.legacy.indexOf(i.value)>-1)});
+    document.querySelectorAll('#pilih-topik input[data-sub]').forEach(function(i){i.checked=n.type==='sub'?i.dataset.sub===n.id:true});
+    if(n.type==='sub'){var ptp=topikTaxById(n.id.slice(0,n.id.lastIndexOf('.')));
+      if(ptp)document.querySelectorAll('#pilih-topik input[data-tp]').forEach(function(i){i.checked=i.value===ptp.topik.nama});
+      var cb=document.querySelector('#pilih-topik input[data-sub="'+n.id+'"]'),bl=cb&&cb.closest('.tp-blok');
+      if(bl){bl.classList.add('buka');bl.querySelector('.sb-isi').hidden=false}}
+    document.querySelectorAll('#pilih-topik .tp-blok').forEach(labelSub);
+    window._subAktif=null;
     var si=$('sub-info');si.hidden=!window._subAktif;if(window._subAktif)si.innerHTML='<span>Filter subtopik aktif: <b>'+esc(n.nama)+'</b></span><button type="button" class="tp-link" id="sub-hapus">Hapus filter</button>';
-    document.querySelectorAll('#pilih-topik label').forEach(function(l){l.hidden=false});
+    document.querySelectorAll('#pilih-topik label,#pilih-topik .tp-blok').forEach(function(l){l.hidden=false});
     hitungSoal();ringkasSesi();$('pilih-topik').dispatchEvent(new Event('change',{bubbles:true}))}
   $('sub-info').addEventListener('click',function(e){if(e.target.id==='sub-hapus'){window._subAktif=null;this.hidden=true;hitungSoal();ringkasSesi()}});
   document.querySelectorAll('.nav-link[data-hal="materi"]').forEach(function(a){a.addEventListener('click',function(){mt.sheet=false;render();tampil('materi')})});
