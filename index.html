@@ -5789,6 +5789,8 @@ async function aksiAkun(aksi) {
     renderBeranda();
     renderProfil(!ProfilApp.ambil());
     renderSalam();
+    tampil('menu');
+    if (window.tampilWelcome) window.tampilWelcome();
     return;
   }
   const email = ($('ak-email') ? $('ak-email').value : '').trim();
@@ -5915,6 +5917,8 @@ segarkanSoalBawaan();
     tutup();renderProfil(!ProfilApp.ambil());tampil('profil');
     setTimeout(function(){var a=document.querySelector('#kartu-profil .akun-box');if(!a)return;var d=a.querySelector('.opsi-email');if(d&&bukaEmail)d.open=true;a.scrollIntoView({behavior:'smooth',block:'center'})},60);
   }
+  // Dipanggil setelah keluar akun: kembali ke halaman Welcome
+  window.tampilWelcome=function(){try{localStorage.removeItem('nalarin_welcome_seen')}catch(e){}root.classList.add('welcome-on');lain(function(el){el.inert=true});w.scrollTop=0};
   $('wl-mulai').addEventListener('click',function(){keAkun(false)});
   $('wl-masuk').addEventListener('click',function(){keAkun(true)});
   $('wl-lokal').addEventListener('click',function(){tutup();tampil('menu')});
