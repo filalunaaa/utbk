@@ -627,7 +627,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .stat-tile span{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .stat-tile strong{font-size:1.7rem;font-weight:800;line-height:1.25}
 .stat-tile small{font-size:.75rem;color:var(--muted)}
-.bank-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 150px 150px minmax(0,220px);gap:10px;margin:16px 0 4px}#filter-sub,#f-sub{text-overflow:ellipsis}.sub-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--primary-soft);color:var(--accent);margin-left:6px;vertical-align:middle}
+.bank-toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 4px}.bank-toolbar #cari-soal{grid-column:1/-1;min-width:0}.bank-toolbar select{min-width:0;width:100%}#filter-sub,#f-sub{text-overflow:ellipsis}.sub-tag{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--primary-soft);color:var(--accent);margin-left:6px;vertical-align:middle}
 .state-kosong{text-align:center;padding:32px 16px;border:1.5px dashed var(--border);border-radius:12px;margin-top:14px}
 .state-kosong p{margin:4px 0 0}
 .wadah-folder{border-radius:14px;box-shadow:var(--shadow)}
@@ -642,7 +642,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 #kartu-form{scroll-margin-top:76px}
 
 :root[data-theme="dark"]{--warning-soft:#35291a;--warning:#d9a95c}
-@media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #cari-soal{grid-column:1/-1}.bank-toolbar #filter-sub{grid-column:1/-1}.page-head .btn{width:100%}}
+@media(max-width:700px){.ringkasan-bank{grid-template-columns:repeat(2,minmax(0,1fr))}.bank-toolbar{grid-template-columns:1fr 1fr}.bank-toolbar #filter-sub{grid-column:1/-1}.page-head .btn{width:100%}}
 @media(max-width:600px){.kartu-soal>summary{flex-wrap:wrap}.pratinjau-soal{flex-basis:100%}}
 
 /* Statistik v2 */
