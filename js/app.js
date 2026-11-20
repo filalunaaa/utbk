@@ -395,19 +395,41 @@ const DefaultSoal = {
   simpanCache() {
     try { localStorage.setItem('utbk_soal_default', JSON.stringify({ soal: SOAL })); } catch (e) {}
   },
-  // Ambil semua soal bawaan dari server
+ // Ambil semua soal bawaan dari server secara bertahap
   async muat() {
-    const rows = await rest('soal_default?select=id,urutan,data&order=urutan.asc');
+    const semua = [];
+    const ukuranHalaman = 500;
+    let offset = 0;
+
+    while (true) {
+      const halaman = await rest(
+        `soal_default?select=id,urutan,data&order=urutan.asc,id.asc&limit=${ukuranHalaman}&offset=${offset}`
+      );
+
+      if (!Array.isArray(halaman)) {
+        throw new Error('Respons server soal_default tidak valid.');
+      }
+
+      semua.push(...halaman);
+
+      if (halaman.length < ukuranHalaman) break;
+
+      offset += halaman.length;
+    }
+
     this.urutan = {};
     this.asli = {};
-    SOAL = (rows || []).map((r) => {
+
+    SOAL = semua.map((r) => {
       const s = { ...r.data, id: String(r.id) };
       this.urutan[s.id] = r.urutan;
       this.asli[s.id] = kanon(sinId(s));
       return s;
     });
+
     this.simpanCache();
   },
+
   // Kirim perubahan (tambah/ubah/hapus) ke server, satu per satu agar berurutan
   kirim() {
     statusAdmin('Menyimpan ke server...', false);
