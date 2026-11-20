@@ -4049,7 +4049,8 @@ function validasiSoal(daftar) {
       if (!Number.isInteger(s.jawaban) || s.jawaban < 0) err.push('Kunci isian harus bilangan cacah (sekarang: ' + s.jawaban + ')');
       if (s.opsi && s.opsi.length) per.push('Soal isian tidak perlu pilihan');
     } else {
-      if (!Array.isArray(s.opsi) || s.opsi.length !== 5) err.push('Pilihan harus tepat 5 (sekarang: ' + (s.opsi ? s.opsi.length : 0) + ')');
+      const minOpsi = tipe === 'kompleks' ? 4 : 5;
+      if (!Array.isArray(s.opsi) || s.opsi.length < minOpsi || s.opsi.length > 5) err.push((tipe === 'kompleks' ? 'Pilihan kompleks harus 4 atau 5' : 'Pilihan harus tepat 5') + ' (sekarang: ' + (s.opsi ? s.opsi.length : 0) + ')');
       else {
         const lihat = new Map();
         s.opsi.forEach((o, k) => {
