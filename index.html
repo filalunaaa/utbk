@@ -6374,6 +6374,23 @@ segarkanSoalBawaan();
     if ((AkunApp.sesi() || /access_token=/.test(location.hash)) && !(s && s.selesai)) tampilMemuat();
   };
   // Dipanggil setelah data akun terambil. Menentukan: tampilkan onboarding, atau langsung ke dashboard.
+  window.mulaiOnboardingPublik = function () {
+  const s = st.ambil();
+
+  if (s && s.selesai) {
+    tahap = TOTAL;
+  } else {
+    tahap = s && Number.isInteger(s.tahap)
+      ? Math.min(Math.max(s.tahap, 0), TOTAL - 1)
+      : 0;
+  }
+
+  draf = (s && (s.ptn || s.prodi))
+    ? { ptn: s.ptn, prodi: s.prodi }
+    : pecahTarget(ambilProfil().target);
+
+  render();
+};
   window.cekOnboarding = async function () {
     memuat = false; clearTimeout(jedaMuat);
     if (!AkunApp.sesi()) return tutup();
