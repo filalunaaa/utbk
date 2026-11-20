@@ -6194,7 +6194,7 @@ segarkanSoalBawaan();
       case 4: return { teks: bubble('Sekarang kamu sedang berada di jenjang pendidikan apa?'), tombol: 'Lanjut',
         form: `<div class="ob-f" role="radiogroup" aria-label="Status pendidikan"><span class="ob-lab">Status pendidikan <span style="color:var(--ob-err)">*</span></span><div class="ob-grid2">${radio('ob-status', PROFIL_STATUS, p.statusPendidikan)}</div></div>` };
       case 5: return { teks: bubble('Di mana kamu sedang menempuh pendidikan?'), tombol: 'Lanjut',
-        form: teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Oktagon', p.sekolah, 80, 'autocomplete="organization" ') };
+        form: teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
       case 6: return { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
         form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
