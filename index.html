@@ -6187,14 +6187,14 @@ segarkanSoalBawaan();
       case 0: return { teks: bubble('Hai! Aku NARO. Sebelum mulai belajar, aku ingin mengenalmu lebih dulu. Yuk, kita berkenalan!', 'Siapa nama lengkapmu?'), tombol: 'Lanjut',
         form: teksIn('Nama lengkap', { wajib: true }, 'Masukkan nama lengkapmu', p.nama, 50, 'autocomplete="name" ') };
       case 1: return { teks: bubble('Selanjutnya, kita buat identitas unik untukmu di Nalarin!'), tombol: 'Lanjut',
-        form: `<div class="ob-f">${lab('ob-in', 'Username', false, true)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: fathirjohan" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
+        form: `<div class="ob-f">${lab('ob-in', 'Username', false, true)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: khabib_nurmagomedov29-0" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
       case 2: return { teks: bubble('Yuk, pilih foto profil yang paling menggambarkan dirimu!'), tombol: 'Lanjut', form: avatarHTML(p) };
       case 3: return { teks: bubble('Sekarang ceritakan sedikit tentang dirimu. Apa yang sedang kamu perjuangkan?'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Deskripsi singkat', false, true)}<textarea class="ob-input" id="ob-in" maxlength="300" rows="4" placeholder="Contoh: Sedang mempersiapkan UTBK 2027 dengan fokus pada PKPM.">${esc(p.deskripsi)}</textarea><span class="ob-hit" id="ob-hit">${(p.deskripsi || '').length}/300</span></div>` };
       case 4: return { teks: bubble('Sekarang kamu sedang berada di jenjang pendidikan apa?'), tombol: 'Lanjut',
         form: `<div class="ob-f" role="radiogroup" aria-label="Status pendidikan"><span class="ob-lab">Status pendidikan <span style="color:var(--ob-err)">*</span></span><div class="ob-grid2">${radio('ob-status', PROFIL_STATUS, p.statusPendidikan)}</div></div>` };
       case 5: return { teks: bubble('Di mana kamu sedang menempuh pendidikan?'), tombol: 'Lanjut',
-        form: teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Bogor', p.sekolah, 80, 'autocomplete="organization" ') };
+        form: teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Oktagon', p.sekolah, 80, 'autocomplete="organization" ') };
       case 6: return { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
         form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
@@ -6204,7 +6204,7 @@ segarkanSoalBawaan();
       case 9: return { teks: bubble('Sekarang, boleh tahu tanggal lahirmu?'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Tanggal lahir', false, true)}<input class="ob-input" type="date" id="ob-in" max="${hariIni()}" value="${esc(p.tanggalLahir)}"></div><p class="ob-catatan">Tanggal lahir tidak pernah ditampilkan ke orang lain.</p>` };
       case 10: return { teks: bubble('Kamu tinggal di kota mana?'), tombol: 'Lanjut',
-        form: teksIn('Kota domisili', {}, 'Contoh: Bogor', p.kota, 40, 'autocomplete="address-level2" ') };
+        form: teksIn('Kota domisili', {}, 'Contoh: Dagestan', p.kota, 40, 'autocomplete="address-level2" ') };
       case 11: return { teks: bubble('Hampir selesai! Sekarang atur informasi mana yang boleh dilihat orang lain.'), tombol: 'Simpan dan selesai',
         form: `<label class="ob-switch"><input type="checkbox" id="ob-publik" ${p.publik ? 'checked' : ''}><span><b>Tampilkan profil di link publik</b><small>Orang lain bisa membuka profilmu lewat link. Hanya nama, username, avatar, dan deskripsi yang tampil.</small></span></label>
         <div class="ob-f" id="ob-wadah-user" ${p.publik && !p.username ? '' : 'hidden'}><label for="ob-username2">Username untuk link publik</label><input class="ob-input" id="ob-username2" maxlength="20" autocapitalize="none" autocomplete="off" placeholder="huruf kecil, angka, atau _ (3-20 karakter)" value="${esc(p.username)}"></div>
