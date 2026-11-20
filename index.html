@@ -21,7 +21,7 @@
 // Welcome page: tampil hanya untuk pengunjung baru (belum masuk, belum punya profil, belum pernah menekan tombol di halaman ini)
 (function(){try{var L=localStorage;if(!L.getItem('nalarin_welcome_seen')&&!L.getItem('utbk_sesi')&&!L.getItem('utbk_profil')&&!/access_token=|error_description=|^#\/u\//.test(location.hash))document.documentElement.classList.add('welcome-on')}catch(e){}})();
 </script>
-<script>try{var m={terang:"light",gelap:"dark"}[localStorage.getItem("neon_tema")];if(m)document.documentElement.dataset.theme=m}catch(e){}</script>
+<script src="js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
