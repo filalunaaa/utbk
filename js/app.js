@@ -856,8 +856,27 @@ function sumberSoal() {
 }
 
 // ---------- Helper ----------
+const antreanMathJax = new Set();
+let pendengarMathJax = false;
 function rumus(el) {
-  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+  if (el && window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+    window.MathJax.typesetPromise([el]).catch(() => {});
+  } else if (el) {
+    // MathJax dimuat secara async. Simpan elemen yang menunggu agar tidak terlewat
+    // ketika konten soal/pembahasan dirender sebelum pustaka selesai dimuat.
+    antreanMathJax.add(el);
+    const skripMathJax = document.getElementById('MathJax-script');
+    if (skripMathJax && !pendengarMathJax) {
+      pendengarMathJax = true;
+      skripMathJax.addEventListener('load', () => {
+        const target = [...antreanMathJax].filter((node) => node.isConnected);
+        antreanMathJax.clear();
+        if (target.length && window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+          window.MathJax.typesetPromise(target).catch(() => {});
+        }
+      }, { once: true });
+    }
+  }
   if (window.NalarinGraph) window.NalarinGraph.renderAll(el);
 }
 function acak(arr) {
