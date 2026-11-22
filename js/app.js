@@ -2435,6 +2435,10 @@ function validasiSoal(daftar) {
     if (!String(s.topik || '').trim()) err.push('Topik kosong');
     if (kosong(s.soal)) err.push('Teks soal kosong');
     if (kosong(s.pembahasan)) err.push('Pembahasan kosong');
+    if (s.grafik && window.NalarinGraph) {
+      const errorGrafik = window.NalarinGraph.validate(s.grafik);
+      if (errorGrafik) err.push('Konfigurasi grafik tidak valid: ' + errorGrafik);
+    }
     const tipe = tipeSoal(s);
     if (tipe === 'isian') {
       if (!Number.isInteger(s.jawaban) || s.jawaban < 0) err.push('Kunci isian harus bilangan cacah (sekarang: ' + s.jawaban + ')');
@@ -3045,7 +3049,7 @@ function cetakPDF() {
 <script>window.MathJax={tex:{inlineMath:[['$','$'],['\\\\(','\\\\)']],displayMath:[['$$','$$'],['\\\\[','\\\\]']]}};<\/script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/mathjs@15.2.0/lib/browser/math.js"><\/script>
-<script src="https://cdn.jsdelivr.net/gh/fathirfatahillah96-bit/utbk@main/js/graph-builder.js"><\/script>
+<script src="\${location.origin}/js/graph-builder.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async><\/script>
 </head><body>
 <h2>${esc(judul)}</h2>
