@@ -267,7 +267,7 @@
         marks += '<path d="' + path + '" class="ng-curve" stroke="' + paletteColor(fi) + '"/>';
       });
     } else if (g.jenis === 'pertidaksamaan') {
-      var m = String(g.pertidaksamaan).replace(/≥/g, '>=').replace(/≤/g, '<=').match(/^\s*y\s*(>=|<=|>|<)\s*(.+)$/);
+      var m = String(g.pertidaksamaan).replace(/≥/g, '>=').replace(/≤/g, '<=').match(/^\s*y\s*(>=|<=|>|<)\s*(.+)$/i);
       var fn = compileSafe(m[2]), topLine = m[1] === '>=' || m[1] === '>', line = '', region = '', pts = [], steps = 260;
       for (var j = 0; j <= steps; j++) {
         var xx2 = x0 + (x1 - x0) * j / steps, yy2 = fn(xx2);
