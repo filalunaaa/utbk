@@ -3043,6 +3043,9 @@ function cetakPDF() {
   @page{margin:18mm}
 </style>
 <script>window.MathJax={tex:{inlineMath:[['$','$'],['\\\\(','\\\\)']],displayMath:[['$$','$$'],['\\\\[','\\\\]']]}};<\/script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"><\\/script>
+<script src="https://cdn.jsdelivr.net/npm/mathjs@15.2.0/lib/browser/math.js"><\\/script>
+<script src="https://cdn.jsdelivr.net/gh/fathirfatahillah96-bit/utbk@main/js/graph-builder.js"><\\/script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async><\/script>
 </head><body>
 <h2>${esc(judul)}</h2>
@@ -3051,8 +3054,9 @@ ${soalHTML}
 ${kunciHTML}
 <script>
 window.addEventListener('load', function () {
+  if (window.NalarinGraph) window.NalarinGraph.renderAll(document);
   var p = (window.MathJax && MathJax.startup && MathJax.startup.promise) ? MathJax.startup.promise : Promise.resolve();
-  p.then(function () { setTimeout(function () { window.print(); }, 400); }, function () { window.print(); });
+  p.then(function () { setTimeout(function () { window.print(); }, 700); }, function () { window.print(); });
 });
 <\/script>
 </body></html>`;
