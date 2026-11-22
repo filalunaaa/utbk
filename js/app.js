@@ -3049,7 +3049,7 @@ function cetakPDF() {
 <script>window.MathJax={tex:{inlineMath:[['$','$'],['\\\\(','\\\\)']],displayMath:[['$$','$$'],['\\\\[','\\\\]']]}};<\/script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/mathjs@15.2.0/lib/browser/math.js"><\/script>
-<script src="\${location.origin}/js/graph-builder.js"><\/script>
+<script src="${location.origin}/js/graph-builder.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async><\/script>
 </head><body>
 <h2>${esc(judul)}</h2>
