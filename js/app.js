@@ -858,6 +858,7 @@ function sumberSoal() {
 // ---------- Helper ----------
 function rumus(el) {
   if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]);
+  if (window.NalarinGraph) window.NalarinGraph.renderAll(el);
 }
 function acak(arr) {
   const a = [...arr];
@@ -917,9 +918,12 @@ function sanitize(html) {
   div.appendChild(t.content.cloneNode(true));
   return div.innerHTML;
 }
-// Konten soal/pembahasan yang sudah dibersihkan, plus gambar lama (format sebelumnya) bila ada
-function konten(html, gambarLama, alt) {
-  return `<div class="konten">${sanitize(html)}${gambarLama && gambarLama.startsWith('data:image/') ? `<img class="gambar-soal" src="${gambarLama}" alt="${esc(alt)}">` : ''}</div>`;
+// Konten soal/pembahasan yang sudah dibersihkan, plus gambar lama dan grafik opsional.
+function konten(html, gambarLama, alt, grafik) {
+  return `<div class="konten">${sanitize(html)}${gambarLama && gambarLama.startsWith('data:image/') ? `<img class="gambar-soal" src="${gambarLama}" alt="${esc(alt)}">` : ''}${grafikHTML(grafik)}</div>`;
+}
+function grafikHTML(g) {
+  return window.NalarinGraph && g ? window.NalarinGraph.graphHTML(g) : '';
 }
 // Isi satu pilihan jawaban (teks atau gambar)
 function isiOpsi(html) {
@@ -1207,7 +1211,7 @@ function renderSoal() {
   const s = soal[i];
   $('bar').style.width = ((i + 1) / soal.length) * 100 + '%';
   $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
-  $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal');
+  $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
   if (adaIsian(s)) {
     const j = jawab[i];
     const kelasIsi = kunci[i] ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
@@ -1364,7 +1368,7 @@ function renderReviewIsi() {
       <div class="card" style="margin-bottom:0">
         <div class="rev-meta"><span class="badge ${kelasBadge}">${teksBadge}</span><span class="no">Soal ${k + 1}</span><span class="pill-mapel" title="${esc(namaMapel(s.mataPelajaran))}">${esc(s.mataPelajaran)}</span><span class="muted">${esc(s.topik)}</span><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(s.tingkatKesulitan)}</span></div>
         <div class="rev-body">
-          <div><p class="rev-sub">Soal</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div></div>
+          <div><p class="rev-sub">Soal</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div></div>
           <div><p class="rev-sub">Jawaban</p>
             <p class="rev-ket"><span>Jawabanmu: <b>${jawabanKamu(s, jawab[k])}</b></span><span>Jawaban benar: <b>${esc(kunciHuruf(s))}</b></span></p>
             <div class="opsi-list">${opsi}</div></div>
@@ -1613,7 +1617,7 @@ function renderDetailSesi() {
     return `<details class="sx ${s0}" id="sx-${i}"${s0 === 'benar' ? '' : ' open'}>
       <summary><span class="sx-no">${i + 1}</span><span class="sx-prev">${esc(previewTeks(s.soal))}</span><span class="badge ${s0}" style="margin:0">${lb}</span></summary>
       <div class="sx-isi">
-        <div class="teks-soal" style="margin-top:4px">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+        <div class="teks-soal" style="margin-top:4px">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div>
         ${s.topik ? `<span class="pill-topik">${esc(s.topik)}</span>` : ''}
         <p class="rev-sub" style="margin-top:14px">Pilihan jawaban</p>
         <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
@@ -1913,7 +1917,7 @@ function riwayatTopikHTML(topik, batas) {
         <span class="muted" style="flex-shrink:0;font-size:.8rem">${tglPendek}</span></summary>
       <div class="isi-kartu">
         <p class="muted" style="margin-top:8px">${tglPenuh} &middot; Jawaban Anda: <strong>${jawabanmu}</strong> &middot; Kunci: <strong>${kunciHuruf(s)}</strong></p>
-        <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+        <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div>
         <div class="opsi-list">${opsi}</div>
         <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
       </div>
@@ -2586,6 +2590,10 @@ function bacaForm() {
   const meta = bacaMeta();
   if (meta.error) return { error: meta.error };
   if (kosongEditor(getArea('soal'))) return { error: 'Teks soal belum diisi.' };
+  if (window.NalarinGraph) {
+    const errorGrafik = window.NalarinGraph.validateEditor();
+    if (errorGrafik) return { error: 'Grafik: ' + errorGrafik };
+  }
   if (adaRumusTanpaTanda(getArea('soal').textContent)) return { error: 'Teks soal punya rumus tanpa tanda $. Blok rumusnya lalu klik ikon fx.' };
   for (let k = 0; tipe !== 'isian' && k < 5; k++) {
     if (kosongEditor(getArea('opsi' + k))) return { error: `Pilihan ${HURUF[k]} belum diisi (teks atau gambar).` };
@@ -2617,7 +2625,9 @@ function bacaForm() {
     soal: sanitize(getArea('soal').innerHTML),
     opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => sanitize(getArea('opsi' + k).innerHTML)),
     jawaban,
-    pembahasan: sanitize(getArea('pembahasan').innerHTML)
+    pembahasan: sanitize(getArea('pembahasan').innerHTML),
+    ...(window.NalarinGraph && window.NalarinGraph.getEditorValue()
+      ? { grafik: window.NalarinGraph.getEditorValue() } : {})
   };
 }
 function resetForm() {
@@ -2625,6 +2635,7 @@ function resetForm() {
   renderCascade({});
   resetMeta();
   semuaArea().forEach((a) => (a.innerHTML = ''));
+  if (window.NalarinGraph) window.NalarinGraph.setEditorValue(null);
   pilihGambar(null);
   document.querySelector('input[name="f-mapel"][value="PK"]').checked = true;
   document.querySelector('input[name="f-level"][value="sedang"]').checked = true;
@@ -2660,6 +2671,7 @@ function isiForm(s) {
   getArea('soal').innerHTML = sanitize(s.soal) + gambarLama(s.gambarSoal);
   getArea('pembahasan').innerHTML = sanitize(s.pembahasan) + gambarLama(s.gambarPembahasan);
   [0, 1, 2, 3, 4].forEach((k) => (getArea('opsi' + k).innerHTML = s.opsi[k] ? sanitize(s.opsi[k]) : ''));
+  if (window.NalarinGraph) window.NalarinGraph.setEditorValue(s.grafik || null);
   pilihGambar(null);
 }
 function simpanSoal() {
@@ -2723,7 +2735,7 @@ function itemSoalHTML(s, nomor) {
     <summary><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(namaMapel(s.mataPelajaran))} · ${esc(s.topik)} · ${esc(s.tingkatKesulitan)}</span>${namaSub(subDari(s)) ? `<span class="sub-tag">${esc(namaSub(subDari(s)))}</span>` : ''}
       <span class="pratinjau-soal">${nomor}. ${esc(previewTeks(s.soal))}</span></summary>
     <div class="isi-kartu">
-      <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+      <div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div>
       <p class="muted" style="margin-bottom:8px">${{ pg: 'Pilihan ganda', kompleks: 'PG kompleks (centang semua yang benar)', isian: 'Isian bilangan cacah' }[tipeSoal(s)]}</p>
       <div class="opsi-list">${opsiReviewHTML(s)}</div>
       <div class="feedback"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
@@ -2995,7 +3007,7 @@ function cetakPDF() {
     ${g.items.map((s) => { nomor++; return `
     <div class="soal-cetak">
       <p><strong>${nomor}.</strong> <span class="muted">(${esc(namaMapel(s.mataPelajaran))}, ${esc(s.topik)}, ${esc(s.tingkatKesulitan)})</span></p>
-      <div>${konten(s.soal, s.gambarSoal, 'Gambar soal')}</div>
+      <div>${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div>
       <div style="margin-top:6px">${adaIsian(s)
         ? '<p style="margin-top:10px">Jawaban (bilangan cacah): ____________________</p>'
         : (adaGanda(s) ? '<p class="muted">Pilih semua jawaban yang benar.</p>' : '') +
@@ -3213,6 +3225,7 @@ function dataPratinjau() {
   else jawaban = Number(nilai('f-jawaban'));
   return { tipe, jawaban, soal: baca('soal'), pembahasan: baca('pembahasan'),
     opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => baca('opsi' + k)),
+    grafik: window.NalarinGraph ? window.NalarinGraph.getEditorValue() : null,
     mapel: nilai('f-mapel'), topik: (topikTaxById($('f-topiktax').value) || { topik: { nama: '' } }).topik.nama, level: nilai('f-level') };
 }
 let kunciEditor = false;
@@ -3235,7 +3248,7 @@ function renderPratinjau() {
   const cek = bacaForm();
   kotak.innerHTML = `<div class="pratinjau-judul"><strong>Pratinjau</strong><span class="muted">Tampilan siswa: kunci dan pembahasan disembunyikan.</span></div>
     <p class="muted">${namaMapel(s.mapel)}, ${esc(s.topik || 'topik belum diisi')}, ${s.level}, ${nama}</p>
-    <div class="teks-soal">${konten(s.soal)}</div>${badan}
+    <div class="teks-soal">${konten(s.soal, null, 'Gambar soal', s.grafik)}</div>${badan}
     ${kunciEditor ? `<div class="feedback"><strong>Kunci jawaban: ${kunci}</strong><div>${konten(s.pembahasan)}</div></div>` : ''}
     <div style="margin-top:12px"><button class="btn btn-secondary btn-kecil" type="button" id="btn-pv-kunci">${kunciEditor ? 'Sembunyikan kunci' : 'Tampilkan kunci dan pembahasan'}</button></div>
     ${cek.error ? `<p class="muted" style="margin-top:10px">Sebelum disimpan: ${esc(cek.error)}</p>` : ''}`;
@@ -3275,7 +3288,7 @@ function renderPv() {
   const s = pv.daftar[pv.i], n = pv.daftar.length, p = pv.pilih[pv.i];
   $('pv-bar').style.width = ((pv.i + 1) / n) * 100 + '%';
   $('pv-info').textContent = `Soal ${pv.i + 1} dari ${n} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ', centang semua yang benar' : adaIsian(s) ? ', isian bilangan cacah' : ''}`;
-  $('pv-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal');
+  $('pv-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
   $('pv-opsi').innerHTML = adaIsian(s)
     ? `<div class="isian"><input id="pv-isian" aria-label="Jawaban Anda (bilangan cacah)" class="input isian-input" type="text" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Contoh: 24" value="${p === null ? '' : esc(p)}"></div>`
     : s.opsi.map((o, k) => {
@@ -3396,6 +3409,7 @@ document.querySelectorAll('.nav-link').forEach((a) => a.addEventListener('click'
 
 buatEditor('ed-soal', 'Tulis teks soal di sini...', false);
 buatEditor('ed-pembahasan', 'Tulis pembahasan di sini...', false);
+if (window.NalarinGraph) window.NalarinGraph.initEditor($('ng-graph-editor'));
 ['A', 'B', 'C', 'D', 'E'].forEach((h, k) => buatEditor('ed-opsi' + k, `Tulis pilihan ${h} (teks atau gambar)...`, true));
 // ---------- Beranda: hitung mundur, ringkasan, dan topik yang perlu diperkuat ----------
 var JADWAL_UTBK_BAWAAN=[{tahun:2026,mulai:'2026-04-21',selesai:'2026-04-30',status:'resmi'},{tahun:2027,mulai:'2027-04-21',selesai:'2027-04-30',status:'perkiraan'}];
