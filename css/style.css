@@ -1402,3 +1402,37 @@ textarea.ob-input{resize:vertical;min-height:84px;line-height:1.45}
 .nl-sheet .nl-opsi{min-height:46px;font-size:.95rem}
 .nl-sheet .nl-hari{min-height:44px}
 @media(prefers-reduced-motion:reduce){.nl-pop,.nl-dim,.nl-trigger svg{transition:none}}
+
+/* ===== Graph Builder ===== */
+.ng-graph-editor{margin:16px 0 20px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.ng-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.ng-head h3{margin:0 0 3px;font-size:1.02rem}.ng-head p{margin:0}.ng-mode-field{min-width:180px}
+.ng-field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:.84rem;font-weight:600;color:var(--text)}
+.ng-field small,.ng-help{font-size:.77rem;color:var(--muted);font-weight:400;line-height:1.5}.ng-field .input{width:100%;min-width:0}
+.ng-actions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.ng-editor-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:14px;align-items:start;margin-top:12px}
+.ng-editor-fields{display:flex;flex-direction:column;gap:10px;min-width:0}.ng-grid-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.ng-subtitle{font-size:.82rem;font-weight:700;margin-top:4px}
+.ng-data-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,.65fr) auto;gap:7px;align-items:end;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--bg);margin-top:7px}
+.ng-data-row label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:.76rem;font-weight:600}
+.ng-data-row label .input{min-width:0;width:100%;font-size:.84rem;padding:8px}.ng-data-row .btn{white-space:nowrap}
+.ng-function-row{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr) auto}
+.ng-point-row{grid-template-columns:minmax(0,1fr) minmax(65px,.65fr) minmax(65px,.65fr) auto}
+.ng-category-row{grid-template-columns:minmax(0,1fr) auto}.ng-dataset-row{grid-template-columns:minmax(0,.65fr) minmax(0,1.35fr) auto}
+.ng-check{display:flex;gap:8px;align-items:center;font-size:.85rem;margin:6px 0}
+.ng-preview-wrap{position:sticky;top:12px;min-width:0}.ng-preview-heading{font-size:.82rem;font-weight:700;margin-bottom:7px}
+.ng-preview{padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--bg);min-width:0}
+.ng-empty{padding:34px 10px;text-align:center;color:var(--muted);font-size:.85rem}
+.ng-visualisasi{width:100%;margin:12px 0;clear:both}.ng-visual-card{width:100%;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card);overflow:hidden}
+.ng-visual-title{text-align:center;font-size:.94rem;font-weight:700;color:var(--text);margin:0 0 8px}
+.ng-canvas-wrap{position:relative;width:100%;height:300px;min-width:0}.ng-canvas-wrap canvas{max-width:100%}
+.ng-gagal{padding:12px;border-radius:9px;background:var(--salah-soft);color:var(--salah);font-size:.82rem}
+.ng-plot{display:block;width:100%;height:auto;max-height:420px;overflow:visible}.ng-grid{stroke:var(--border);stroke-width:1}
+.ng-axis{stroke:var(--muted);stroke-width:1.6}.ng-tick{fill:var(--muted);font-size:11px}
+.ng-axis-label{fill:var(--text);font-size:12px;font-weight:700}.ng-curve{fill:none;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:round}
+.ng-region{fill:var(--primary);fill-opacity:.17;stroke:none}.ng-point{fill:var(--primary);stroke:var(--card);stroke-width:2}
+.ng-point-label{fill:var(--text);font-size:12px;font-weight:700}
+.ng-legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:.78rem;color:var(--muted)}
+.ng-legend span{display:flex;align-items:center;gap:6px}.ng-legend i{width:18px;height:3px;border-radius:4px;display:inline-block}
+@media(max-width:760px){.ng-editor-layout{grid-template-columns:minmax(0,1fr)}.ng-preview-wrap{position:static}.ng-canvas-wrap{height:250px}}
+@media(max-width:430px){.ng-graph-editor{padding:12px}.ng-grid-fields{grid-template-columns:1fr 1fr}.ng-data-row,.ng-function-row,.ng-point-row,.ng-dataset-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ng-data-row .btn{grid-column:1/-1;justify-self:start}.ng-canvas-wrap{height:220px}}
