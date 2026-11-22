@@ -378,14 +378,14 @@
     var type = editorRoot.querySelector('[data-ng-type]').value;
     var g = { versi: 1, judul: editorRoot.querySelector('[data-ng-field="judul"]').value.trim() };
     function val(key) { var el = editorRoot.querySelector('[data-ng-field="' + key + '"]'); return el ? el.value.trim() : ''; }
-    function num(key) { return Number(val(key)); }
+    function num(key) { var raw = val(key); return raw === '' ? NaN : Number(raw); }
     function readRange() { return { rentangX: [num('xMin'), num('xMax')], rentangY: [num('yMin'), num('yMax')] }; }
     if (type === 'bar') {
       g.jenis = 'bar'; g.sumbuX = val('sumbuX'); g.sumbuY = val('sumbuY'); g.namaDataset = val('namaDataset');
-      g.kategori = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="bar"]')).map(function (r) { return { nama: r.querySelector('[data-ng-key="nama"]').value.trim(), nilai: Number(r.querySelector('[data-ng-key="nilai"]').value) }; });
+      g.kategori = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="bar"]')).map(function (r) { return { nama: r.querySelector('[data-ng-key="nama"]').value.trim(), nilai: (r.querySelector('[data-ng-key="nilai"]').value.trim() === '' ? NaN : Number(r.querySelector('[data-ng-key="nilai"]').value)) }; });
     } else if (type === 'pie') {
       g.jenis = 'pie';
-      g.kategori = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="pie"]')).map(function (r) { return { nama: r.querySelector('[data-ng-key="nama"]').value.trim(), nilai: Number(r.querySelector('[data-ng-key="nilai"]').value) }; });
+      g.kategori = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="pie"]')).map(function (r) { return { nama: r.querySelector('[data-ng-key="nama"]').value.trim(), nilai: (r.querySelector('[data-ng-key="nilai"]').value.trim() === '' ? NaN : Number(r.querySelector('[data-ng-key="nilai"]').value)) }; });
     } else if (type === 'line') {
       g.jenis = 'line'; g.sumbuX = val('sumbuX'); g.sumbuY = val('sumbuY');
       g.kategori = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="line-category"]')).map(function (r) { return r.querySelector('[data-ng-key="nama"]').value.trim(); });
@@ -399,7 +399,7 @@
       Object.assign(g, readRange());
     } else if (type === 'koordinat') {
       g.jenis = 'koordinat';
-      g.titik = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="titik"]')).map(function (r) { return { nama: r.querySelector('[data-ng-key="nama"]').value.trim(), x: Number(r.querySelector('[data-ng-key="x"]').value), y: Number(r.querySelector('[data-ng-key="y"]').value) }; });
+      g.titik = Array.prototype.slice.call(editorRoot.querySelectorAll('[data-ng-row="titik"]')).map(function (r) { return { nama: r.querySelector('[data-ng-key="nama"]').value.trim(), x: (r.querySelector('[data-ng-key="x"]').value.trim() === '' ? NaN : Number(r.querySelector('[data-ng-key="x"]').value)), y: (r.querySelector('[data-ng-key="y"]').value.trim() === '' ? NaN : Number(r.querySelector('[data-ng-key="y"]').value)) }; });
       var check = editorRoot.querySelector('[data-ng-field="hubungkan"]'); g.hubungkan = !!(check && check.checked);
       Object.assign(g, readRange());
     } else {
