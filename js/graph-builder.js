@@ -102,7 +102,8 @@
       }
       if (node.isParenthesisNode) { inspect(node.content, depth + 1); return; }
       if (node.isFunctionNode) {
-        if (!funcs[node.name]) throw new Error('Fungsi "' + node.name + '" tidak diizinkan.');
+        var fnName = node.fn && node.fn.name ? node.fn.name : node.name;
+        if (!funcs[fnName]) throw new Error('Fungsi "' + fnName + '" tidak diizinkan.');
         node.args.forEach(function (arg) { inspect(arg, depth + 1); });
         return;
       }
