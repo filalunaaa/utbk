@@ -796,13 +796,24 @@ const tipeSoal = (s) => (s.tipe === 'isian' ? 'isian' : Array.isArray(s.jawaban)
 const adaIsian = (s) => tipeSoal(s) === 'isian';
 const adaGanda = (s) => tipeSoal(s) === 'kompleks';
 const kunciHuruf = (s) => (adaIsian(s) ? String(s.jawaban) : adaGanda(s) ? s.jawaban.map((k) => HURUF[k]).join(', ') : HURUF[s.jawaban]);
-const kunciOpsi = (s, k) => (adaIsian(s) ? false : adaGanda(s) ? s.jawaban.includes(k) : s.jawaban === k);
-const dipilih = (s, j, k) => (adaIsian(s) ? false : adaGanda(s) ? Array.isArray(j) && j.includes(k) : j === k);
+// Kunci dari sumber lama/Supabase kadang tersimpan sebagai string (mis. "2"),
+// sedangkan indeks pilihan dari antarmuka berupa number. Samakan tipenya sebelum dibandingkan.
+const indeksAngka = (v) => Number.isInteger(Number(v)) && String(v).trim() !== '' ? Number(v) : NaN;
+const kunciOpsi = (s, k) => (adaIsian(s) ? false : adaGanda(s)
+  ? Array.isArray(s.jawaban) && s.jawaban.some((x) => indeksAngka(x) === k)
+  : indeksAngka(s.jawaban) === k);
+const dipilih = (s, j, k) => (adaIsian(s) ? false : adaGanda(s)
+  ? Array.isArray(j) && j.some((x) => indeksAngka(x) === k)
+  : indeksAngka(j) === k);
 const jawabBenar = (s, j) => {
   if (j === null || j === undefined) return false;
   if (adaIsian(s)) return Number(j) === Number(s.jawaban);
-  if (!adaGanda(s)) return j === s.jawaban;
-  return Array.isArray(j) && j.length === s.jawaban.length && s.jawaban.every((k) => j.includes(k));
+  if (!adaGanda(s)) return indeksAngka(j) === indeksAngka(s.jawaban);
+  if (!Array.isArray(j) || !Array.isArray(s.jawaban)) return false;
+  const pilihan = j.map(indeksAngka).filter(Number.isInteger);
+  const kunci = s.jawaban.map(indeksAngka).filter(Number.isInteger);
+  return pilihan.length === kunci.length && pilihan.length === j.length &&
+    kunci.length === s.jawaban.length && kunci.every((k) => pilihan.includes(k));
 };
 const teksJawabanmu = (s, j) => (j === null || j === undefined || (Array.isArray(j) && !j.length) ? 'Tidak dijawab'
   : adaIsian(s) ? String(j) : Array.isArray(j) ? j.map((k) => HURUF[k]).join(', ') : HURUF[j]);
