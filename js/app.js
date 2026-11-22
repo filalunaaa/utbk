@@ -2469,8 +2469,10 @@ function validasiSoal(daftar) {
       if (adaRumusTanpaTanda(tk)) per.push('Teks ' + nm + ' punya rumus tanpa tanda $');
       if ((tk.match(/\$/g) || []).length % 2) per.push('Teks ' + nm + ' punya jumlah tanda $ ganjil');
     });
-    const kS = norm(s.soal);
-    if (kS && soalPernah.has(kS)) per.push('Teks soal sama dengan soal no. ' + (soalPernah.get(kS) + 1)); else if (kS) soalPernah.set(kS, n);
+    // Soal grafik dapat memiliki redaksi sama tetapi data visual berbeda.
+    // Karena itu, duplikasi dinilai dari teks + konfigurasi grafik, bukan teks saja.
+    const kS = norm(s.soal) + (s.grafik ? '|grafik:' + JSON.stringify(s.grafik) : '');
+    if (kS && soalPernah.has(kS)) per.push('Teks dan data soal sama dengan soal no. ' + (soalPernah.get(kS) + 1)); else if (kS) soalPernah.set(kS, n);
     if (err.length || per.length) hasil.push({ n, s, err, per });
   });
   return hasil;
