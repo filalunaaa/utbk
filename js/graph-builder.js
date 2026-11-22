@@ -50,6 +50,9 @@
     return 'bar';
   }
   function normalize(g) {
+    if (typeof g === 'string') {
+      try { g = JSON.parse(g); } catch (e) { return null; }
+    }
     if (!g || typeof g !== 'object') return null;
     var out = clone(g);
     if (out.jenis && String(out.jenis).indexOf('fungsi-') === 0) {
