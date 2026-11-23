@@ -1554,3 +1554,40 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   transform:none;
   filter:none;
 }
+
+
+/* Android/mobile: kartu Mulai Belajar tanpa efek neon */
+@media(max-width:899px){
+  #menu .qa,
+  #menu .qa:hover,
+  #menu .qa:active{
+    background:var(--card);
+    border:1px solid var(--border);
+    box-shadow:none!important;
+    filter:none!important;
+    text-shadow:none!important;
+    transform:none!important;
+    outline:none;
+    transition:background-color .12s ease,border-color .12s ease;
+  }
+  #menu .qa:hover,
+  #menu .qa:active{
+    background:#f3f4f6;
+    border-color:var(--border);
+  }
+  #menu .qa-ik{
+    background:#f1f5f9;
+    color:#345675;
+    box-shadow:none!important;
+    filter:none!important;
+    text-shadow:none!important;
+  }
+  :root[data-theme="dark"] #menu .qa:hover,
+  :root[data-theme="dark"] #menu .qa:active{
+    background:#1b2738;
+  }
+  :root[data-theme="dark"] #menu .qa-ik{
+    background:#1b2738;
+    color:#a9bdd4;
+  }
+}
