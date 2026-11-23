@@ -1519,15 +1519,37 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   #btn-keluar-ujian:focus-visible{outline:2px solid rgba(52,86,117,.22);outline-offset:2px;box-shadow:none}
 }
 
-/* Statistik dashboard: tiga kartu tetap terpisah dan statis */
-.sum-grid{gap:10px}
-.sum-grid>.sum-card,
-.sum-grid>.sum-card:hover,
-.sum-grid>.sum-card:active{
+/* Statistik dashboard: induk netral, setiap kartu punya state sendiri */
+#kartu-ringkasan,
+#kartu-ringkasan:hover,
+#kartu-ringkasan:active{
+  background:transparent;
+  border-color:transparent;
+  box-shadow:none;
+  transform:none;
+  filter:none;
+  cursor:default;
+}
+.sum-grid{gap:12px}
+.sum-grid>.sum-card{
   background:#fff;
   border:1px solid var(--border);
   box-shadow:none;
   transform:none;
   filter:none;
-  transition:none;
+  transition:background-color .12s ease;
+}
+.sum-grid>.sum-card:hover{
+  background:#F3F4F6;
+  border:1px solid var(--border);
+  box-shadow:none;
+  transform:none;
+  filter:none;
+}
+.sum-grid>.sum-card:active{
+  background:#F3F4F6;
+  border:1px solid var(--border);
+  box-shadow:none;
+  transform:none;
+  filter:none;
 }
