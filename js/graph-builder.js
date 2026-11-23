@@ -189,7 +189,7 @@
     canvas.setAttribute('aria-label', g.judul || 'Grafik statistik');
     node.appendChild(canvas);
     var labels, datasets, type, options = {
-      responsive: true, maintainAspectRatio: false, animation: { duration: 180 },
+      responsive: true, maintainAspectRatio: false, animation: false,
       plugins: {
         legend: { display: true, position: 'bottom', labels: { color: cssColor('--muted', '#5f6b85'), boxWidth: 12, usePointStyle: true } },
         title: { display: false },
