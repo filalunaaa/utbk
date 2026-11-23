@@ -3671,7 +3671,7 @@ function jedaAnimasiRefresh() { const sisa = 700 - (Date.now() - _beritaRefreshM
 try { const c = JSON.parse(sessionStorage.getItem('neon_berita')); if (c && Array.isArray(c.data)) { _berita.t = c.t; _berita.data = c.data; } } catch (e) {}
 function tampilBerita(basi) {
   const el = $('kartu-berita');
-  el.innerHTML = `<div class="berita-aksi"><h2 style="margin:0">Berita UTBK terbaru</h2><button type="button" class="berita-refresh" data-berita="muat" aria-label="Perbarui berita" title="Perbarui berita"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button></div>
+  el.innerHTML = `<div class="berita-aksi"><h2 style="margin:0">Berita Pendidikan Terbaru</h2><button type="button" class="berita-refresh" data-berita="muat" aria-label="Perbarui berita" title="Perbarui berita"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button></div>
     ${basi ? '<p class="muted">Gagal memperbarui, menampilkan berita tersimpan.</p>' : ''}
     <ul class="daftar-berita">${_berita.data.slice(0, 5).map((b) => `<li><a href="${esc(b.link)}" target="_blank" rel="noopener">${esc(b.judul)}</a>
       <div class="muted">${esc(b.sumber || '')}${b.tanggal ? ' · ' + esc(fmtTglBerita(b.tanggal)) : ''}</div></li>`).join('')}</ul>
@@ -3681,8 +3681,8 @@ function renderBerita(paksa) {
   const el = $('kartu-berita');
   if (_berita.p) return _berita.p;
   if (!paksa && _berita.data && Date.now() - _berita.t < BERITA_TTL) { tampilBerita(); return Promise.resolve(); }
-  if (!paksa && !_berita.data && Date.now() - _berita.gagal < 60000) { el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>'; return Promise.resolve(); }
-  if (!_berita.data) el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Memuat berita...</p>';
+  if (!paksa && !_berita.data && Date.now() - _berita.gagal < 60000) { el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Berita belum bisa dimuat.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>'; return Promise.resolve(); }
+  if (!_berita.data) el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Memuat berita...</p>';
   _berita.p = fetch('/api/berita').then((r) => { if (!r.ok) throw new Error('gagal'); return r.json(); })
     .then(async (data) => {
       if (!Array.isArray(data) || !data.length) throw new Error('kosong');
@@ -3695,7 +3695,7 @@ function renderBerita(paksa) {
       if (_beritaRefreshMulai) await jedaAnimasiRefresh();
       _berita.gagal = Date.now();
       if (_berita.data) tampilBerita(true);
-      else el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>';
+      else el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>';
     })
     .finally(() => { _berita.p = null; });
   return _berita.p;
