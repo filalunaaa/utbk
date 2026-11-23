@@ -1200,7 +1200,7 @@ table.kem-tabel{width:100%;border-collapse:collapse;font-size:.9rem;min-width:42
 .st-kartu .grafik{margin-bottom:12px}
 
 /* ===== Welcome page ===== */
-#welcome{display:none;position:fixed;inset:0;z-index:2000;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f8fbff url("/nalarin-math-bg.png") center / cover no-repeat;color:#10244d;--w-blue:#1068f8;--w-navy:#082868;--w-muted:#5f6b85;--w-yellow:#ffd66b}
+#welcome{display:none;position:fixed;inset:0;z-index:2000;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f8fafc;color:#10244d;--w-blue:#1068f8;--w-navy:#082868;--w-muted:#5f6b85;--w-yellow:#ffd66b}
 html.welcome-on #welcome{display:block}
 html.welcome-on body{overflow:hidden}
 .wl-wrap{position:relative;min-height:100%;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:28px 16px;box-sizing:border-box}
@@ -1262,18 +1262,18 @@ html.ob-on body{overflow:hidden}
 @keyframes ob-mundur{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 .ob-naro{height:clamp(120px,21vh,180px);display:flex;justify-content:center;align-items:flex-end}
 .ob-naro img{height:100%;width:auto;display:block}
-.ob-bubble{position:relative;margin:12px auto 14px;max-width:100%;background:#fff;border:1px solid var(--ob-line);border-radius:18px;padding:13px 18px;text-align:center;box-shadow:0 6px 20px rgba(8,40,104,.07)}
+.ob-bubble{position:relative;margin:12px auto 14px;max-width:100%;background:#fff;border:1px solid var(--ob-line);border-radius:18px;padding:13px 18px;text-align:center;box-shadow:none}
 .ob-bubble::before{content:"";position:absolute;left:50%;top:-8px;width:14px;height:14px;background:#fff;border-left:1px solid var(--ob-line);border-top:1px solid var(--ob-line);transform:translateX(-50%) rotate(45deg)}
 .ob-bubble p{margin:0;font-size:1rem;line-height:1.5;color:var(--ob-navy)}
 .ob-bubble p+p{margin-top:6px;font-size:.92rem;color:var(--ob-muted)}
-.ob-kartu{background:#fff;border:1px solid var(--ob-line);border-radius:22px;padding:18px;box-shadow:0 10px 36px rgba(8,40,104,.07);display:flex;flex-direction:column;gap:14px}
+.ob-kartu{background:#fff;border:1px solid var(--ob-line);border-radius:22px;padding:18px;box-shadow:none;display:flex;flex-direction:column;gap:14px}
 .ob-f{display:flex;flex-direction:column;gap:6px;min-width:0}
 .ob-f>label,.ob-f>.ob-lab{font-size:.84rem;font-weight:700;color:var(--ob-navy)}
 .ob-f small{font-size:.76rem;color:var(--ob-muted)}
 .ob-input{width:100%;min-height:44px;padding:10px 14px;border:1.5px solid #cfe0fa;border-radius:12px;background:#fff;color:#10244d;font:inherit;font-size:.95rem}
 textarea.ob-input{resize:vertical;min-height:84px;line-height:1.45}
 .ob-input:focus{outline:none;border-color:var(--ob-blue);box-shadow:none}
-.ob-input:focus-visible{outline:2px solid rgba(16,104,248,.22);outline-offset:2px}
+.ob-input:focus-visible{outline:2px solid #9ca3af;outline-offset:2px}
 .ob-input::placeholder{color:#97a5c0}
 .ob-hit{align-self:flex-end;font-size:.74rem;color:var(--ob-muted)}
 .ob-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -1281,7 +1281,7 @@ textarea.ob-input{resize:vertical;min-height:84px;line-height:1.45}
 .ob-opsi input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
 .ob-opsi span{display:flex;align-items:center;justify-content:center;text-align:center;min-height:46px;padding:8px 10px;border:1.5px solid #cfe0fa;border-radius:12px;background:#fff;font-size:.88rem;font-weight:600;color:var(--ob-navy);line-height:1.25;transition:background .15s,border-color .15s}
 .ob-opsi input:checked+span{background:var(--ob-soft);border-color:var(--ob-blue);color:var(--ob-blue)}
-.ob-opsi input:focus-visible+span{outline:2px solid var(--ob-blue);outline-offset:2px}
+.ob-opsi input:focus-visible+span{outline:2px solid #9ca3af;outline-offset:2px}
 .ob-switch{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1.5px solid #cfe0fa;border-radius:14px;cursor:pointer;background:#fff}
 .ob-switch input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ob-blue);flex-shrink:0}
 .ob-switch b{display:block;font-size:.92rem;color:var(--ob-navy)}
@@ -1294,8 +1294,8 @@ textarea.ob-input{resize:vertical;min-height:84px;line-height:1.45}
 .ob-av-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px;margin-top:10px}
 .ob-av{padding:0;border:2px solid transparent;border-radius:50%;overflow:hidden;background:none;cursor:pointer;aspect-ratio:1;width:100%}
 .ob-av svg{width:100%;height:100%;display:block}
-.ob-av.aktif{border-color:var(--ob-blue);box-shadow:0 0 0 3px rgba(16,104,248,.2)}
-.ob-av:focus-visible{outline:2px solid var(--ob-blue);outline-offset:2px}
+.ob-av.aktif{border-color:var(--ob-blue);box-shadow:none}
+.ob-av:focus-visible{outline:2px solid #9ca3af;outline-offset:2px}
 .ob-pesan{margin:10px 2px 0;min-height:1.2em;font-size:.84rem;font-weight:600;color:var(--ob-err)}
 .ob-aksi{display:flex;gap:10px;margin-top:6px;align-items:center}
 .ob-aksi .ob-btn.pri{flex:1}
@@ -1305,7 +1305,7 @@ textarea.ob-input{resize:vertical;min-height:84px;line-height:1.45}
 .ob-btn.pri:hover{background:#0d57d1}
 .ob-btn.kecil{min-height:36px;padding:0 14px;font-size:.82rem}
 .ob-btn:disabled{opacity:.6;cursor:default}
-.ob-btn:focus-visible{outline:2px solid var(--ob-blue);outline-offset:2px}
+.ob-btn:focus-visible{outline:2px solid #9ca3af;outline-offset:2px}
 .ob-lewati{border:0;background:transparent;color:var(--ob-muted);font:inherit;font-size:.85rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;cursor:pointer;padding:10px 8px}
 .ob-muat{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ob-muted);font-size:.9rem;margin-top:4px}
 .ob-spin{width:18px;height:18px;border-radius:50%;border:3px solid #cfe0fa;border-top-color:var(--ob-blue);animation:ob-putar .8s linear infinite}
