@@ -1457,3 +1457,7 @@ small{font-weight:600}
   color:var(--muted);
   font-weight:600;
 }
+
+/* Animasi refresh tetap terlihat meskipun preferensi animasi halaman dikurangi */
+html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite!important}
+@media(prefers-reduced-motion:reduce){.berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite!important}}
