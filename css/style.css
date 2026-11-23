@@ -109,6 +109,7 @@ p{margin-bottom:12px}
 .skor{font-size:2.5rem;font-weight:800;color:var(--accent)}
 .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.8rem;font-weight:700;margin-bottom:6px}
 .badge.benar{background:var(--benar-soft);color:var(--benar)}
+.badge.parsial{background:var(--warning-soft);color:var(--warning)}
 .badge.salah{background:var(--salah-soft);color:var(--salah)}
 .badge.kosong{background:var(--border);color:var(--muted)}
 .stat-baris{margin-bottom:12px}
@@ -258,7 +259,7 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 .sx-tag{font-size:.7rem;font-weight:800;padding:1px 8px;border-radius:6px;background:var(--primary-soft);color:var(--accent);letter-spacing:.03em}
 .sx-strip{display:flex;gap:2px;height:7px}
 .sx-strip i{flex:1;min-width:2px;max-width:16px;border-radius:2px;background:var(--border)}
-.sx-strip i.benar{background:var(--benar)}.sx-strip i.salah{background:var(--salah)}
+.sx-strip i.benar{background:var(--benar)}.sx-strip i.parsial{background:var(--warning)}.sx-strip i.salah{background:var(--salah)}
 .sx-kanan{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;color:var(--muted)}
 .sx-kanan>svg{width:18px;height:18px}
 .sx-ring{position:relative;width:var(--u,52px);height:var(--u,52px);flex-shrink:0;display:inline-block}
@@ -661,7 +662,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:1.6rem;font-weight:800}
 .komposisi{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--border);margin:6px 0 10px}
 .komposisi span{display:block;height:100%}
-.seg-benar{background:var(--benar)}.seg-salah{background:var(--salah)}.seg-kosong{background:var(--muted);opacity:.55}
+.seg-benar{background:var(--benar)}.seg-parsial{background:var(--warning)}.seg-salah{background:var(--salah)}.seg-kosong{background:var(--muted);opacity:.55}
 .legenda.besar{font-size:.88rem;gap:16px;margin:0 0 16px}
 .rek-grid{display:grid;align-items:start;gap:14px;grid-template-columns:minmax(0,1fr)}
 .rek-grid .kartu-rek{margin:0;display:flex;flex-direction:column}
