@@ -1,5 +1,5 @@
 /* NALARIN - MAIN STYLESHEET */
-:root{--primary:#1068f8;--primary-dark:#0a4fc4;--primary-soft:#eaf2ff;--text:#10244d;--muted:#5f6b85;--bg:#ffffff;--card:#ffffff;--border:#e1e7f3;--benar:#16a34a;--benar-soft:#ecfdf3;--salah:#e11d48;--salah-soft:#fff1f2;--accent:#0a56d6;--hover:#d9e7ff;--radius:12px;--shadow:0 1px 2px rgba(45,42,74,.06),0 4px 14px rgba(45,42,74,.05)}
+:root{--primary:#1068f8;--primary-dark:#0a4fc4;--primary-soft:#eaf2ff;--text:#10244d;--muted:#5f6b85;--bg:#ffffff;--card:#ffffff;--border:#e1e7f3;--benar:#16a34a;--benar-soft:#ecfdf3;--salah:#e11d48;--salah-soft:#fff1f2;--accent:#0a56d6;--hover:#d9e7ff;--radius:12px;--shadow:none;
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
 body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
@@ -512,7 +512,7 @@ h1,h2,h3{letter-spacing:-.01em;font-weight:700}
 .lap-ringkasan p:last-child{margin:0}
 
 /* ===== nalarin v2: design system, tata letak, navigasi ===== */
-:root{--primary:#1068f8;--primary-dark:#0a4fc4;--primary-soft:#eaf2ff;--navy:#082868;--bg:#ffffff;--card:#ffffff;--border:#e1e7f3;--text:#10244d;--muted:#5f6b85;--benar:#16a34a;--benar-soft:#ecfdf3;--warning:#d97706;--warning-soft:#fffbeb;--salah:#e11d48;--salah-soft:#fff1f2;--radius:14px;--shadow:0 1px 2px rgba(45,42,74,.06),0 4px 14px rgba(45,42,74,.05);--side-w:248px;--nav-h:64px}
+:root{--primary:#1068f8;--primary-dark:#0a4fc4;--primary-soft:#eaf2ff;--navy:#082868;--bg:#ffffff;--card:#ffffff;--border:#e1e7f3;--text:#10244d;--muted:#5f6b85;--benar:#16a34a;--benar-soft:#ecfdf3;--warning:#d97706;--warning-soft:#fffbeb;--salah:#e11d48;--salah-soft:#fff1f2;--radius:14px;--shadow:none;--side-w:248px;--nav-h:64px}
 body{-webkit-font-smoothing:antialiased}
 h2{font-weight:800;letter-spacing:-.01em}
 .card{border-radius:var(--radius);padding:22px;min-width:0}
