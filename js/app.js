@@ -1289,7 +1289,7 @@ function hasilRinci(soal, jawab, poin, mode) {
   soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; mp[m].b += skorJawaban(s, jawab[k]); });
   const baris = Object.entries(mp).map(([m, x]) => { const q = Math.round((x.b / x.n) * 100); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">· ${angkaSkor(x.b)}/${x.n}</span></span></div>`; }).join('');
   $('hasil-rinci').innerHTML = `<p class="label" style="margin-top:0">Komposisi jawaban</p>
-    <div class="komposisi" role="img" aria-label="${benar} benar, ${parsial} parsial, ${salah} salah, ${kosong} kosong"><span class="seg-benar" style="width:${w(benar)}"></span><span class="seg-salah" style="width:${w(salah)}"></span><span class="seg-kosong" style="width:${w(kosong)}"></span></div>
+    <div class="komposisi" role="img" aria-label="${benar} benar, ${parsial} parsial, ${salah} salah, ${kosong} kosong"><span class="seg-benar" style="width:${w(benar)}"></span><span class="seg-parsial" style="width:${w(parsial)}"></span><span class="seg-salah" style="width:${w(salah)}"></span><span class="seg-kosong" style="width:${w(kosong)}"></span></div>
     <div class="legenda besar"><span><i class="seg-benar"></i>Benar ${benar}</span><span>Parsial ${parsial}</span><span><i class="seg-salah"></i>Salah ${salah}</span><span><i class="seg-kosong"></i>Kosong ${kosong}</span></div>
     <p class="label">Akurasi per mata pelajaran</p>${baris}`;
 }
