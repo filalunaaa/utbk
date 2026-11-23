@@ -1107,9 +1107,8 @@ table.kem-tabel{width:100%;border-collapse:collapse;font-size:.9rem;min-width:42
 /* Chip pilihan (multi/banyak opsi) */
 .chip:not(.pv-chip) span,#menu .chip span{display:inline-flex;align-items:center;gap:7px;min-height:var(--flt-h);padding:0 14px;border:1px solid var(--border);border-radius:var(--flt-r);font-size:.84rem;font-weight:500;line-height:1.2;background:var(--card);color:var(--text);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
 .chip:not(.pv-chip):hover input:not(:checked)+span{background:var(--primary-soft);border-color:var(--hover)}
-.chip:not(.pv-chip) input:checked+span,#menu .chip input:checked+span{background:var(--primary-soft);border-color:var(--primary);color:var(--accent);font-weight:600}
-.chip:not(.pv-chip) input:checked+span::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
-.chip input:focus-visible+span{outline:2px solid var(--primary);outline-offset:2px}
+.chip:not(.pv-chip) input:checked+span,#menu .chip input:checked+span{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+.chip input:focus-visible+span{outline:2px solid var(--navy);outline-offset:2px;box-shadow:none}
 .pilihan{gap:8px}
 /* Segmented control: untuk 2-5 pilihan yang saling meniadakan */
 .seg,.pilihan.seg-r{display:inline-flex;flex-wrap:nowrap;gap:2px;padding:3px;max-width:100%;background:var(--card);border:1px solid var(--border);border-radius:calc(var(--flt-r) + 2px);box-sizing:border-box;vertical-align:top}
