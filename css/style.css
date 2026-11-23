@@ -49,7 +49,7 @@ p{margin-bottom:12px}
 .chip input{position:absolute;opacity:0;pointer-events:none}
 .chip span{display:inline-block;padding:6px 14px;border:2px solid var(--border);border-radius:999px;font-size:.9rem;cursor:pointer;background:var(--card)}
 .chip input:checked+span{background:var(--primary);border-color:var(--primary);color:#fff}
-.chip input:focus-visible+span{outline:2px solid var(--primary);outline-offset:2px}
+.chip input:focus-visible+span{outline:2px solid var(--navy);outline-offset:2px;box-shadow:none}
 .info{margin-top:16px}
 .progress{height:8px;background:var(--border);border-radius:999px;overflow:hidden;margin-bottom:8px}
 .progress-bar{height:100%;background:var(--primary);border-radius:999px;transition:width .3s}
@@ -206,7 +206,7 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 #menu .chip span{padding:6px 14px;font-size:.88rem;border-width:1.5px}
 #pilih-topik{gap:6px}
 #pilih-topik .chip span{padding:5px 12px;font-size:.84rem}
-#pilih-topik .chip input:checked+span{background:var(--primary-soft);color:var(--accent);border-color:var(--primary)}
+#menu .chip input:checked+span,#pilih-topik .chip input:checked+span{background:var(--primary);color:#fff;border-color:var(--primary)}
 #info-soal{background:var(--primary-soft);padding:10px 12px;border-radius:10px;color:var(--text);margin:18px 0 14px;font-size:.9rem}
 #menu .btn-besar{margin-top:4px;padding:12px}
 @media(max-width:480px){
