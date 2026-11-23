@@ -1459,7 +1459,7 @@ async function pantauPerubahanSoalAktif() {
     if (cacheBerubah) {
       DefaultSoal.simpanCache();
       if (soalAktifBerubah) renderSoal();
-      renderSemuaBank();
+      if (document.body.dataset.hal === 'bank' && $('kartu-form').hidden) renderSemuaBank();
     }
   } catch (err) {
     console.warn('Pemeriksaan pembaruan soal gagal:', err);
