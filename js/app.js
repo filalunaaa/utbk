@@ -1425,13 +1425,15 @@ async function simpanEditorSoalLive(e) {
     tombol.disabled = false;
   }
 }
+let lastPollSoalAt = Date.now() - 60000;
 async function pantauPerubahanSoalAktif() {
   if (ADMIN || !Object.keys(DefaultSoal.urutan).length) return;
   try {
-    // Ambil seluruh soal yang berubah baru-baru ini, bukan hanya soal yang sedang dibuka.
-    // Jendela 30 detik memberi overlap agar perubahan di batas polling tidak terlewat.
-    const sejak = new Date(Date.now() - 30000).toISOString();
+    // Ambil semua perubahan sejak pemeriksaan sukses terakhir, dengan overlap 30 detik.
+    // Jika koneksi putus, batas waktu tidak maju sehingga perubahan lama tetap akan terambil.
+    const sejak = new Date(lastPollSoalAt - 30000).toISOString();
     const rows = await rest('soal_default?select=id,data,diperbarui_pada&diperbarui_pada=gt.' + encodeURIComponent(sejak) + '&order=diperbarui_pada.asc');
+    lastPollSoalAt = Date.now();
     if (!Array.isArray(rows) || !rows.length) return;
     let cacheBerubah = false, soalAktifBerubah = false;
     rows.forEach((row) => {
