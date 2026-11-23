@@ -1544,3 +1544,44 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   outline:2px solid #cbd5e1;
   outline-offset:2px;
 }
+
+
+/* Statistik beranda: hover abu-abu hanya pada kartu yang disentuh */
+#kartu-ringkasan{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  cursor:default;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+#kartu-ringkasan:hover{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+#kartu-ringkasan .sum-card{
+  min-width:0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:none;
+  transform:none;
+  transition:background-color .15s ease,border-color .15s ease;
+}
+#kartu-ringkasan .sum-card:hover,
+#kartu-ringkasan .sum-card:active,
+#kartu-ringkasan .sum-card:focus{
+  background:#f3f4f6;
+  border-color:#cbd5e1;
+  box-shadow:none;
+  transform:none;
+}
+#kartu-ringkasan .sum-card:focus-visible{
+  outline:2px solid #cbd5e1;
+  outline-offset:2px;
+}
+@media(max-width:480px){
+  #kartu-ringkasan{gap:10px}
+}
