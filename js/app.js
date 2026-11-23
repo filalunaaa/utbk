@@ -3666,6 +3666,8 @@ function fmtTglBerita(s) {
 }
 var _berita = { t: 0, data: null, p: null, gagal: 0 };
 var BERITA_TTL = 15 * 60 * 1000;
+var _beritaRefreshMulai = 0;
+function jedaAnimasiRefresh() { const sisa = 700 - (Date.now() - _beritaRefreshMulai); return sisa > 0 ? new Promise((resolve) => setTimeout(resolve, sisa)) : Promise.resolve(); }
 try { const c = JSON.parse(sessionStorage.getItem('neon_berita')); if (c && Array.isArray(c.data)) { _berita.t = c.t; _berita.data = c.data; } } catch (e) {}
 function tampilBerita(basi) {
   const el = $('kartu-berita');
@@ -3682,13 +3684,15 @@ function renderBerita(paksa) {
   if (!paksa && !_berita.data && Date.now() - _berita.gagal < 60000) { el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>'; return Promise.resolve(); }
   if (!_berita.data) el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Memuat berita...</p>';
   _berita.p = fetch('/api/berita').then((r) => { if (!r.ok) throw new Error('gagal'); return r.json(); })
-    .then((data) => {
+    .then(async (data) => {
       if (!Array.isArray(data) || !data.length) throw new Error('kosong');
+      if (_beritaRefreshMulai) await jedaAnimasiRefresh();
       _berita.data = data; _berita.t = Date.now(); _berita.gagal = 0;
       try { sessionStorage.setItem('neon_berita', JSON.stringify({ t: _berita.t, data })); } catch (e) {}
       tampilBerita();
     })
-    .catch(() => {
+    .catch(async () => {
+      if (_beritaRefreshMulai) await jedaAnimasiRefresh();
       _berita.gagal = Date.now();
       if (_berita.data) tampilBerita(true);
       else el.innerHTML = '<h2>Berita UTBK terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>';
@@ -3696,7 +3700,7 @@ function renderBerita(paksa) {
     .finally(() => { _berita.p = null; });
   return _berita.p;
 }
-$('kartu-berita').addEventListener('click', (e) => { const btn = e.target.closest('[data-berita="muat"]'); if (btn) { e.stopPropagation(); btn.classList.add('is-loading'); btn.setAttribute('aria-busy', 'true'); renderBerita(true); } });
+$('kartu-berita').addEventListener('click', (e) => { const btn = e.target.closest('[data-berita="muat"]'); if (btn) { e.stopPropagation(); _beritaRefreshMulai = Date.now(); btn.classList.add('is-loading'); btn.setAttribute('aria-busy', 'true'); renderBerita(true); } });
 
 // ---------- Hitung mundur (overlay animasi) ----------
 let timerHitung = null;
