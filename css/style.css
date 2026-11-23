@@ -786,6 +786,11 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .prio{display:inline-block;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px}
 .prio.tinggi{background:var(--salah-soft);color:var(--salah)}.prio.sedang{background:var(--warning-soft,#fef3c7);color:var(--warning,#b45309)}.prio.baik{background:var(--benar-soft);color:var(--benar)}
 .berita-aksi{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.berita-refresh{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--primary);cursor:pointer;transition:color .15s,transform .15s}
+.berita-refresh:hover{background:transparent;color:var(--primary-dark);transform:rotate(25deg)}
+.berita-refresh:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.berita-refresh svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
 #menu .card,#menu .sum-card,#menu .qa{min-width:0}
 @media(max-width:480px){.sum-card{padding:11px}.sum-card b{font-size:1.3rem}.qa{padding:13px}.hero .hero-hari{font-size:2.2rem}}
 @media(max-width:380px){.qa-grid{grid-template-columns:1fr}}
