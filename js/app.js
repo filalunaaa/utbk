@@ -752,8 +752,11 @@ async function mulaiSesi() {
   try {
     const a = await rest(`admin_users?user_id=eq.${AkunApp.sesi().user_id}&select=user_id`);
     ADMIN = !!(a && a.length);
-    if (ADMIN) await DefaultSoal.muat();
   } catch (e) { ADMIN = false; }
+  if (ADMIN) {
+    try { await DefaultSoal.muat(); }
+    catch (e) { console.warn('Daftar soal server belum termuat untuk editor admin:', e); }
+  }
   tampilkanPanelAdmin();
   renderSemuaBank();
   renderBeranda();
@@ -1352,8 +1355,10 @@ function bukaEditorSoalLive() {
   $('esl-soal').value = s.soal || '';
   $('esl-pembahasan').value = s.pembahasan || '';
   const tipe = tipeSoal(s);
+  const jumlahOpsi = tipe === 'kompleks' ? Math.max(4, Math.min(5, (s.opsi || []).length || 5)) : 5;
+  $('esl-opsi-wrap').dataset.jumlah = String(jumlahOpsi);
   $('esl-opsi-wrap').innerHTML = tipe === 'isian' ? '<p class="esl-hint">Soal isian bilangan cacah tidak menggunakan opsi.</p>' :
-    '<div class="esl-label">Pilihan jawaban</div>' + Array.from({length:5},(_,i) =>
+    '<div class="esl-label">Pilihan jawaban</div>' + Array.from({length:jumlahOpsi},(_,i) =>
       '<label class="esl-label" for="esl-opsi-' + i + '">Opsi ' + HURUF[i] + '</label><textarea class="input esl-area esl-opsi" id="esl-opsi-' + i + '" rows="2">' + esc((s.opsi||[])[i]||'') + '</textarea>'
     ).join('');
   if (tipe === 'pg') {
@@ -1361,7 +1366,7 @@ function bukaEditorSoalLive() {
       HURUF.map((h,i)=>'<option value="' + i + '" ' + (Number(s.jawaban)===i?'selected':'') + '>' + h + '</option>').join('') + '</select>';
   } else if (tipe === 'kompleks') {
     $('esl-kunci-wrap').innerHTML = '<fieldset class="esl-fieldset"><legend class="esl-label">Kunci jawaban — pilih semua yang benar</legend><div class="esl-kunci-grid">' +
-      HURUF.map((h,i)=>'<label><input type="checkbox" data-esl-kunci value="' + i + '" ' + ((Array.isArray(s.jawaban)&&s.jawaban.includes(i))?'checked':'') + '> ' + h + '</label>').join('') +
+      HURUF.slice(0, jumlahOpsi).map((h,i)=>'<label><input type="checkbox" data-esl-kunci value="' + i + '" ' + ((Array.isArray(s.jawaban)&&s.jawaban.includes(i))?'checked':'') + '> ' + h + '</label>').join('') +
       '</div></fieldset>';
   } else {
     $('esl-kunci-wrap').innerHTML = '<label class="esl-label" for="esl-kunci-isian">Kunci jawaban (bilangan cacah)</label><input class="input" id="esl-kunci-isian" type="number" min="0" step="1" value="' + Number(s.jawaban) + '">';
@@ -1388,7 +1393,8 @@ async function simpanEditorSoalLive(e) {
   const soal = $('esl-soal').value.trim();
   const pembahasan = $('esl-pembahasan').value.trim();
   if (!soal || !pembahasan) { pesan.textContent = 'Pertanyaan dan pembahasan wajib diisi.'; return; }
-  const opsi = tipe === 'isian' ? [] : Array.from({length:5},(_,i)=>$('esl-opsi-' + i).value.trim());
+  const jumlahOpsi = Number($('esl-opsi-wrap').dataset.jumlah || 5);
+  const opsi = tipe === 'isian' ? [] : Array.from({length:jumlahOpsi},(_,i)=>$('esl-opsi-' + i).value.trim());
   if (tipe !== 'isian' && opsi.some((x)=>!x)) { pesan.textContent = 'Semua lima opsi harus diisi.'; return; }
   let jawaban;
   if (tipe === 'pg') jawaban = Number($('esl-kunci-pg').value);
