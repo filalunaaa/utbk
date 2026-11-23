@@ -790,6 +790,11 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .berita-refresh:hover{background:transparent;color:var(--primary-dark);transform:rotate(25deg)}
 .berita-refresh:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .berita-refresh svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite}
+.berita-refresh.is-loading{cursor:progress;pointer-events:none}
+@keyframes berita-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.berita-refresh.is-loading svg{animation-duration:2s}}
+
 
 #menu .card,#menu .sum-card,#menu .qa{min-width:0}
 @media(max-width:480px){.sum-card{padding:11px}.sum-card b{font-size:1.3rem}.qa{padding:13px}.hero .hero-hari{font-size:2.2rem}}
