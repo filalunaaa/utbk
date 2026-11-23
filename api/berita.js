@@ -1,6 +1,6 @@
 const FEED =
   'https://news.google.com/rss/search?q=' +
-  encodeURIComponent('UTBK OR SNBT OR SNPMB') +
+  encodeURIComponent('UTBK OR SNBT OR SNPMB OR TKA OR "Tes Kemampuan Akademik"') +
   '&hl=id&gl=ID&ceid=ID:id';
 
 function decode(s) {
