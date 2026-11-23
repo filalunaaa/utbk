@@ -1521,3 +1521,26 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
 .tile-detik{animation:none}
 .tgl-hitung{color:#dbeafe}
 .pesan-hitung{color:#c5d8f2}
+
+
+/* Kartu statistik beranda: tiap kartu tetap terpisah saat hover/fokus/klik */
+#menu .sum-grid{gap:10px}
+#menu .sum-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  box-shadow:none;
+  transform:none;
+}
+#menu .sum-card:hover,
+#menu .sum-card:active,
+#menu .sum-card:focus{
+  background:var(--card);
+  border-color:#cbd5e1;
+  box-shadow:none;
+  transform:none;
+}
+#menu .sum-card:focus-visible{
+  outline:2px solid #cbd5e1;
+  outline-offset:2px;
+}
