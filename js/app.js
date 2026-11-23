@@ -1395,7 +1395,7 @@ async function simpanEditorSoalLive(e) {
   if (!soal || !pembahasan) { pesan.textContent = 'Pertanyaan dan pembahasan wajib diisi.'; return; }
   const jumlahOpsi = Number($('esl-opsi-wrap').dataset.jumlah || 5);
   const opsi = tipe === 'isian' ? [] : Array.from({length:jumlahOpsi},(_,i)=>$('esl-opsi-' + i).value.trim());
-  if (tipe !== 'isian' && opsi.some((x)=>!x)) { pesan.textContent = 'Semua lima opsi harus diisi.'; return; }
+  if (tipe !== 'isian' && opsi.some((x)=>!x)) { pesan.textContent = 'Semua opsi harus diisi.'; return; }
   let jawaban;
   if (tipe === 'pg') jawaban = Number($('esl-kunci-pg').value);
   else if (tipe === 'kompleks') jawaban = [...document.querySelectorAll('[data-esl-kunci]:checked')].map(x=>Number(x.value)).sort((a,b)=>a-b);
@@ -1417,7 +1417,7 @@ async function simpanEditorSoalLive(e) {
     if (diBank) Object.assign(diBank, data, { id });
     DefaultSoal.asli[id] = kanon(sinId(lama));
     DefaultSoal.simpanCache();
-    pesan.textContent = 'Tersimpan. Soal terbaru akan tampil kepada pengguna lain saat soal ini dimuat atau disegarkan.';
+    pesan.textContent = 'Tersimpan. Pengguna lain akan menerima pembaruan otomatis dalam sekitar 15 detik.';
     renderSoal();
     setTimeout(tutupEditorSoalLive, 700);
   } catch (err) {
@@ -1426,27 +1426,41 @@ async function simpanEditorSoalLive(e) {
   }
 }
 async function pantauPerubahanSoalAktif() {
-  if (ADMIN || !sesi || !sesi.aktif) return;
-  const s = sesi.soal[sesi.i];
-  if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
+  if (ADMIN || !Object.keys(DefaultSoal.urutan).length) return;
   try {
-    const rows = await rest('soal_default?id=eq.' + encodeURIComponent(String(s.id)) + '&select=id,data,diperbarui_pada');
-    if (!rows || !rows.length || !rows[0].data) return;
-    const dataBaru = rows[0].data;
-    if (kanon(dataBaru) === kanon(sinId(s))) return;
-    const id = String(s.id);
-    const indeksSoal = SOAL.findIndex(x=>String(x.id)===id);
-    const sudahDijawab = sesi.mode === 'latihan' && sesi.kunci[sesi.i];
-    if (sudahDijawab) {
-      // Pertahankan snapshot sesi yang sudah dijawab; gunakan versi baru untuk sesi berikutnya.
-      if (indeksSoal >= 0) SOAL[indeksSoal] = { ...SOAL[indeksSoal], ...dataBaru, id };
-    } else {
-      Object.assign(s, dataBaru, { id });
-      if (indeksSoal >= 0 && SOAL[indeksSoal] !== s) Object.assign(SOAL[indeksSoal], dataBaru, { id });
-      renderSoal();
+    // Ambil seluruh soal yang berubah baru-baru ini, bukan hanya soal yang sedang dibuka.
+    // Jendela 30 detik memberi overlap agar perubahan di batas polling tidak terlewat.
+    const sejak = new Date(Date.now() - 30000).toISOString();
+    const rows = await rest('soal_default?select=id,data,diperbarui_pada&diperbarui_pada=gt.' + encodeURIComponent(sejak) + '&order=diperbarui_pada.asc');
+    if (!Array.isArray(rows) || !rows.length) return;
+    let cacheBerubah = false, soalAktifBerubah = false;
+    rows.forEach((row) => {
+      const id = String(row.id);
+      const dataBaru = row.data;
+      if (!dataBaru) return;
+      const indeks = SOAL.findIndex(x => String(x.id) === id);
+      if (indeks < 0 || kanon(dataBaru) === kanon(sinId(SOAL[indeks]))) return;
+      const sesiIndeks = sesi && sesi.aktif ? sesi.soal.findIndex(x => String(x.id) === id) : -1;
+      const soalSesi = sesiIndeks >= 0 ? sesi.soal[sesiIndeks] : null;
+      const terkunci = !!(soalSesi && sesi.mode === 'latihan' && sesi.kunci[sesiIndeks]);
+      if (terkunci && SOAL[indeks] === soalSesi) {
+        // Jawaban yang sudah dinilai tetap memakai snapshot lama; sesi berikutnya memakai versi baru.
+        SOAL[indeks] = { ...SOAL[indeks], ...dataBaru, id };
+      } else {
+        Object.assign(SOAL[indeks], dataBaru, { id });
+      }
+      if (soalSesi && !terkunci) {
+        Object.assign(soalSesi, dataBaru, { id });
+        if (sesiIndeks === sesi.i) soalAktifBerubah = true;
+      }
+      DefaultSoal.asli[id] = kanon(dataBaru);
+      cacheBerubah = true;
+    });
+    if (cacheBerubah) {
+      DefaultSoal.simpanCache();
+      if (soalAktifBerubah) renderSoal();
+      renderSemuaBank();
     }
-    DefaultSoal.asli[id] = kanon(dataBaru);
-    DefaultSoal.simpanCache();
   } catch (err) {
     console.warn('Pemeriksaan pembaruan soal gagal:', err);
   }
