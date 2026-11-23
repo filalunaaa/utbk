@@ -103,7 +103,7 @@ p{margin-bottom:12px}
 .feedback{margin-top:16px;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--primary-soft)}
 .feedback.benar{background:var(--benar-soft);border-color:var(--benar)}
 .feedback.salah{background:var(--salah-soft);border-color:var(--salah)}
-.feedback.parsial{background:var(--warning-soft);border-color:var(--warning)}
+.feedback.parsial,#feedback.feedback.parsial{background:#fff7d6!important;border:1px solid #b7791f!important;color:#704b12!important}
 .feedback div{margin-top:6px}
 .pusat{text-align:center}
 .pusat .aksi{justify-content:center}
