@@ -3143,7 +3143,16 @@ $('opsi-list').addEventListener('click', (e) => {
   } else {
     sesi.jawab[sesi.i] = k;
   }
-  renderSoal();
+
+  // Perbarui status pilihan saja. Jangan render ulang seluruh soal karena
+  // grafik/MathJax ikut dibuat ulang dan dapat menggeser posisi scroll.
+  $('opsi-list').querySelectorAll('.opsi').forEach((opsi) => {
+    const indeks = Number(opsi.dataset.k);
+    const terpilih = dipilih(s, sesi.jawab[sesi.i], indeks);
+    opsi.classList.toggle('terpilih', terpilih);
+    opsi.setAttribute('aria-checked', String(terpilih));
+  });
+  if (sesi.mode === 'latihan') $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
 });
 $('btn-aksi').addEventListener('click', () => {
   const { mode, i, soal, kunci, jawab } = sesi;
