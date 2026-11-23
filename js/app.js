@@ -1499,19 +1499,19 @@ function metaItem(r, peta) {
 // Statistik satu sesi (boleh dibatasi ke satu mata pelajaran)
 function statSesi(e, peta, m) {
   const topik = {}, mapel = {};
-  let n = 0, b = 0, k = 0;
+  let n = 0, b = 0, k = 0, salah = 0;
   e.item.forEach((r) => {
     const x = metaItem(r, peta);
     if (m && x.m !== m) return;
     n++;
-    if (kosongJ(r.j)) k++; else b += skorRiwayat(r);
+    if (kosongJ(r.j)) k++; else { const skor = skorRiwayat(r); b += skor; if (skor === 0) salah++; }
     [[topik, x.tp], [mapel, x.m]].forEach(([o, nm]) => {
       if (!nm) return;
       o[nm] = o[nm] || { n: 0, b: 0 };
       o[nm].n++; if (!kosongJ(r.j)) o[nm].b += skorRiwayat(r);
     });
   });
-  return { n, b, k, s: n - b - k, topik, mapel, p: n ? Math.round((b / n) * 100) : 0 };
+  return { n, b, k, s: salah, topik, mapel, p: n ? Math.round((b / n) * 100) : 0 };
 }
 // Tiap sesi dibandingkan dengan sesi sebelumnya (per topik dan per mapel: sesi terakhir yang memuatnya)
 function analisisSesi(semua, peta, m) {
@@ -1631,16 +1631,16 @@ function renderDetailSesi() {
     + blok('Topik baru', 'baru', a.topik.filter((t) => t.d === null))
     + (a.mapel.length > 1 ? blok('Per mata pelajaran', 'netral', a.mapel, namaMapel) : '');
   const daftar = daftarItem(e, peta, rdState.m);
-  const hitung = { semua: daftar.length, benar: 0, salah: 0, kosong: 0 };
+  const hitung = { semua: daftar.length, benar: 0, parsial: 0, salah: 0, kosong: 0 };
   daftar.forEach((o) => hitung[o.s0]++);
-  const label = { semua: 'Semua', benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
+  const label = { semua: 'Semua', benar: 'Benar', parsial: 'Parsial', salah: 'Salah', kosong: 'Kosong' };
   const chips = Object.keys(label).map((k) => `<label class="chip"><input type="radio" name="filter-rd" value="${k}" ${k === rdState.filter ? 'checked' : ''}><span>${label[k]} (${hitung[k]})</span></label>`).join('');
   const petak = daftar.map((o) => `<button type="button" class="petak ${o.s0}" data-no="${o.i}" aria-label="Soal ${o.i + 1}">${o.i + 1}</button>`).join('');
   const tampilDaftar = daftar.filter((o) => rdState.filter === 'semua' || o.s0 === rdState.filter);
   const kartuSoal = tampilDaftar.slice(0, rdState.batas).map((o) => {
     const { r, i, s0 } = o;
     const s = peta.get(r.id);
-    const lb = { benar: 'Benar', salah: 'Salah', kosong: 'Kosong' }[s0];
+    const lb = { benar: 'Benar', parsial: 'Kurang lengkap', salah: 'Salah', kosong: 'Kosong' }[s0];
     if (!s) return `<div class="sx ${s0}" id="sx-${i}"><div class="sx-isi" style="padding-top:12px"><span class="sx-no" style="display:inline-flex">${i + 1}</span> <span class="muted">Soal ini sudah dihapus dari bank, jadi pembahasannya tidak tersedia.</span></div></div>`;
     return `<details class="sx ${s0}" id="sx-${i}"${s0 === 'benar' ? '' : ' open'}>
       <summary><span class="sx-no">${i + 1}</span><span class="sx-prev">${esc(previewTeks(s.soal))}</span><span class="badge ${s0}" style="margin:0">${lb}</span></summary>
@@ -1926,10 +1926,10 @@ function riwayatTopikHTML(topik, batas) {
     return '<p class="muted">Riwayat topik ini belum tercatat. Riwayat mulai dicatat sejak fitur ini aktif, jadi kerjakan soal lagi untuk mengisinya.</p>';
   }
   const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.length);
-  const benar = semua.filter((r) => r.b).length;
-  const label = { benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
+  const poin = semua.reduce((sum, r) => sum + skorRiwayat(r), 0);
+  const label = { benar: 'Benar', parsial: 'Kurang lengkap', salah: 'Salah', kosong: 'Kosong' };
   const items = semua.slice(0, batas).map((r) => {
-    const st = kosongJ(r.j) ? 'kosong' : r.b ? 'benar' : 'salah';
+    const st = kosongJ(r.j) ? 'kosong' : skorRiwayat(r) === 1 ? 'benar' : skorRiwayat(r) > 0 ? 'parsial' : 'salah';
     const tglPendek = new Date(r.t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     const tglPenuh = new Date(r.t).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const s = peta.get(r.id);
@@ -1953,7 +1953,7 @@ function riwayatTopikHTML(topik, batas) {
   }).join('');
   const lagi = semua.length > batas
     ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi="${esc(topik)}">Tampilkan lebih banyak (${semua.length - batas} lagi)</button></div>` : '';
-  return `<p class="muted">${semua.length} pengerjaan &middot; ${benar} benar &middot; terbaru di atas</p>${items}${lagi}`;
+  return `<p class="muted">${semua.length} pengerjaan &middot; ${angkaSkor(poin)} poin &middot; terbaru di atas</p>${items}${lagi}`;
 }
 function isiRiwayat(d) {
   const topik = d.dataset.topik;
