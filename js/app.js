@@ -9,14 +9,14 @@ const Penyimpanan = {
   simpan(data) {
     try { localStorage.setItem(this.KEY, JSON.stringify(data)); } catch (e) {}
   },
-  catat(soal, benar) {
+  catat(soal, skor) {
     const d = this.ambil();
     d.total++;
-    if (benar) d.benar++;
+    d.benar = (d.benar || 0) + skor;
     [['mapel', soal.mataPelajaran], ['topik', namaTopikResmi(soal)]].forEach(([k, nama]) => {
       d[k][nama] = d[k][nama] || { total: 0, benar: 0 };
       d[k][nama].total++;
-      if (benar) d[k][nama].benar++;
+      d[k][nama].benar = (d[k][nama].benar || 0) + skor;
     });
     this.simpan(d);
   },
@@ -70,10 +70,10 @@ const Riwayat = {
   simpan(a) {
     try { localStorage.setItem(this.KEY, JSON.stringify(a)); } catch (e) {}
   },
-  catat(soal, jawaban, benar) {
+  catat(soal, jawaban, skor) {
     const a = this.ambil();
     a.push({ id: String(soal.id), topik: soal.topik, mapel: soal.mataPelajaran,
-      j: jawaban === undefined ? null : jawaban, b: !!benar, t: Date.now() });
+      j: jawaban === undefined ? null : jawaban, b: skor === 1, sc: skor, t: Date.now() });
     this.simpan(a.slice(-this.MAKS));
   },
   reset() {
@@ -805,16 +805,18 @@ const kunciOpsi = (s, k) => (adaIsian(s) ? false : adaGanda(s)
 const dipilih = (s, j, k) => (adaIsian(s) ? false : adaGanda(s)
   ? Array.isArray(j) && j.some((x) => indeksAngka(x) === k)
   : indeksAngka(j) === k);
-const jawabBenar = (s, j) => {
-  if (j === null || j === undefined) return false;
-  if (adaIsian(s)) return Number(j) === Number(s.jawaban);
-  if (!adaGanda(s)) return indeksAngka(j) === indeksAngka(s.jawaban);
-  if (!Array.isArray(j) || !Array.isArray(s.jawaban)) return false;
-  const pilihan = j.map(indeksAngka).filter(Number.isInteger);
+const skorJawaban = (s, j) => {
+  if (j === null || j === undefined) return 0;
+  if (adaIsian(s)) return Number(j) === Number(s.jawaban) ? 1 : 0;
+  if (!adaGanda(s)) return indeksAngka(j) === indeksAngka(s.jawaban) ? 1 : 0;
+  if (!Array.isArray(j) || !Array.isArray(s.jawaban) || !s.jawaban.length) return 0;
+  const pilihan = j.map(indeksAngka);
   const kunci = s.jawaban.map(indeksAngka).filter(Number.isInteger);
-  return pilihan.length === kunci.length && pilihan.length === j.length &&
-    kunci.length === s.jawaban.length && kunci.every((k) => pilihan.includes(k));
+  if (pilihan.some((k) => !Number.isInteger(k) || !kunci.includes(k))) return 0;
+  return Math.min(1, new Set(pilihan).size / kunci.length);
 };
+const jawabBenar = (s, j) => skorJawaban(s, j) === 1;
+const angkaSkor = (v) => Number.isInteger(v) ? String(v) : Number(v.toFixed(2)).toString();
 const teksJawabanmu = (s, j) => (j === null || j === undefined || (Array.isArray(j) && !j.length) ? 'Tidak dijawab'
   : adaIsian(s) ? String(j) : Array.isArray(j) ? j.map((k) => HURUF[k]).join(', ') : HURUF[j]);
 // Tampilan pilihan (atau kotak jawaban untuk soal isian) yang dipakai di review, riwayat, dan bank soal.
@@ -1253,8 +1255,10 @@ function renderSoal() {
   fb.hidden = !kunci[i];
   if (kunci[i]) {
     const benar = jawabBenar(s, jawab[i]);
-    fb.className = 'feedback ' + (benar ? 'benar' : 'salah');
-    fb.innerHTML = `<strong>${benar ? 'Benar!' : 'Kurang tepat. Jawaban yang benar: ' + kunciHuruf(s)}</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div>`;
+    const skor = skorJawaban(s, jawab[i]);
+    fb.className = 'feedback ' + (skor === 1 ? 'benar' : 'salah');
+    const status = skor === 1 ? 'Benar!' : skor > 0 ? `Kurang lengkap (${Math.round(skor * 100)}%).` : 'Kurang tepat.';
+    fb.innerHTML = `<strong>${status} ${skor < 1 ? 'Jawaban yang benar: ' + kunciHuruf(s) : ''}</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div>`;
   }
 
   $('btn-prev').disabled = i === 0;
@@ -1270,43 +1274,47 @@ function renderSoal() {
   rumus($('kuis'));
 }
 
-function hasilRinci(soal, jawab, benar, mode) {
+function hasilRinci(soal, jawab, poin, mode) {
   const n = soal.length;
   const kosong = soal.filter((s, k) => jawab[k] === null || jawab[k] === undefined).length;
-  const salah = Math.max(0, n - benar - kosong);
-  const p = Math.round((benar / n) * 100);
+  const benar = soal.filter((s, k) => jawabBenar(s, jawab[k])).length;
+  const parsial = soal.filter((s, k) => skorJawaban(s, jawab[k]) > 0 && skorJawaban(s, jawab[k]) < 1).length;
+  const salah = Math.max(0, n - benar - parsial - kosong);
+  const p = Math.round((poin / n) * 100);
   const C = 2 * Math.PI * 52;
   $('hasil-ring').innerHTML = `<svg viewBox="0 0 128 128" aria-hidden="true"><circle class="dasar" cx="64" cy="64" r="52"/><circle class="isi ${p >= 75 ? 't' : p >= 50 ? 's' : 'r'}" cx="64" cy="64" r="52" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p / 100)).toFixed(1)}"/></svg><b>${p}%</b>`;
   $('hasil-ket').textContent = `${mode === 'tryout' ? 'Try Out' : 'Latihan'} · ${n} soal`;
   const w = (v) => `${(v / n) * 100}%`;
   const mp = {};
-  soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; if (jawabBenar(s, jawab[k])) mp[m].b++; });
-  const baris = Object.entries(mp).map(([m, x]) => { const q = Math.round((x.b / x.n) * 100); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">· ${x.b}/${x.n}</span></span></div>`; }).join('');
+  soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; mp[m].b += skorJawaban(s, jawab[k]); });
+  const baris = Object.entries(mp).map(([m, x]) => { const q = Math.round((x.b / x.n) * 100); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">· ${angkaSkor(x.b)}/${x.n}</span></span></div>`; }).join('');
   $('hasil-rinci').innerHTML = `<p class="label" style="margin-top:0">Komposisi jawaban</p>
-    <div class="komposisi" role="img" aria-label="${benar} benar, ${salah} salah, ${kosong} kosong"><span class="seg-benar" style="width:${w(benar)}"></span><span class="seg-salah" style="width:${w(salah)}"></span><span class="seg-kosong" style="width:${w(kosong)}"></span></div>
-    <div class="legenda besar"><span><i class="seg-benar"></i>Benar ${benar}</span><span><i class="seg-salah"></i>Salah ${salah}</span><span><i class="seg-kosong"></i>Kosong ${kosong}</span></div>
+    <div class="komposisi" role="img" aria-label="${benar} benar, ${parsial} parsial, ${salah} salah, ${kosong} kosong"><span class="seg-benar" style="width:${w(benar)}"></span><span class="seg-salah" style="width:${w(salah)}"></span><span class="seg-kosong" style="width:${w(kosong)}"></span></div>
+    <div class="legenda besar"><span><i class="seg-benar"></i>Benar ${benar}</span><span>Parsial ${parsial}</span><span><i class="seg-salah"></i>Salah ${salah}</span><span><i class="seg-kosong"></i>Kosong ${kosong}</span></div>
     <p class="label">Akurasi per mata pelajaran</p>${baris}`;
 }
 function selesai() {
-  if (!sesi || !sesi.aktif) return; // cegah penyelesaian ganda
+  if (!sesi || !sesi.aktif) return;
   $('modal-ex').hidden = true;
   filterReview = 'semua';
   clearInterval(sesi.timer);
   sesi.aktif = false;
   const { mode, soal, jawab, kunci } = sesi;
   const durasi = Math.min(Math.round((Date.now() - sesi.mulai) / 1000), soal.length * DETIK_PER_SOAL);
-  if (mode === 'latihan') jawab.forEach((j, k) => { if (!kunci[k]) jawab[k] = null; }); // belum dijawab = kosong
+  if (mode === 'latihan') jawab.forEach((j, k) => { if (!kunci[k]) jawab[k] = null; });
   if (mode === 'tryout') soal.forEach((s, k) => {
-    Penyimpanan.catat(s, jawabBenar(s, jawab[k]));
-    Riwayat.catat(s, jawab[k], jawabBenar(s, jawab[k]));
+    const skor = skorJawaban(s, jawab[k]);
+    Penyimpanan.catat(s, skor);
+    Riwayat.catat(s, jawab[k], skor);
     if (jawab[k] !== null) PilihanStat.catat(s, jawab[k]);
   });
+  const poin = soal.reduce((total, s, k) => total + skorJawaban(s, jawab[k]), 0);
   const benar = soal.filter((s, k) => jawabBenar(s, jawab[k])).length;
-  catatSesi(mode, soal, jawab, durasi, benar);
-  $('skor').textContent = `${benar} / ${soal.length}`;
-  $('persen').textContent = `Akurasi ${Math.round((benar / soal.length) * 100)}%`;
+  catatSesi(mode, soal, jawab, durasi, poin);
+  $('skor').textContent = `${angkaSkor(poin)} / ${soal.length}`;
+  $('persen').textContent = `Nilai ${Math.round((poin / soal.length) * 100)}%`;
   $('waktu').textContent = mode === 'tryout' ? `Waktu pengerjaan: ${format(durasi)}` : '';
-  hasilRinci(soal, jawab, benar, mode);
+  hasilRinci(soal, jawab, poin, mode);
   renderLaporan();
   tampil('hasil');
 }
@@ -3158,8 +3166,8 @@ $('btn-aksi').addEventListener('click', () => {
   const { mode, i, soal, kunci, jawab } = sesi;
   if (mode === 'latihan' && !kunci[i]) {
     kunci[i] = true;
-    Penyimpanan.catat(soal[i], jawabBenar(soal[i], jawab[i]));
-    Riwayat.catat(soal[i], jawab[i], jawabBenar(soal[i], jawab[i]));
+    Penyimpanan.catat(soal[i], skorJawaban(soal[i], jawab[i]));
+    Riwayat.catat(soal[i], jawab[i], skorJawaban(soal[i], jawab[i]));
     PilihanStat.catat(soal[i], jawab[i]);
     renderSoal();
   } else if (i === soal.length - 1) {
