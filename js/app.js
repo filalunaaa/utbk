@@ -1344,7 +1344,7 @@ function renderLaporan() {
     return { nama: label(n), dTotal: b.total - a.total, dBenar: b.benar - a.benar, pAwal, pKini, delta: pAwal === null ? null : pKini - pAwal };
   }).filter(Boolean).sort((x, y) => (y.delta ?? -999) - (x.delta ?? -999));
   const baris = (it) => `<div class="lap-baris">
-      <div class="stat-judul"><span>${esc(it.nama)}</span><span>${it.dBenar} dari ${it.dTotal} benar di sesi ini</span></div>
+      <div class="stat-judul"><span>${esc(it.nama)}</span><span>${angkaSkor(it.dBenar)} dari ${it.dTotal} poin di sesi ini</span></div>
       <div class="progress"><div class="progress-bar" style="width:${it.pKini}%;background:${warnaLevel(it.pKini)}"></div></div>
       <div class="lap-ubah"><span>${it.pAwal === null ? `Data pertama: ${it.pKini}%` : `${it.pAwal}% &rarr; ${it.pKini}%`}</span>${badgeUbah(it.delta)}</div>
     </div>`;
@@ -1581,7 +1581,7 @@ function daftarSesiHTML() {
       ${ringSesi(st.p, 54)}
       <span class="sx-tengah">
         <span class="sx-atas"><b>${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</b><span>${jamSesi(e.t)}</span></span>
-        <span class="sx-meta">${st.n} soal &middot; ${st.b} benar${st.k ? ' &middot; ' + st.k + ' kosong' : ''}${dur}</span>
+        <span class="sx-meta">${st.n} soal &middot; ${angkaSkor(st.b)} poin${st.k ? ' &middot; ' + st.k + ' kosong' : ''}${dur}</span>
         <span class="sx-tags">${filterSesiMapel ? `<span class="sx-tag">${esc(namaMapel(filterSesiMapel))}</span>` : tagMapel(a, 2)}</span>
         <span class="sx-strip" aria-hidden="true">${strip}</span>
       </span>
