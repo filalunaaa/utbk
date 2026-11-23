@@ -1257,6 +1257,15 @@ function renderSoal() {
     const benar = jawabBenar(s, jawab[i]);
     const skor = skorJawaban(s, jawab[i]);
     fb.className = 'feedback ' + (skor === 1 ? 'benar' : skor > 0 ? 'parsial' : 'salah');
+    if (skor > 0 && skor < 1) {
+      fb.style.setProperty('background-color', '#fff7d6', 'important');
+      fb.style.setProperty('border-color', '#b7791f', 'important');
+      fb.style.setProperty('color', '#704b12', 'important');
+    } else {
+      fb.style.removeProperty('background-color');
+      fb.style.removeProperty('border-color');
+      fb.style.removeProperty('color');
+    }
     const status = skor === 1 ? 'Benar!' : skor > 0 ? `Kurang lengkap (${Math.round(skor * 100)}%).` : 'Kurang tepat.';
     fb.innerHTML = `<strong>${status} ${skor < 1 ? 'Jawaban yang benar: ' + kunciHuruf(s) : ''}</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div>`;
   }
