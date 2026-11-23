@@ -1479,3 +1479,13 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
     transform:none;
   }
 }
+
+
+/* Tombol pengaturan di header khusus perangkat mobile */
+.topbar-pengaturan{display:none;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;padding:0;border:1px solid var(--border);border-radius:50%;background:var(--card);color:var(--accent);text-decoration:none}
+.topbar-pengaturan svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.topbar-pengaturan:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media(max-width:760px){
+  .topbar .keluar-kuis{display:none!important}
+  .topbar .topbar-pengaturan{display:inline-flex}
+}
