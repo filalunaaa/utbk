@@ -340,7 +340,7 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 .gm-judul{font-size:.8rem;font-weight:700;color:var(--muted);margin:10px 0 6px}
 .gm-petak{display:flex;flex-wrap:wrap;gap:5px}
 .petak{width:32px;height:32px;border-radius:8px;border:2px solid transparent;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
-.petak.benar{background:var(--benar-soft);color:var(--benar)}.petak.salah{background:var(--salah-soft);color:var(--salah)}.petak.kosong{background:var(--border);color:var(--muted)}
+.petak.benar{background:var(--benar-soft);color:var(--benar)}.petak.parsial{background:var(--warning-soft);color:var(--warning)}.petak.salah{background:var(--salah-soft);color:var(--salah)}.petak.kosong{background:var(--border);color:var(--muted)}
 .petak.aktif{border-color:var(--primary)}
 .gm-soal{margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:10px}
 .gm-tp{display:flex;align-items:center;gap:8px;font-size:.88rem;padding:4px 0}
