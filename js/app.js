@@ -3575,7 +3575,7 @@ function gambarGrafik() {
     const rc = svg.getBoundingClientRect(), x = ((ev.clientX - rc.left) / rc.width) * W;
     let b = 0, jb = 1e9; pts.forEach((p, i) => { const j = Math.abs(X(i) - x); if (j < jb) { jb = j; b = i; } });
     const p = pts[b], tgl = p.d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
-    tip.innerHTML = `<b>${tgl}</b><br>${p.n ? `${p.n} soal · ${p.acc}% akurat (${p.b} benar)` : 'Tidak ada pengerjaan'}`;
+    tip.innerHTML = `<b>${tgl}</b><br>${p.n ? `${p.n} soal · ${p.acc}% akurat (${angkaSkor(p.b)} benar)` : 'Tidak ada pengerjaan'}`;
     tip.hidden = false;
     const v = val(p);
     if (v !== null) { hov.setAttribute('cx', X(b)); hov.setAttribute('cy', Y(v)); hov.removeAttribute('display'); } else hov.setAttribute('display', 'none');
