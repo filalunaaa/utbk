@@ -1256,7 +1256,7 @@ function renderSoal() {
   if (kunci[i]) {
     const benar = jawabBenar(s, jawab[i]);
     const skor = skorJawaban(s, jawab[i]);
-    fb.className = 'feedback ' + (skor === 1 ? 'benar' : 'salah');
+    fb.className = 'feedback ' + (skor === 1 ? 'benar' : skor > 0 ? 'parsial' : 'salah');
     const status = skor === 1 ? 'Benar!' : skor > 0 ? `Kurang lengkap (${Math.round(skor * 100)}%).` : 'Kurang tepat.';
     fb.innerHTML = `<strong>${status} ${skor < 1 ? 'Jawaban yang benar: ' + kunciHuruf(s) : ''}</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div>`;
   }
