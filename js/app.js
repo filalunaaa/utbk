@@ -12,11 +12,11 @@ const Penyimpanan = {
   catat(soal, skor) {
     const d = this.ambil();
     d.total++;
-    d.benar = (d.benar || 0) + skor;
+    d.benar = bulatSkor((d.benar || 0) + skor);
     [['mapel', soal.mataPelajaran], ['topik', namaTopikResmi(soal)]].forEach(([k, nama]) => {
       d[k][nama] = d[k][nama] || { total: 0, benar: 0 };
       d[k][nama].total++;
-      d[k][nama].benar = (d[k][nama].benar || 0) + skor;
+      d[k][nama].benar = bulatSkor((d[k][nama].benar || 0) + skor);
     });
     this.simpan(d);
   },
@@ -683,6 +683,9 @@ async function pullData() {
     localStorage.setItem(lokal, raw);
     terakhirDikirim[lokal] = raw;
   });
+  migrasiPresisiSkor();
+  await sinkronInti();
+  await sinkronOpsional();
 }
 // Kirim hanya data yang berubah sejak terakhir dikirim
 async function sinkronInti() {
@@ -816,7 +819,17 @@ const skorJawaban = (s, j) => {
   return Math.min(1, new Set(pilihan).size / kunci.length);
 };
 const jawabBenar = (s, j) => skorJawaban(s, j) === 1;
-const angkaSkor = (v) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(Number(v) || 0);
+const bulatSkor = (v) => Math.round((Number(v) || 0) * 1000) / 1000;
+const tambahSkor = (a, b) => bulatSkor((Number(a) || 0) + (Number(b) || 0));
+const angkaSkor = (v) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(bulatSkor(v));
+function migrasiPresisiSkor() {
+  const normStat = (d) => { if (!d || typeof d !== 'object') return d; if ('benar' in d) d.benar = bulatSkor(d.benar); ['mapel','topik'].forEach((k) => { if (d[k] && typeof d[k] === 'object') Object.values(d[k]).forEach((x) => { if (x && typeof x === 'object' && 'benar' in x) x.benar = bulatSkor(x.benar); }); }); return d; };
+  const normList = (list) => { if (!Array.isArray(list)) return list; list.forEach((r) => { if (r && r.sc !== undefined) r.sc = bulatSkor(r.sc); }); return list; };
+  try { const d = JSON.parse(localStorage.getItem('utbk_testing_stats') || 'null'); if (d) localStorage.setItem('utbk_testing_stats', JSON.stringify(normStat(d))); } catch (e) {}
+  try { const d = JSON.parse(localStorage.getItem('utbk_riwayat') || 'null'); if (Array.isArray(d)) localStorage.setItem('utbk_riwayat', JSON.stringify(normList(d))); } catch (e) {}
+  try { const d = JSON.parse(localStorage.getItem('utbk_riwayat_sesi') || 'null'); if (Array.isArray(d)) { d.forEach((x) => { if (!x || typeof x !== 'object') return; if (x.b !== undefined) x.b = bulatSkor(x.b); if (Array.isArray(x.item)) normList(x.item); }); localStorage.setItem('utbk_riwayat_sesi', JSON.stringify(d)); } } catch (e) {}
+}
+migrasiPresisiSkor();
 const teksJawabanmu = (s, j) => (j === null || j === undefined || (Array.isArray(j) && !j.length) ? 'Tidak dijawab'
   : adaIsian(s) ? String(j) : Array.isArray(j) ? j.map((k) => HURUF[k]).join(', ') : HURUF[j]);
 // Tampilan pilihan (atau kotak jawaban untuk soal isian) yang dipakai di review, riwayat, dan bank soal.
@@ -1295,7 +1308,7 @@ function hasilRinci(soal, jawab, poin, mode) {
   $('hasil-ket').textContent = `${mode === 'tryout' ? 'Try Out' : 'Latihan'} · ${n} soal`;
   const w = (v) => `${(v / n) * 100}%`;
   const mp = {};
-  soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; mp[m].b += skorJawaban(s, jawab[k]); });
+  soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; mp[m].b = tambahSkor(mp[m].b, skorJawaban(s, jawab[k])); });
   const baris = Object.entries(mp).map(([m, x]) => { const q = Math.round((x.b / x.n) * 100); return `<div class="hbar"><span class="nm">${esc(namaMapel(m))}</span><div class="tr"><div class="fl ${q < 50 ? 'lv-rendah' : q < 75 ? 'lv-sedang' : 'lv-tinggi'}" style="width:${Math.max(2, q)}%"></div></div><span class="nilai">${q}% <span class="muted">· ${angkaSkor(x.b)}/${x.n}</span></span></div>`; }).join('');
   $('hasil-rinci').innerHTML = `<p class="label" style="margin-top:0">Komposisi jawaban</p>
     <div class="komposisi" role="img" aria-label="${benar} benar, ${parsial} parsial, ${salah} salah, ${kosong} kosong"><span class="seg-benar" style="width:${w(benar)}"></span><span class="seg-parsial" style="width:${w(parsial)}"></span><span class="seg-salah" style="width:${w(salah)}"></span><span class="seg-kosong" style="width:${w(kosong)}"></span></div>
@@ -1474,7 +1487,7 @@ function migrasiSesiLama() {
       const g = grup[grup.length - 1];
       if (g && r.t - g[g.length - 1].t < 5 * 60 * 1000) g.push(r); else grup.push([r]);
     });
-    const sesiLama = grup.map((g) => ({ id: 'l' + g[0].t, t: g[0].t, mode: 'tryout', d: 0, n: g.length, b: g.reduce((sum, r) => sum + (Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0)), 0),
+    const sesiLama = grup.map((g) => ({ id: 'l' + g[0].t, t: g[0].t, mode: 'tryout', d: 0, n: g.length, b: bulatSkor(g.reduce((sum, r) => tambahSkor(sum, Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0)), 0)),
       item: g.map((r) => ({ id: String(r.id), j: kosongJ(r.j) ? null : r.j, b: !!r.b, sc: Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0), m: r.mapel || '', tp: r.topik || '' })) }));
     RiwayatSesi.simpan(sesiLama.slice(-RiwayatSesi.MAKS));
   } catch (e) {}
@@ -1517,7 +1530,7 @@ function statSesi(e, peta, m) {
     [[topik, x.tp], [mapel, x.m]].forEach(([o, nm]) => {
       if (!nm) return;
       o[nm] = o[nm] || { n: 0, b: 0 };
-      o[nm].n++; if (!kosongJ(r.j)) o[nm].b += skorRiwayat(r);
+      o[nm].n++; if (!kosongJ(r.j)) o[nm].b = tambahSkor(o[nm].b, skorRiwayat(r));
     });
   });
   return { n, b, k, s: salah, topik, mapel, p: n ? Math.round((b / n) * 100) : 0 };
@@ -1718,7 +1731,7 @@ function analisisHTML(buka) {
 let periodeStat = '30';
 function garisHTML(data) {
   const per = {};
-  data.forEach((r) => { const k = new Date(r.t).toLocaleDateString('sv-SE'); per[k] = per[k] || { n: 0, b: 0 }; per[k].n++; per[k].b += skorRiwayat(r); });
+  data.forEach((r) => { const k = new Date(r.t).toLocaleDateString('sv-SE'); per[k] = per[k] || { n: 0, b: 0 }; per[k].n++; per[k].b = tambahSkor(per[k].b, skorRiwayat(r)); });
   const hari = Object.keys(per).sort();
   const W = 600, H = 200, L = 36, R = 14, T = 12, B = 26;
   const x = (i) => (hari.length === 1 ? L + (W - L - R) / 2 : L + (i * (W - L - R)) / (hari.length - 1));
@@ -1741,7 +1754,7 @@ function grafikStatHTML() {
   if (!data.length) return kepala + '<div class="state-kosong"><strong>Belum ada data pada periode ini</strong><p class="muted">Kerjakan soal untuk melihat grafik perkembanganmu.</p></div>';
   const kel = (kunci) => {
     const o = {};
-    data.forEach((r) => { const k = r[kunci]; if (!k) return; o[k] = o[k] || { n: 0, b: 0 }; o[k].n++; o[k].b += skorRiwayat(r); });
+    data.forEach((r) => { const k = r[kunci]; if (!k) return; o[k] = o[k] || { n: 0, b: 0 }; o[k].n++; o[k].b = tambahSkor(o[k].b, skorRiwayat(r)); });
     return o;
   };
   const pct = (x) => Math.round((x.b / x.n) * 100);
@@ -1868,7 +1881,7 @@ function renderStatistik() {
     // topik yang punya statistik tapi mapelnya tidak diketahui
     const sisa = Object.fromEntries(Object.entries(topikLengkap).filter(([tp]) => !mapelTopik[tp]));
     if (Object.keys(sisa).length) {
-      const tot = Object.values(sisa).reduce((a, x) => ({ total: a.total + x.total, benar: a.benar + x.benar }), { total: 0, benar: 0 });
+      const tot = Object.values(sisa).reduce((a, x) => ({ total: a.total + x.total, benar: tambahSkor(a.benar, x.benar) }), { total: 0, benar: 0 });
       html += bagian('Lainnya', tot, sisa);
     }
     return html || '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
@@ -3532,7 +3545,7 @@ function kunciTgl(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).p
 function dataGrafik() {
   const r = Riwayat.ambil().filter((x) => x && Number.isFinite(x.t));
   const per = {};
-  r.forEach((x) => { const k = kunciTgl(new Date(x.t)); const o = per[k] || (per[k] = { n: 0, b: 0 }); o.n++; o.b += skorRiwayat(x); });
+  r.forEach((x) => { const k = kunciTgl(new Date(x.t)); const o = per[k] || (per[k] = { n: 0, b: 0 }); o.n++; o.b = tambahSkor(o.b, skorRiwayat(x)); });
   const hariIni = new Date(); hariIni.setHours(0, 0, 0, 0);
   let awal = new Date(hariIni);
   if (grafikState.p === 'semua') { if (r.length) { awal = new Date(Math.min(...r.map((x) => x.t))); awal.setHours(0, 0, 0, 0); } }
