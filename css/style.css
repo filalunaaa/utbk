@@ -1489,32 +1489,32 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
 }
 
 
-/* Ikon pengaturan: biru solid, tanpa neon atau glow */
+/* Ikon pengaturan: biru navy lembut, tanpa neon atau glow */
 .dash-gear,
 .dash-gear:hover,
 .dash-gear:active{
-  color:#1068f8;
+  color:#345675;
   background:var(--card);
   border-color:var(--border);
   box-shadow:none;
   filter:none;
   text-shadow:none;
 }
-.dash-gear:hover{background:#edf4ff;border-color:#d5e4ff}
-.dash-gear:focus-visible{outline:2px solid rgba(16,104,248,.28);outline-offset:2px;box-shadow:none}
+.dash-gear:hover{background:#f1f5f9;border-color:#cbd5e1}
+.dash-gear:focus-visible{outline:2px solid rgba(52,86,117,.22);outline-offset:2px;box-shadow:none}
 
 @media(max-width:899px){
   #btn-keluar-ujian,
   #btn-keluar-ujian:hover,
   #btn-keluar-ujian:active{
-    color:#1068f8;
+    color:#345675;
     background:transparent;
     border:1px solid var(--border);
     box-shadow:none;
     filter:none;
     text-shadow:none;
   }
-  #btn-keluar-ujian:hover{background:#edf4ff;border-color:#d5e4ff}
-  #btn-keluar-ujian svg{stroke:#1068f8}
-  #btn-keluar-ujian:focus-visible{outline:2px solid rgba(16,104,248,.28);outline-offset:2px;box-shadow:none}
+  #btn-keluar-ujian:hover{background:#f1f5f9;border-color:#cbd5e1}
+  #btn-keluar-ujian svg{stroke:#345675}
+  #btn-keluar-ujian:focus-visible{outline:2px solid rgba(52,86,117,.22);outline-offset:2px;box-shadow:none}
 }
