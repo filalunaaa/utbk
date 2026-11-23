@@ -1489,3 +1489,35 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   .topbar .keluar-kuis{display:none!important}
   .topbar .topbar-pengaturan{display:inline-flex}
 }
+
+
+/* Timer UTBK: warna solid dan tampilan hitung mundur minimal */
+#menu>#kartu-hitung.hero{
+  background:#1068f8;
+  color:#fff;
+  box-shadow:none;
+}
+#menu>#kartu-hitung.hero:hover{
+  background:#1068f8;
+  border-color:transparent;
+  box-shadow:none;
+  transform:none;
+}
+.overlay-hitung{
+  background:#102b55;
+  animation:fadeIn .2s ease-out;
+}
+.isi-hitung{color:#fff}
+.judul-hitung{color:#dbeafe;letter-spacing:.08em}
+.tile-waktu{
+  background:#193d6b;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:12px;
+  backdrop-filter:none;
+  box-shadow:none;
+}
+.tile-waktu .angka{color:#fff;text-shadow:none}
+.tile-waktu .lbl{color:#dbeafe;letter-spacing:.06em}
+.tile-detik{animation:none}
+.tgl-hitung{color:#dbeafe}
+.pesan-hitung{color:#c5d8f2}
