@@ -1674,3 +1674,35 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
     fill:#a3b2c5!important;
   }
 }
+
+
+/* Editor soal langsung saat latihan — panel khusus admin */
+.editor-soal-live{position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));background:rgba(15,23,42,.62);overflow-y:auto}
+.editor-soal-live[hidden]{display:none!important}
+.editor-soal-live-panel{width:min(760px,100%);max-height:100%;overflow:auto;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:18px;padding:clamp(16px,3vw,26px);box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.esl-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.esl-head h2{margin:3px 0 4px;font-size:1.25rem}
+.esl-head p{margin:0;font-size:.82rem;overflow-wrap:anywhere}
+.esl-eyebrow{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:var(--accent)}
+.esl-label{display:block;margin:13px 0 6px;font-size:.88rem;font-weight:700}
+.esl-area{display:block;width:100%;min-height:76px;resize:vertical;line-height:1.5;font:inherit;font-size:.9rem}
+#esl-soal{min-height:120px}
+#esl-pembahasan{min-height:140px}
+.esl-opsi{min-height:64px}
+.esl-fieldset{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:14px 0}
+.esl-fieldset legend{padding:0 5px}
+.esl-kunci-grid{display:flex;flex-wrap:wrap;gap:14px}
+.esl-kunci-grid label{display:flex;align-items:center;gap:6px;font-weight:700;cursor:pointer}
+.esl-hint{font-size:.8rem;color:var(--muted);line-height:1.55;margin:12px 0}
+.esl-pesan{min-height:1.4em;margin:8px 0;color:var(--accent);font-size:.86rem;overflow-wrap:anywhere}
+.esl-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:12px;border-top:1px solid var(--border)}
+.esl-trigger{margin-left:auto;white-space:nowrap}
+.esl-actions .btn{min-height:44px}
+body.esl-terbuka{overflow:hidden}
+@media(max-width:520px){
+ .editor-soal-live{align-items:flex-end;padding:0}
+ .editor-soal-live-panel{width:100%;max-height:94dvh;border-radius:18px 18px 0 0;padding:18px 14px calc(16px + env(safe-area-inset-bottom,0px))}
+ .esl-actions{position:sticky;bottom:-16px;background:var(--card);padding:12px 0 4px}
+ .esl-actions .btn{flex:1}
+ .esl-trigger{font-size:.78rem;padding:7px 10px}
+}
