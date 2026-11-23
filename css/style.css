@@ -1461,3 +1461,21 @@ small{font-weight:600}
 /* Animasi refresh tetap terlihat meskipun preferensi animasi halaman dikurangi */
 html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite!important}
 @media(prefers-reduced-motion:reduce){.berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite!important}}
+
+
+/* Hover kartu dashboard: netral, halus, tanpa efek neon */
+@media(hover:hover){
+  #kartu-ringkasan:hover,
+  #kartu-hitung:hover,
+  #kartu-perkuat:hover,
+  .sum-card:hover,
+  .qa:hover,
+  .sx-kartu:hover,
+  .set-kat:hover,
+  .rs-kartu:hover{
+    background:color-mix(in srgb,var(--text) 4%,var(--card));
+    border-color:var(--border);
+    box-shadow:none;
+    transform:none;
+  }
+}
