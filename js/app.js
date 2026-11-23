@@ -1245,6 +1245,7 @@ function renderSoal() {
   const s = soal[i];
   $('bar').style.width = ((i + 1) / soal.length) * 100 + '%';
   $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
+  renderTombolEditSoal(s);
   $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
   if (adaIsian(s)) {
     const j = jawab[i];
@@ -1297,6 +1298,147 @@ function renderSoal() {
   renderUjianUI();
   rumus($('kuis'));
 }
+
+
+// ---------- Edit soal langsung saat latihan (admin) ----------
+let editorSoalLiveFokus = null;
+function buatEditorSoalLive() {
+  if ($('editor-soal-live')) return;
+  const el = document.createElement('div');
+  el.id = 'editor-soal-live';
+  el.className = 'editor-soal-live';
+  el.hidden = true;
+  el.innerHTML = '<section class="editor-soal-live-panel" role="dialog" aria-modal="true" aria-labelledby="esl-judul">' +
+    '<header class="esl-head"><div><span class="esl-eyebrow">PANEL ADMIN</span><h2 id="esl-judul">Edit soal aktif</h2><p id="esl-meta" class="muted"></p></div><button type="button" class="btn btn-secondary btn-kecil" data-esl-tutup aria-label="Tutup editor">Tutup</button></header>' +
+    '<form id="esl-form" novalidate><label class="esl-label" for="esl-soal">Pertanyaan</label><textarea id="esl-soal" class="input esl-area" rows="5" required></textarea>' +
+    '<div id="esl-opsi-wrap"></div><div id="esl-kunci-wrap"></div>' +
+    '<label class="esl-label" for="esl-pembahasan">Pembahasan</label><textarea id="esl-pembahasan" class="input esl-area" rows="6" required></textarea>' +
+    '<p class="esl-hint">Format HTML dan LaTeX tetap didukung. Periksa kembali kunci dan pembahasan sebelum menyimpan.</p>' +
+    '<p id="esl-pesan" class="esl-pesan" role="status" aria-live="polite"></p>' +
+    '<footer class="esl-actions"><button type="button" class="btn btn-secondary" data-esl-batal>Batal</button><button type="submit" class="btn btn-primary" id="esl-simpan">Simpan untuk semua pengguna</button></footer></form></section>';
+  document.body.appendChild(el);
+  el.addEventListener('click', (e) => {
+    if (e.target === el || e.target.closest('[data-esl-tutup],[data-esl-batal]')) tutupEditorSoalLive();
+  });
+  el.querySelector('#esl-form').addEventListener('submit', simpanEditorSoalLive);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !el.hidden) tutupEditorSoalLive();
+  });
+}
+function renderTombolEditSoal(s) {
+  const baris = document.querySelector('#kuis .baris-info');
+  if (!baris) return;
+  let btn = $('btn-edit-soal-aktif');
+  const boleh = !!(ADMIN && s && Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id)));
+  if (!boleh) { if (btn) btn.remove(); return; }
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'btn-edit-soal-aktif';
+    btn.className = 'btn btn-secondary btn-kecil esl-trigger';
+    btn.textContent = 'Edit soal';
+    btn.addEventListener('click', bukaEditorSoalLive);
+    baris.appendChild(btn);
+  }
+}
+function bukaEditorSoalLive() {
+  if (!ADMIN || !sesi || !sesi.aktif) return;
+  const s = sesi.soal[sesi.i];
+  if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
+  buatEditorSoalLive();
+  editorSoalLiveFokus = document.activeElement;
+  const el = $('editor-soal-live');
+  $('esl-meta').textContent = String(s.id) + ' · ' + namaMapel(s.mataPelajaran) + ' · ' + s.topik + ' · ' + tipeSoal(s);
+  $('esl-soal').value = s.soal || '';
+  $('esl-pembahasan').value = s.pembahasan || '';
+  const tipe = tipeSoal(s);
+  $('esl-opsi-wrap').innerHTML = tipe === 'isian' ? '<p class="esl-hint">Soal isian bilangan cacah tidak menggunakan opsi.</p>' :
+    '<div class="esl-label">Pilihan jawaban</div>' + Array.from({length:5},(_,i) =>
+      '<label class="esl-label" for="esl-opsi-' + i + '">Opsi ' + HURUF[i] + '</label><textarea class="input esl-area esl-opsi" id="esl-opsi-' + i + '" rows="2">' + esc((s.opsi||[])[i]||'') + '</textarea>'
+    ).join('');
+  if (tipe === 'pg') {
+    $('esl-kunci-wrap').innerHTML = '<label class="esl-label" for="esl-kunci-pg">Kunci jawaban</label><select class="input" id="esl-kunci-pg">' +
+      HURUF.map((h,i)=>'<option value="' + i + '" ' + (Number(s.jawaban)===i?'selected':'') + '>' + h + '</option>').join('') + '</select>';
+  } else if (tipe === 'kompleks') {
+    $('esl-kunci-wrap').innerHTML = '<fieldset class="esl-fieldset"><legend class="esl-label">Kunci jawaban — pilih semua yang benar</legend><div class="esl-kunci-grid">' +
+      HURUF.map((h,i)=>'<label><input type="checkbox" data-esl-kunci value="' + i + '" ' + ((Array.isArray(s.jawaban)&&s.jawaban.includes(i))?'checked':'') + '> ' + h + '</label>').join('') +
+      '</div></fieldset>';
+  } else {
+    $('esl-kunci-wrap').innerHTML = '<label class="esl-label" for="esl-kunci-isian">Kunci jawaban (bilangan cacah)</label><input class="input" id="esl-kunci-isian" type="number" min="0" step="1" value="' + Number(s.jawaban) + '">';
+  }
+  $('esl-pesan').textContent = '';
+  $('esl-simpan').disabled = false;
+  el.hidden = false;
+  document.body.classList.add('esl-terbuka');
+  $('esl-soal').focus();
+}
+function tutupEditorSoalLive() {
+  const el = $('editor-soal-live');
+  if (!el) return;
+  el.hidden = true;
+  document.body.classList.remove('esl-terbuka');
+  if (editorSoalLiveFokus && editorSoalLiveFokus.focus) editorSoalLiveFokus.focus();
+}
+async function simpanEditorSoalLive(e) {
+  e.preventDefault();
+  if (!ADMIN || !sesi || !sesi.aktif) return;
+  const tombol = $('esl-simpan'), pesan = $('esl-pesan');
+  const lama = sesi.soal[sesi.i];
+  const tipe = tipeSoal(lama);
+  const soal = $('esl-soal').value.trim();
+  const pembahasan = $('esl-pembahasan').value.trim();
+  if (!soal || !pembahasan) { pesan.textContent = 'Pertanyaan dan pembahasan wajib diisi.'; return; }
+  const opsi = tipe === 'isian' ? [] : Array.from({length:5},(_,i)=>$('esl-opsi-' + i).value.trim());
+  if (tipe !== 'isian' && opsi.some((x)=>!x)) { pesan.textContent = 'Semua lima opsi harus diisi.'; return; }
+  let jawaban;
+  if (tipe === 'pg') jawaban = Number($('esl-kunci-pg').value);
+  else if (tipe === 'kompleks') jawaban = [...document.querySelectorAll('[data-esl-kunci]:checked')].map(x=>Number(x.value)).sort((a,b)=>a-b);
+  else jawaban = Number($('esl-kunci-isian').value);
+  if (tipe === 'kompleks' && !jawaban.length) { pesan.textContent = 'Pilih minimal satu opsi yang benar.'; return; }
+  if (tipe === 'isian' && (!Number.isSafeInteger(jawaban) || jawaban < 0)) { pesan.textContent = 'Kunci isian harus bilangan cacah.'; return; }
+  const id = String(lama.id);
+  const data = { ...sinId(lama), soal: sanitize(soal), opsi: opsi.map(sanitize), jawaban, pembahasan: sanitize(pembahasan) };
+  tombol.disabled = true;
+  pesan.textContent = 'Menyimpan perubahan ke server...';
+  try {
+    await rest('soal_default?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH', prefer: 'return=representation',
+      body: { data, diperbarui_pada: new Date().toISOString() }
+    });
+    Object.assign(lama, data, { id });
+    const diBank = SOAL.find(x=>String(x.id)===id);
+    if (diBank) Object.assign(diBank, data, { id });
+    DefaultSoal.asli[id] = kanon(sinId(lama));
+    DefaultSoal.simpanCache();
+    pesan.textContent = 'Tersimpan. Soal terbaru akan tampil kepada pengguna lain saat soal ini dimuat atau disegarkan.';
+    renderSoal();
+    setTimeout(tutupEditorSoalLive, 700);
+  } catch (err) {
+    pesan.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : 'Periksa koneksi dan izin admin.');
+    tombol.disabled = false;
+  }
+}
+async function pantauPerubahanSoalAktif() {
+  if (ADMIN || !sesi || !sesi.aktif) return;
+  const s = sesi.soal[sesi.i];
+  if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
+  try {
+    const rows = await rest('soal_default?id=eq.' + encodeURIComponent(String(s.id)) + '&select=id,data,diperbarui_pada');
+    if (!rows || !rows.length || !rows[0].data) return;
+    const dataBaru = rows[0].data;
+    if (kanon(dataBaru) === kanon(sinId(s))) return;
+    const versi = SOAL.find(x=>String(x.id)===String(s.id));
+    if (versi) Object.assign(versi, dataBaru, { id: String(s.id) });
+    if (!sesi.kunci[sesi.i]) {
+      Object.assign(s, dataBaru, { id: String(s.id) });
+      DefaultSoal.asli[String(s.id)] = kanon(sinId(s));
+      DefaultSoal.simpanCache();
+      renderSoal();
+    }
+  } catch (err) {
+    console.warn('Pemeriksaan pembaruan soal gagal:', err);
+  }
+}
+setInterval(pantauPerubahanSoalAktif, 15000);
 
 function hasilRinci(soal, jawab, poin, mode) {
   const n = soal.length;
