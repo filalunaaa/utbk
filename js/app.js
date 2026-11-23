@@ -1661,7 +1661,7 @@ function renderDetailSesi() {
       <div class="sx-hero-atas">${ringSesi(st.p, 84)}
         <div><span class="sx-mode">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span><h2>${tglPenuh}</h2><p class="muted" style="margin:2px 0 0">${st.n} soal${dur}</p></div></div>
       <div class="sx-tags" style="margin-top:12px">${rdState.m ? `<span class="sx-tag">${esc(namaMapel(rdState.m))}</span>` : tagMapel(a, 6)}</div>
-      <div class="sx-lgd"><span><i class="benar"></i><b>${st.b}</b> benar</span><span><i class="salah"></i><b>${st.s}</b> salah</span>${st.k ? `<span><i class="kosong"></i><b>${st.k}</b> kosong</span>` : ''}</div>
+      <div class="sx-lgd"><span><i class="benar"></i><b>${angkaSkor(st.b)}</b> poin</span><span><i class="salah"></i><b>${st.s}</b> salah</span>${st.k ? `<span><i class="kosong"></i><b>${st.k}</b> kosong</span>` : ''}</div>
       <p class="gm-judul" style="margin-top:14px">Peta soal (ketuk nomor untuk melompat)</p><div class="gm-petak">${petak}</div>
     </div>
     <div class="card">
@@ -1814,7 +1814,7 @@ function renderStatistik() {
   const d = Penyimpanan.ambil();
   const baris = (nama, x) => {
     const p = x.total ? Math.round((x.benar / x.total) * 100) : 0;
-    return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${x.benar} dari ${x.total} benar (${p}%)</span></div>
+    return `<div class="stat-baris"><div class="stat-judul"><span>${esc(nama)}</span><span>${angkaSkor(x.benar)} dari ${x.total} poin (${p}%)</span></div>
       <div class="progress"><div class="progress-bar" style="width:${p}%;background:${warnaLevel(p)}"></div></div></div>`;
   };
   // Tampilkan semua mapel/topik yang ada di bank soal, termasuk yang belum pernah dikerjakan
@@ -1870,7 +1870,7 @@ function renderStatistik() {
       : baris2(n, x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   $('isi-statistik').innerHTML =
-    `<div class="ringkasan-bank">${[['Soal dikerjakan', d.total, ''], ['Benar', d.benar, 'benar'], ['Salah', d.total - d.benar, 'salah'], ['Akurasi', (d.total ? Math.round((d.benar / d.total) * 100) : 0) + '%', '']].map(([a, v, w]) => `<div class="stat-tile"><span>${a}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`).join('')}</div>` +
+    `<div class="ringkasan-bank">${[['Soal dikerjakan', d.total, ''], ['Poin diperoleh', angkaSkor(d.benar), 'benar'], ['Poin belum diperoleh', angkaSkor(d.total - d.benar), 'salah'], ['Akurasi', (d.total ? Math.round((d.benar / d.total) * 100) : 0) + '%', '']].map(([a, v, w]) => `<div class="stat-tile"><span>${a}</span><strong${w ? ` style="color:var(--${w})"` : ''}>${v}</strong></div>`).join('')}</div>` +
     `<div id="kemampuan-sub" style="margin-bottom:14px">${kemampuanSubHTML()}</div>` +
     `<div id="riwayat-sesi">${riwayatSesiHTML()}</div>` +
     `<div id="grafik-stat">${grafikStatHTML()}</div>` +
