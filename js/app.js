@@ -816,7 +816,7 @@ const skorJawaban = (s, j) => {
   return Math.min(1, new Set(pilihan).size / kunci.length);
 };
 const jawabBenar = (s, j) => skorJawaban(s, j) === 1;
-const angkaSkor = (v) => Number.isInteger(v) ? String(v) : Number(v.toFixed(2)).toString();
+const angkaSkor = (v) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(Number(v) || 0);
 const teksJawabanmu = (s, j) => (j === null || j === undefined || (Array.isArray(j) && !j.length) ? 'Tidak dijawab'
   : adaIsian(s) ? String(j) : Array.isArray(j) ? j.map((k) => HURUF[k]).join(', ') : HURUF[j]);
 // Tampilan pilihan (atau kotak jawaban untuk soal isian) yang dipakai di review, riwayat, dan bank soal.
@@ -3606,7 +3606,7 @@ function renderBeranda() {
   $('kartu-ringkasan').innerHTML =
     kartu('<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>', d.total, 'Soal dikerjakan') +
     kartu('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>', d.total ? Math.round((d.benar / d.total) * 100) + '%' : '–', 'Akurasi') +
-    kartu('<path d="M5 12l5 5L20 7"/>', Math.round(d.benar * 10) / 10, 'Jawaban benar');
+    kartu('<path d="M5 12l5 5L20 7"/>', angkaSkor(d.benar), 'Jawaban benar');
 
   gambarGrafik();
   renderBerita();
