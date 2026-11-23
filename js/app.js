@@ -3669,7 +3669,7 @@ var BERITA_TTL = 15 * 60 * 1000;
 try { const c = JSON.parse(sessionStorage.getItem('neon_berita')); if (c && Array.isArray(c.data)) { _berita.t = c.t; _berita.data = c.data; } } catch (e) {}
 function tampilBerita(basi) {
   const el = $('kartu-berita');
-  el.innerHTML = `<div class="berita-aksi"><h2 style="margin:0">Berita UTBK terbaru</h2><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Perbarui</button></div>
+  el.innerHTML = `<div class="berita-aksi"><h2 style="margin:0">Berita UTBK terbaru</h2><button type="button" class="berita-refresh" data-berita="muat" aria-label="Perbarui berita" title="Perbarui berita"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"/></svg></button></div>
     ${basi ? '<p class="muted">Gagal memperbarui, menampilkan berita tersimpan.</p>' : ''}
     <ul class="daftar-berita">${_berita.data.slice(0, 5).map((b) => `<li><a href="${esc(b.link)}" target="_blank" rel="noopener">${esc(b.judul)}</a>
       <div class="muted">${esc(b.sumber || '')}${b.tanggal ? ' · ' + esc(fmtTglBerita(b.tanggal)) : ''}</div></li>`).join('')}</ul>
