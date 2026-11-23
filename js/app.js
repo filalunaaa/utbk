@@ -752,6 +752,7 @@ async function mulaiSesi() {
   try {
     const a = await rest(`admin_users?user_id=eq.${AkunApp.sesi().user_id}&select=user_id`);
     ADMIN = !!(a && a.length);
+    if (ADMIN) await DefaultSoal.muat();
   } catch (e) { ADMIN = false; }
   tampilkanPanelAdmin();
   renderSemuaBank();
@@ -1400,10 +1401,11 @@ async function simpanEditorSoalLive(e) {
   tombol.disabled = true;
   pesan.textContent = 'Menyimpan perubahan ke server...';
   try {
-    await rest('soal_default?id=eq.' + encodeURIComponent(id), {
+    const hasilSimpan = await rest('soal_default?id=eq.' + encodeURIComponent(id), {
       method: 'PATCH', prefer: 'return=representation',
       body: { data, diperbarui_pada: new Date().toISOString() }
     });
+    if (!Array.isArray(hasilSimpan) || !hasilSimpan.length) throw new Error('Server tidak mengonfirmasi perubahan. Periksa hak akses admin.');
     Object.assign(lama, data, { id });
     const diBank = SOAL.find(x=>String(x.id)===id);
     if (diBank) Object.assign(diBank, data, { id });
@@ -1426,14 +1428,19 @@ async function pantauPerubahanSoalAktif() {
     if (!rows || !rows.length || !rows[0].data) return;
     const dataBaru = rows[0].data;
     if (kanon(dataBaru) === kanon(sinId(s))) return;
-    const versi = SOAL.find(x=>String(x.id)===String(s.id));
-    if (versi) Object.assign(versi, dataBaru, { id: String(s.id) });
-    if (!sesi.kunci[sesi.i]) {
-      Object.assign(s, dataBaru, { id: String(s.id) });
-      DefaultSoal.asli[String(s.id)] = kanon(sinId(s));
-      DefaultSoal.simpanCache();
+    const id = String(s.id);
+    const indeksSoal = SOAL.findIndex(x=>String(x.id)===id);
+    const sudahDijawab = sesi.mode === 'latihan' && sesi.kunci[sesi.i];
+    if (sudahDijawab) {
+      // Pertahankan snapshot sesi yang sudah dijawab; gunakan versi baru untuk sesi berikutnya.
+      if (indeksSoal >= 0) SOAL[indeksSoal] = { ...SOAL[indeksSoal], ...dataBaru, id };
+    } else {
+      Object.assign(s, dataBaru, { id });
+      if (indeksSoal >= 0 && SOAL[indeksSoal] !== s) Object.assign(SOAL[indeksSoal], dataBaru, { id });
       renderSoal();
     }
+    DefaultSoal.asli[id] = kanon(dataBaru);
+    DefaultSoal.simpanCache();
   } catch (err) {
     console.warn('Pemeriksaan pembaruan soal gagal:', err);
   }
