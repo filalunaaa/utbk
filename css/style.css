@@ -100,6 +100,9 @@ p{margin-bottom:12px}
 .isian-review .kunci{border-color:var(--benar)}
 .opsi.benar{border-color:var(--benar);background:var(--benar-soft)}
 .opsi.salah{border-color:var(--salah);background:var(--salah-soft)}
+.opsi.parsial{border-color:var(--warning);background:var(--warning-soft);color:#704b12}
+.opsi.parsial .cek{background:var(--warning);border-color:var(--warning)}
+.opsi.parsial .huruf{background:var(--warning);color:#fff}
 .feedback{margin-top:16px;padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--primary-soft)}
 .feedback.benar{background:var(--benar-soft);border-color:var(--benar)}
 .feedback.salah{background:var(--salah-soft);border-color:var(--salah)}
