@@ -1706,3 +1706,38 @@ body.esl-terbuka{overflow:hidden}
  .esl-actions .btn{flex:1}
  .esl-trigger{font-size:.78rem;padding:7px 10px}
 }
+
+/* Mobile parity: keep the homepage chart and segmented controls consistent with desktop.
+   Scoped to the homepage chart and narrow viewports so desktop styling is unchanged. */
+@media (max-width: 768px) {
+  #kartu-grafik .seg {
+    background: var(--primary-soft) !important;
+  }
+  #kartu-grafik .seg button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent !important;
+    color: var(--accent) !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #kartu-grafik .seg button[aria-pressed="true"] {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+  }
+  #kartu-grafik .grafik svg path[fill="none"] {
+    stroke: var(--primary) !important;
+  }
+  #kartu-grafik .grafik svg path[fill="var(--primary)"] {
+    fill: var(--primary) !important;
+  }
+  #kartu-grafik .grafik svg line {
+    stroke: var(--border) !important;
+  }
+  #kartu-grafik .grafik svg text {
+    fill: var(--muted) !important;
+  }
+  #kartu-grafik .grafik svg circle {
+    stroke: var(--primary) !important;
+  }
+}
