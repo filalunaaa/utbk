@@ -1257,8 +1257,10 @@ function renderSoal() {
     $('opsi-list').innerHTML = s.opsi.map((o, k) => {
       let kelas = 'opsi';
       if (kunci[i]) {
-        if (kunciOpsi(s, k)) kelas += ' benar';
-        else if (dipilih(s, jawab[i], k)) kelas += ' salah';
+        const skorAkhir = skorJawaban(s, jawab[i]);
+        if (kunciOpsi(s, k)) {
+          kelas += skorAkhir > 0 && skorAkhir < 1 && dipilih(s, jawab[i], k) ? ' parsial' : ' benar';
+        } else if (dipilih(s, jawab[i], k)) kelas += ' salah';
       } else if (dipilih(s, jawab[i], k)) kelas += ' terpilih';
       return `<div class="${kelas}" data-k="${k}">${adaGanda(s) ? '<span class="cek"></span>' : ''}<span class="huruf">${HURUF[k]}</span>${isiOpsi(o)}</div>`;
     }).join('');
