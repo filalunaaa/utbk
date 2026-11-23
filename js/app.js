@@ -4403,8 +4403,11 @@ segarkanSoalBawaan();
         form: `<div class="ob-f" role="radiogroup" aria-label="Status pendidikan"><span class="ob-lab">Status pendidikan <span style="color:var(--ob-err)">*</span></span><div class="ob-grid2">${radio('ob-status', PROFIL_STATUS, p.statusPendidikan)}</div></div>` };
       case 5: return { teks: bubble('Di mana kamu sedang menempuh pendidikan?'), tombol: 'Lanjut',
         form: teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
-      case 6: return { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
-        form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
+      case 6: return p.statusPendidikan === 'mahasiswa'
+        ? { teks: bubble('Apa program studi yang sedang kamu tempuh saat ini?'), tombol: 'Lanjut',
+            form: teksIn('Program studi', {}, 'Contoh: Teknologi Laboratorium Medis', p.jurusan, 80, 'autocomplete="organization-title" ') }
+        : { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
+            form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
         form: teksIn('Target PTN', {}, 'Pilih atau masukkan PTN tujuanmu', draf.ptn, 80, 'list="ob-ptn" autocomplete="off" ') + datalist('ob-ptn', PTN_SARAN) };
       case 8: return { teks: bubble('Kalau begitu, program studi apa yang ingin kamu perjuangkan?'), tombol: 'Lanjut',
@@ -4424,11 +4427,15 @@ segarkanSoalBawaan();
 
   function render(mundur) {
     const p = ambilProfil(), k = isiLangkah(p), L = LANGKAH[tahap] || LANGKAH[12];
-    const akhir = tahap >= TOTAL, nomor = Math.min(tahap + 1, TOTAL);
-    const label = akhir ? 'Selesai' : `Pertanyaan ${nomor} dari ${TOTAL}`;
+    const akhir = tahap >= TOTAL;
+    const mahasiswa = p.statusPendidikan === 'mahasiswa';
+    const jumlahPertanyaan = mahasiswa ? TOTAL - 2 : TOTAL;
+    const tahapTampil = mahasiswa && tahap >= 7 && !akhir ? tahap - 2 : tahap;
+    const nomor = Math.min(tahapTampil + 1, jumlahPertanyaan);
+    const label = akhir ? 'Selesai' : `Pertanyaan ${nomor} dari ${jumlahPertanyaan}`;
     OB.innerHTML = `<div class="ob-wrap">
       <header class="ob-atas"><span class="ob-logo">nalarin</span><span class="ob-langkah">${label}</span></header>
-      <div class="ob-bar" role="progressbar" aria-label="Progres onboarding" aria-valuemin="0" aria-valuemax="${TOTAL}" aria-valuenow="${akhir ? TOTAL : nomor}"><i style="width:${akhir ? 100 : Math.round((nomor / TOTAL) * 100)}%"></i></div>
+      <div class="ob-bar" role="progressbar" aria-label="Progres onboarding" aria-valuemin="0" aria-valuemax="${jumlahPertanyaan}" aria-valuenow="${akhir ? jumlahPertanyaan : nomor}"><i style="width:${akhir ? 100 : Math.round((nomor / jumlahPertanyaan) * 100)}%"></i></div>
       <main class="ob-panggung"><div class="ob-slide${mundur ? ' mundur' : ''}" data-tahap="${tahap}">
         <div class="ob-naro"><div class="ob-spr"><div class="ob-gerak g-${L.gerak}${L.flip ? ' flip' : ''}" data-pose="${L.n}">${gambar(L.n, L.flip)}${aksenSvg(L.aksen)}</div></div></div>
         ${k.teks}
@@ -4515,7 +4522,12 @@ segarkanSoalBawaan();
         case 3: await simpanProfil({ deskripsi: val() }); return atur(4);
         case 4: { const s = OB.querySelector('[name="ob-status"]:checked'); if (!s) return pesan('Pilih status pendidikanmu dulu.'); await simpanProfil({ statusPendidikan: s.value }); return atur(5); }
         case 5: await simpanProfil({ sekolah: val() }); return atur(6);
-        case 6: { const j = OB.querySelector('[name="ob-jur"]:checked'); await simpanProfil({ jurusan: j ? j.value : '' }); return atur(7); }
+        case 6: {
+          const j = OB.querySelector('[name="ob-jur"]:checked');
+          const jurusan = j ? j.value : ($('ob-in') ? $('ob-in').value.trim() : '');
+          await simpanProfil({ jurusan });
+          return atur(ambilProfil().statusPendidikan === 'mahasiswa' ? 9 : 7);
+        }
         case 7: draf.ptn = val(); await simpanProfil({ target: gabungTarget() }); return atur(8);
         case 8: draf.prodi = val(); await simpanProfil({ target: gabungTarget() }); return atur(9);
         case 9: { const t = $('ob-in').value; if (t && t > hariIni()) return pesan('Tanggal lahir tidak boleh di masa depan.'); await simpanProfil({ tanggalLahir: t }); return atur(10); }
@@ -4545,7 +4557,10 @@ segarkanSoalBawaan();
   OB.addEventListener('submit', (e) => { e.preventDefault(); lanjut(); });
   OB.addEventListener('click', async (e) => {
     const t = e.target;
-    if (t.closest('[data-ob-kembali]')) { if (tahap > 0) atur(tahap - 1, true); return; }
+    if (t.closest('[data-ob-kembali]')) {
+      if (tahap > 0) atur(tahap === 9 && ambilProfil().statusPendidikan === 'mahasiswa' ? 6 : tahap - 1, true);
+      return;
+    }
     if (t.closest('[data-ob-keluar]')) { await aksiAkun('keluar'); return; }
     const av = t.closest('[data-ob-av]');
     if (av) { await simpanAvatar({ tipe: 'preset', id: av.dataset.obAv }); segarAvatar(); return; }
@@ -4596,6 +4611,7 @@ segarkanSoalBawaan();
   draf = (s && (s.ptn || s.prodi))
     ? { ptn: s.ptn, prodi: s.prodi }
     : pecahTarget(ambilProfil().target);
+  if (ambilProfil().statusPendidikan === 'mahasiswa' && (tahap === 7 || tahap === 8)) tahap = 9;
 
   render();
 };
@@ -4615,6 +4631,7 @@ segarkanSoalBawaan();
     draf = (s && (s.ptn || s.prodi)) ? { ptn: s.ptn, prodi: s.prodi } : pecahTarget(ambilProfil().target);
     // data profil sudah terisi (misal progres format lama): jangan mengulang dari nama
     if (tahap === 0 && String(ambilProfil().nama).trim()) tahap = 1;
+    if (ambilProfil().statusPendidikan === 'mahasiswa' && (tahap === 7 || tahap === 8)) tahap = 9;
     render();
   };
   window.tutupOnboarding = tutup;
