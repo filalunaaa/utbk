@@ -1591,3 +1591,66 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
     color:#a9bdd4;
   }
 }
+
+
+/* Android: kontrol dan grafik Akurasi/Soal Dikerjakan tanpa neon */
+@media(max-width:899px){
+  #kartu-grafik .seg{
+    background:#f1f5f9;
+    box-shadow:none!important;
+    filter:none!important;
+  }
+  #kartu-grafik .seg button,
+  #kartu-grafik .seg button[aria-pressed="true"]{
+    color:#475569;
+    background:transparent;
+    box-shadow:none!important;
+    text-shadow:none!important;
+    filter:none!important;
+  }
+  #kartu-grafik .seg button[aria-pressed="true"]{
+    background:#dbe3ec;
+    color:#26384d;
+  }
+  #grafik svg,
+  #grafik svg *{
+    filter:none!important;
+    box-shadow:none!important;
+    text-shadow:none!important;
+  }
+  #grafik svg path[stroke="var(--primary)"]{
+    stroke:#64748b!important;
+  }
+  #grafik svg path[fill="var(--primary)"]{
+    fill:#94a3b8!important;
+    fill-opacity:.10!important;
+  }
+  #grafik svg circle[stroke="var(--primary)"]{
+    stroke:#64748b!important;
+  }
+  #grafik svg circle[fill="var(--primary)"]{
+    fill:#64748b!important;
+  }
+  #grafik svg #gr-hov{
+    fill:#64748b!important;
+    stroke:#fff!important;
+  }
+  :root[data-theme="dark"] #kartu-grafik .seg{
+    background:#1b2738;
+  }
+  :root[data-theme="dark"] #kartu-grafik .seg button[aria-pressed="true"]{
+    background:#34465e;
+    color:#edf2f7;
+  }
+  :root[data-theme="dark"] #grafik svg path[stroke="var(--primary)"]{
+    stroke:#a3b2c5!important;
+  }
+  :root[data-theme="dark"] #grafik svg path[fill="var(--primary)"]{
+    fill:#94a3b8!important;
+  }
+  :root[data-theme="dark"] #grafik svg circle[stroke="var(--primary)"],
+  :root[data-theme="dark"] #grafik svg circle[fill="var(--primary)"]{
+    stroke:#a3b2c5!important;
+    fill:#a3b2c5!important;
+  }
+}
