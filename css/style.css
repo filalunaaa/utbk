@@ -1170,7 +1170,7 @@ table.kem-tabel{width:100%;border-collapse:collapse;font-size:.9rem;min-width:42
 /* Chip filter statistik */
 .kem-chip{display:inline-flex;align-items:center;gap:6px;min-height:var(--flt-h);padding:0 14px;border:1px solid var(--border);border-radius:var(--flt-r);background:var(--card);color:var(--text);font:inherit;font-size:.84rem;font-weight:500;cursor:pointer}
 .kem-chip:hover{background:var(--primary-soft)}
-.kem-chip[aria-pressed="true"]{background:var(--primary-soft);color:var(--accent);border-color:var(--primary);font-weight:600}
+.kem-chip[aria-pressed="true"]{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;box-shadow:none;text-shadow:none;filter:none}
 .kem-chip b{font-weight:700}
 /* Toolbar Jelajahi Materi */
 #mt-filter{margin-top:2px}
