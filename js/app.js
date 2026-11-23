@@ -3696,7 +3696,7 @@ function renderBerita(paksa) {
     .finally(() => { _berita.p = null; });
   return _berita.p;
 }
-$('kartu-berita').addEventListener('click', (e) => { if (e.target.closest('[data-berita="muat"]')) { e.stopPropagation(); renderBerita(true); } });
+$('kartu-berita').addEventListener('click', (e) => { const btn = e.target.closest('[data-berita="muat"]'); if (btn) { e.stopPropagation(); btn.classList.add('is-loading'); btn.setAttribute('aria-busy', 'true'); renderBerita(true); } });
 
 // ---------- Hitung mundur (overlay animasi) ----------
 let timerHitung = null;
