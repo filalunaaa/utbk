@@ -750,7 +750,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 #salam-sub{margin:2px 0 0}.dash-tgl{margin:2px 0 0!important;font-size:.8rem}
 .dash-avatar{width:48px;height:48px;flex-shrink:0;border:2px solid var(--border);cursor:pointer;padding:0;font-size:1.2rem}
 .dash-avatar:hover{border-color:var(--primary)}
-#menu>#kartu-hitung.hero{border:0;background:linear-gradient(135deg,#1068f8,#082868 105%);color:#fff;padding:22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+#menu>#kartu-hitung.hero{border:0;background:#1068f8;color:#fff;padding:22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .hero .hero-lbl{font-size:.75rem;font-weight:800;letter-spacing:.12em;opacity:.85;margin:0}
 .hero .hero-hari{font-size:2.6rem;font-weight:800;line-height:1.1;margin:2px 0}
 .hero p{margin:0}.hero .hero-tgl{opacity:.9;font-size:.9rem}
@@ -1459,6 +1459,21 @@ small{font-weight:600}
 html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite!important}
 @media(prefers-reduced-motion:reduce){.berita-refresh.is-loading svg{animation:berita-spin .75s linear infinite!important}}
 
+
+
+/* Kartu Menuju UTBK: biru solid pada semua state, tanpa gradasi */
+#menu>#kartu-hitung.hero,
+#menu>#kartu-hitung.hero:hover,
+#menu>#kartu-hitung.hero:active,
+#menu>#kartu-hitung.hero:focus-visible{
+  background:#1068f8!important;
+  color:#fff;
+  border-color:transparent;
+  box-shadow:none!important;
+  filter:none!important;
+  text-shadow:none!important;
+  transform:none;
+}
 
 /* Hover kartu dashboard: netral, halus, tanpa efek neon */
 @media(hover:hover){
