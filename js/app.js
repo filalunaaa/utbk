@@ -1378,10 +1378,10 @@ let filterReview = 'semua'; // 'semua' | 'benar' | 'salah' | 'kosong'
 // Isi halaman review: filter di atas, lalu soal bisa digeser kanan-kiri
 function renderReviewIsi() {
   const { soal, jawab } = sesi;
-  const status = soal.map((s, k) => (jawab[k] === null ? 'kosong' : jawabBenar(s, jawab[k]) ? 'benar' : 'salah'));
-  const hitung = { semua: soal.length, benar: 0, salah: 0, kosong: 0 };
+  const status = soal.map((s, k) => (jawab[k] === null ? 'kosong' : jawabBenar(s, jawab[k]) ? 'benar' : skorJawaban(s, jawab[k]) > 0 ? 'parsial' : 'salah'));
+  const hitung = { semua: soal.length, benar: 0, parsial: 0, salah: 0, kosong: 0 };
   status.forEach((st) => hitung[st]++);
-  const label = { semua: 'Semua', benar: 'Benar', salah: 'Salah', kosong: 'Kosong' };
+  const label = { semua: 'Semua', benar: 'Benar', parsial: 'Parsial', salah: 'Salah', kosong: 'Kosong' };
   const chips = Object.keys(label).map((k) =>
     `<label class="chip"><input type="radio" name="filter-review" value="${k}" ${k === filterReview ? 'checked' : ''}><span>${label[k]} (${hitung[k]})</span></label>`).join('');
   const daftar = soal
@@ -1389,7 +1389,7 @@ function renderReviewIsi() {
     .filter((x) => filterReview === 'semua' || x.st === filterReview);
   const jawabanKamu = (s, j) => (j === null || j === undefined ? 'Tidak dijawab' : adaIsian(s) ? esc(j) : (s.opsi.map((o, x) => (dipilih(s, j, x) ? HURUF[x] : null)).filter(Boolean).join(', ') || '-'));
   const slide = daftar.map(({ s, k, st }) => {
-    const [kelasBadge, teksBadge] = st === 'benar' ? ['benar', 'Benar'] : st === 'salah' ? ['salah', 'Salah'] : ['kosong', 'Kosong'];
+    const [kelasBadge, teksBadge] = st === 'benar' ? ['benar', 'Benar'] : st === 'parsial' ? ['parsial', 'Kurang lengkap'] : st === 'salah' ? ['salah', 'Salah'] : ['kosong', 'Kosong'];
     const opsi = opsiReviewHTML(s, jawab[k]);
     return `<div class="slide-review" data-nomor="${k + 1}">
       <div class="card" style="margin-bottom:0">
@@ -1446,6 +1446,7 @@ function renderReview() {
 
 // ---------- Riwayat sesi: kartu per sesi, dibuka untuk melihat soal, kunci, pembahasan, dan perubahan statistik ----------
 const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.length);
+const skorRiwayat = (r) => Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0);
 function catatSesi(mode, soal, jawab, durasi, benar) {
   if (!soal.some((s, k) => !kosongJ(jawab[k]))) return; // tidak ada satu pun soal dijawab: tidak dicatat
   const item = soal.map((s, k) => ({ id: String(s.id), j: kosongJ(jawab[k]) ? null : jawab[k], b: !!jawabBenar(s, jawab[k]), m: s.mataPelajaran || '', tp: s.topik || '' }));
@@ -1464,8 +1465,8 @@ function migrasiSesiLama() {
       const g = grup[grup.length - 1];
       if (g && r.t - g[g.length - 1].t < 5 * 60 * 1000) g.push(r); else grup.push([r]);
     });
-    const sesiLama = grup.map((g) => ({ id: 'l' + g[0].t, t: g[0].t, mode: 'tryout', d: 0, n: g.length, b: g.filter((r) => r.b).length,
-      item: g.map((r) => ({ id: String(r.id), j: kosongJ(r.j) ? null : r.j, b: !!r.b, m: r.mapel || '', tp: r.topik || '' })) }));
+    const sesiLama = grup.map((g) => ({ id: 'l' + g[0].t, t: g[0].t, mode: 'tryout', d: 0, n: g.length, b: g.reduce((sum, r) => sum + (Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0)), 0),
+      item: g.map((r) => ({ id: String(r.id), j: kosongJ(r.j) ? null : r.j, b: !!r.b, sc: Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0), m: r.mapel || '', tp: r.topik || '' })) }));
     RiwayatSesi.simpan(sesiLama.slice(-RiwayatSesi.MAKS));
   } catch (e) {}
 }
@@ -1503,11 +1504,11 @@ function statSesi(e, peta, m) {
     const x = metaItem(r, peta);
     if (m && x.m !== m) return;
     n++;
-    if (kosongJ(r.j)) k++; else if (r.b) b++;
+    if (kosongJ(r.j)) k++; else b += skorRiwayat(r);
     [[topik, x.tp], [mapel, x.m]].forEach(([o, nm]) => {
       if (!nm) return;
       o[nm] = o[nm] || { n: 0, b: 0 };
-      o[nm].n++; if (r.b) o[nm].b++;
+      o[nm].n++; if (!kosongJ(r.j)) o[nm].b += skorRiwayat(r);
     });
   });
   return { n, b, k, s: n - b - k, topik, mapel, p: n ? Math.round((b / n) * 100) : 0 };
@@ -1556,7 +1557,7 @@ function ringSesi(p, u) {
 function daftarItem(e, peta, m) {
   return e.item.map((r, i) => ({ r, i, x: metaItem(r, peta) }))
     .filter((o) => !m || o.x.m === m)
-    .map((o) => ({ ...o, s0: kosongJ(o.r.j) ? 'kosong' : o.r.b ? 'benar' : 'salah' }));
+    .map((o) => ({ ...o, s0: kosongJ(o.r.j) ? 'kosong' : skorRiwayat(o.r) === 1 ? 'benar' : skorRiwayat(o.r) > 0 ? 'parsial' : 'salah' }));
 }
 function tagMapel(a, maks) {
   const k = urutMapel(a);
@@ -1708,7 +1709,7 @@ function analisisHTML(buka) {
 let periodeStat = '30';
 function garisHTML(data) {
   const per = {};
-  data.forEach((r) => { const k = new Date(r.t).toLocaleDateString('sv-SE'); per[k] = per[k] || { n: 0, b: 0 }; per[k].n++; if (r.b) per[k].b++; });
+  data.forEach((r) => { const k = new Date(r.t).toLocaleDateString('sv-SE'); per[k] = per[k] || { n: 0, b: 0 }; per[k].n++; per[k].b += skorRiwayat(r); });
   const hari = Object.keys(per).sort();
   const W = 600, H = 200, L = 36, R = 14, T = 12, B = 26;
   const x = (i) => (hari.length === 1 ? L + (W - L - R) / 2 : L + (i * (W - L - R)) / (hari.length - 1));
@@ -1731,7 +1732,7 @@ function grafikStatHTML() {
   if (!data.length) return kepala + '<div class="state-kosong"><strong>Belum ada data pada periode ini</strong><p class="muted">Kerjakan soal untuk melihat grafik perkembanganmu.</p></div>';
   const kel = (kunci) => {
     const o = {};
-    data.forEach((r) => { const k = r[kunci]; if (!k) return; o[k] = o[k] || { n: 0, b: 0 }; o[k].n++; if (r.b) o[k].b++; });
+    data.forEach((r) => { const k = r[kunci]; if (!k) return; o[k] = o[k] || { n: 0, b: 0 }; o[k].n++; o[k].b += skorRiwayat(r); });
     return o;
   };
   const pct = (x) => Math.round((x.b / x.n) * 100);
