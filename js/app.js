@@ -3523,7 +3523,7 @@ function kunciTgl(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).p
 function dataGrafik() {
   const r = Riwayat.ambil().filter((x) => x && Number.isFinite(x.t));
   const per = {};
-  r.forEach((x) => { const k = kunciTgl(new Date(x.t)); const o = per[k] || (per[k] = { n: 0, b: 0 }); o.n++; if (x.b) o.b++; });
+  r.forEach((x) => { const k = kunciTgl(new Date(x.t)); const o = per[k] || (per[k] = { n: 0, b: 0 }); o.n++; o.b += skorRiwayat(x); });
   const hariIni = new Date(); hariIni.setHours(0, 0, 0, 0);
   let awal = new Date(hariIni);
   if (grafikState.p === 'semua') { if (r.length) { awal = new Date(Math.min(...r.map((x) => x.t))); awal.setHours(0, 0, 0, 0); } }
