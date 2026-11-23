@@ -549,8 +549,10 @@ h2{font-weight:800;letter-spacing:-.01em}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:30}
 .topbar{background:var(--card);color:var(--text);box-shadow:none;border-bottom:1px solid var(--border);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
 .topbar-inner{max-width:none;padding:10px 16px}
-.keluar-kuis{display:none}
-.topbar .keluar-kuis{flex:none}
+.topbar-pengaturan{display:none;flex:none;width:40px;height:40px;align-items:center;justify-content:center;padding:0;border-radius:10px;color:var(--primary);background:transparent}
+.topbar-pengaturan svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.topbar-pengaturan:hover{background:var(--primary-soft);color:var(--primary)}
+.topbar-pengaturan:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
 /* Ikon dan tautan navigasi */
 .nav-link.nl{display:flex;align-items:center;text-decoration:none;color:var(--muted);font-weight:600;transition:background .15s,color .15s}
@@ -577,7 +579,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 /* Mode ujian: tanpa navigasi, hanya tombol keluar */
 body[data-hal="kuis"] .bottomnav,body[data-hal="kuis"] .sidebar{display:none}
 body[data-hal="kuis"] .topbar{display:block}
-body[data-hal="kuis"] .topbar .keluar-kuis{display:inline-flex;padding:8px 14px;border-radius:10px;background:var(--salah-soft);color:var(--salah)}
+body[data-hal="kuis"] .topbar .topbar-pengaturan{display:inline-flex}
 body[data-hal="kuis"] .container{padding-bottom:40px}
 
 /* Beranda sebagai dashboard */
