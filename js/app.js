@@ -1449,7 +1449,7 @@ const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.
 const skorRiwayat = (r) => Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0);
 function catatSesi(mode, soal, jawab, durasi, benar) {
   if (!soal.some((s, k) => !kosongJ(jawab[k]))) return; // tidak ada satu pun soal dijawab: tidak dicatat
-  const item = soal.map((s, k) => ({ id: String(s.id), j: kosongJ(jawab[k]) ? null : jawab[k], b: !!jawabBenar(s, jawab[k]), m: s.mataPelajaran || '', tp: s.topik || '' }));
+  const item = soal.map((s, k) => ({ id: String(s.id), j: kosongJ(jawab[k]) ? null : jawab[k], b: !!jawabBenar(s, jawab[k]), sc: skorJawaban(s, jawab[k]), m: s.mataPelajaran || '', tp: s.topik || '' }));
   RiwayatSesi.catat({ id: 's' + Date.now(), t: Date.now(), mode, d: durasi, n: soal.length, b: benar, item });
 }
 // Data try out lama (Riwayat per soal) dijadikan sesi sekali saja: soal yang dicatat berdekatan (< 5 menit) dianggap satu sesi
