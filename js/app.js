@@ -798,7 +798,7 @@ const adaGanda = (s) => tipeSoal(s) === 'kompleks';
 const kunciHuruf = (s) => (adaIsian(s) ? String(s.jawaban) : adaGanda(s) ? s.jawaban.map((k) => HURUF[k]).join(', ') : HURUF[s.jawaban]);
 // Kunci dari sumber lama/Supabase kadang tersimpan sebagai string (mis. "2"),
 // sedangkan indeks pilihan dari antarmuka berupa number. Samakan tipenya sebelum dibandingkan.
-const indeksAngka = (v) => Number.isInteger(Number(v)) && String(v).trim() !== '' ? Number(v) : NaN;
+const indeksAngka = (v) => v !== null && v !== undefined && String(v).trim() !== '' && Number.isInteger(Number(v)) ? Number(v) : NaN;
 const kunciOpsi = (s, k) => (adaIsian(s) ? false : adaGanda(s)
   ? Array.isArray(s.jawaban) && s.jawaban.some((x) => indeksAngka(x) === k)
   : indeksAngka(s.jawaban) === k);
