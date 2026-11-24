@@ -969,20 +969,29 @@ function isiOpsi(html) {
 }
 function tampil(id) {
   const aktif = ({
-  materi: 'materi',
-  statistik: 'statistik',
-  riwayatdetail: 'statistik',
-  bank: 'bank',
-  'laporan-admin': 'laporan-admin',
-  pengaturan: 'pengaturan',
-  setup: 'setup',
-  kuis: 'setup',
-  hasil: 'setup',
-  review: 'setup',
-  rekomendasi: 'rekomendasi',
-  profil: 'profil',
-  publik: 'profil'
-})[id] || 'menu';
+    materi: 'materi',
+    statistik: 'statistik',
+    riwayatdetail: 'statistik',
+    bank: 'bank',
+    'laporan-admin': 'laporan-admin',
+    pengaturan: 'pengaturan',
+    setup: 'setup',
+    kuis: 'setup',
+    hasil: 'setup',
+    review: 'setup',
+    rekomendasi: 'rekomendasi',
+    profil: 'profil',
+    publik: 'profil'
+  })[id] || 'menu';
+  document.querySelectorAll('.halaman').forEach((h) => (h.hidden = h.id !== id));
+  document.body.dataset.hal = id;
+  const tombolProfil = $('btn-profil');
+  if (tombolProfil) tombolProfil.hidden = id === 'kuis';
+  if (id === 'menu') renderBeranda();
+  if (id === 'setup') { if (!window._dariMateri) window._subAktif = null; window._dariMateri = false; terapkanDefaultSetup(); syncBlokWaktu(); ringkasSesi(); }
+  if (AkunApp.sesi()) sinkron().catch(() => {});
+  document.querySelectorAll('.nav-link').forEach((a) => a.classList.toggle('aktif', a.dataset.hal === aktif));
+  window.scrollTo(0, 0);
 }
 const nilai = (name) => document.querySelector(`input[name="${name}"]:checked`).value;
 const centang = (wadah) => [...document.querySelectorAll(`#${wadah} input:checked`)].map((i) => i.value);
