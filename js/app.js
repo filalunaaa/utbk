@@ -798,8 +798,8 @@ const ProfilApp = {
 let DETIK_PER_SOAL = PengaturanApp.ambil().waktuPerSoal; // jatah waktu Try Out per soal
 // Jumlah soal yang dipilih di halaman atur latihan ('semua' = semua soal yang cocok)
 function jumlahDipilih(n) {
-  const j = nilai('jumlah');
-  return j === 'semua' ? n : Math.min(n, Number(j));
+  const j = Number(nilai('jumlah')) || 5;
+  return Math.min(n, j);
 }
 const HURUF = ['A', 'B', 'C', 'D', 'E'];
 // Nilai internal tetap PK/PM (agar data lama dan data akun tidak rusak); hanya tampilannya memakai nama lengkap
@@ -1001,7 +1001,7 @@ function tampil(id) {
   document.querySelectorAll('.nav-link').forEach((a) => a.classList.toggle('aktif', a.dataset.hal === aktif));
   window.scrollTo(0, 0);
 }
-const nilai = (name) => document.querySelector(`input[name="${name}"]:checked`).value;
+const nilai = (name) => { const el = document.querySelector(`input[name="${name}"]:checked, select[name="${name}"]`); return el ? el.value : ''; };
 const centang = (wadah) => [...document.querySelectorAll(`#${wadah} input:checked`)].map((i) => i.value);
 
 // ---------- Menu & filter ----------
@@ -1205,16 +1205,16 @@ $('pilih-topik').addEventListener('change', (e) => {
   labelSub(b);
 });
 function soalTerfilter() {
-  const mapel = nilai('mapel'), topik = topikDipilih(), level = centang('pilih-level'), ex = subDikecualikan();
+  const mapel = nilai('mapel'), topik = topikDipilih(), level = nilai('level') || 'semua', ex = subDikecualikan();
   return sumberSoal().filter((s) =>
-    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(namaTopikResmi(s)) && lolosSub(s, ex) && level.includes(s.tingkatKesulitan) && (modeAdmin || s.status !== 'draf') && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
+    (mapel === 'semua' || s.mataPelajaran === mapel) && topik.includes(namaTopikResmi(s)) && lolosSub(s, ex) && (level === 'semua' || level === s.tingkatKesulitan) && (modeAdmin || s.status !== 'draf') && (!window._subAktif || s.subtopikId === window._subAktif || (s.subtopikIds || []).includes(window._subAktif)));
 }
 function ringkasSesi() {
   const teks = (nm) => { const i = document.querySelector(`input[name="${nm}"]:checked`); return i && i.nextElementSibling ? i.nextElementSibling.textContent : '-'; };
   const n = soalTerfilter().length, jml = jumlahDipilih(n), mode = nilai('mode');
   const wEl = document.querySelector('input[name="waktu"]:checked');
   const waktu = wEl ? Number(wEl.value) : DETIK_PER_SOAL;
-  const lv = centang('pilih-level').map((v) => v[0].toUpperCase() + v.slice(1)).join(', ') || '-';
+  const lv = ({ semua: 'Semua tingkat', mudah: 'Mudah', sedang: 'Sedang', sulit: 'Sulit' })[nilai('level')] || 'Semua tingkat';
   const b = (a, v) => `<div class="ringkas-baris"><span>${a}</span><b>${v}</b></div>`;
   $('ringkas-sesi').innerHTML = b('Sumber', esc(teks('sumber'))) + b('Mata pelajaran', esc(teks('mapel'))) +
     b('Mode', mode === 'tryout' ? `Try Out · ${waktu} dtk/soal` : 'Latihan') + b('Jumlah soal', n ? jml : 0) +
@@ -4458,7 +4458,8 @@ function terapkanDefaultSetup() {
   const t = p.ingatTerakhir && p.konfigTerakhir ? p.konfigTerakhir : null;
   const mode = t ? t.mode : (p.modeDefault || 'latihan'), jml = t ? t.jumlah : String(p.jumlahDefault || '5'), mp = t ? t.mapel : (p.mapelDefault || 'semua');
   document.querySelectorAll('input[name="mode"]').forEach((i) => (i.checked = i.value === mode));
-  document.querySelectorAll('input[name="jumlah"]').forEach((i) => (i.checked = i.value === jml));
+  const pilihJumlah = $('pilih-jumlah');
+  pilihJumlah.value = ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50'].includes(String(jml)) ? String(jml) : '5';
   document.querySelectorAll('input[name="mapel"]').forEach((i) => (i.checked = i.value === mp));
 }
 $('pengaturan').addEventListener('change', (e) => {
