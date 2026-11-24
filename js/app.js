@@ -1237,9 +1237,13 @@ function hitungSoal() {
 // ---------- Sesi soal ----------
 function mulai() {
   migrasiSesiLama();
-  const soal = acak(soalTerfilter()).slice(0, jumlahDipilih(Infinity));
+ const soal = acak(soalTerfilter()).slice(0, jumlahDipilih(Infinity));
+const sumberSoalSesi = soal.map((s) =>
+  SOAL.includes(s) ? 'bawaan' : 'personal'
+);
   sesi = {
-    mode: nilai('mode'), soal, aktif: true, i: 0, mulai: Date.now(), timer: null,
+  mode: nilai('mode'), soal, sumberSoal: sumberSoalSesi,
+aktif: true, i: 0, mulai: Date.now(), timer: null,
     statAwal: JSON.parse(JSON.stringify(Penyimpanan.ambil())), // untuk membandingkan sebelum dan sesudah sesi
     jawab: soal.map(() => null), kunci: soal.map(() => false),
     sisa: soal.length * DETIK_PER_SOAL
@@ -1448,13 +1452,14 @@ async function kirimLaporanSoal(e) {
     await rest('laporan_soal', {
       method: 'POST',
       prefer: 'return=minimal',
-      body: {
-        user_id: akun.user_id,
-        question_id: String(s.id),
-        question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
-        category: kategori,
-        description: deskripsi || null
-      }
+    body: {
+  user_id: akun.user_id,
+  question_id: String(s.id),
+  question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
+  question_source: sesi.sumberSoal[sesi.i],
+  category: kategori,
+  description: deskripsi || null
+}
     });
 
     $('modal-laporan-soal').hidden = true;
