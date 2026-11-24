@@ -3820,13 +3820,15 @@ function renderUjianUI() {
   $('ex-pos').textContent = `${i + 1} / ${n}`;
   const sudah = (k) => (mode === 'latihan' ? kunci[k] : jawab[k] !== null && jawab[k] !== undefined);
   const statusNavigasi = (k) => {
-    // Kebenaran hanya boleh ditampilkan setelah tombol "Jawab" dikonfirmasi di mode Latihan.
-    // Try Out tidak mengungkap benar/salah selama ujian berlangsung.
-    if (mode !== 'latihan' || !kunci[k]) return '';
+    // Try Out hanya menandai progres; tidak pernah mengungkap benar atau salah.
+    if (mode === 'tryout') return sudah(k) ? 'status-terjawab' : '';
+    // Kebenaran hanya ditampilkan setelah tombol "Jawab" dikonfirmasi di mode Latihan.
+    if (!kunci[k]) return '';
     const skor = skorJawaban(soal[k], jawab[k]);
     return skor === 1 ? 'status-benar' : skor > 0 ? 'status-parsial' : 'status-salah';
   };
   const gayaStatusNavigasi = (status) => {
+    if (status === 'status-terjawab') return 'background:var(--primary);border:2px solid var(--primary);color:#fff;';
     if (status === 'status-benar') return 'background:#ecfdf3;border:2px solid #16a34a;color:#15803d;';
     if (status === 'status-salah') return 'background:#fff1f2;border:2px solid #e11d48;color:#be123c;';
     if (status === 'status-parsial') return 'background:#fff7d6;border:2px solid #b7791f;color:#8a5a00;';
@@ -3835,7 +3837,7 @@ function renderUjianUI() {
   $('ex-status').textContent = `${soal.filter((s, k) => sudah(k)).length}/${n} terjawab`;
   $('ex-nav').innerHTML = soal.map((s, k) => {
     const status = statusNavigasi(k);
-    const labelStatus = status === 'status-benar' ? 'benar' : status === 'status-parsial' ? 'parsial' : status === 'status-salah' ? 'salah' : sudah(k) ? 'sudah dijawab' : 'kosong';
+    const labelStatus = status === 'status-terjawab' ? 'sudah dijawab' : status === 'status-benar' ? 'benar' : status === 'status-parsial' ? 'parsial' : status === 'status-salah' ? 'salah' : 'kosong';
     return `<button type="button" data-k="${k}" class="${[k === i ? 'aktif' : '', status].filter(Boolean).join(' ')}" style="${gayaStatusNavigasi(status)}" aria-label="Soal ${k + 1}, ${labelStatus}"${k === i ? ' aria-current="true"' : ''}${mode === 'latihan' && k > i && !kunci[k - 1] ? ' disabled' : ''}>${k + 1}</button>`;
   }).join('');
   document.querySelectorAll('#opsi-list .opsi').forEach((o) => {
