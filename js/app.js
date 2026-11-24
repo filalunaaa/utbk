@@ -1894,7 +1894,7 @@ function renderLaporan() {
 function aksiSoalReviewHTML(s, sumber, nomor) {
   const edit = ADMIN && Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))
     ? `<button type="button" class="btn btn-secondary btn-kecil esl-trigger" data-edit-soal-review="${esc(s.id)}">Edit soal</button>` : '';
-  return `<div class="aksi-soal-review" style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn btn-secondary btn-kecil" data-lapor-soal="${esc(s.id)}" data-sumber-soal="${esc(sumber)}" data-nomor-soal="${nomor}" aria-label="Laporkan soal" title="Laporkan soal">!</button>${edit}</div>`;
+  return `<div class="lapor-soal-row aksi-soal-review"><button type="button" class="btn-lapor-icon" data-lapor-soal="${esc(s.id)}" data-sumber-soal="${esc(sumber)}" data-nomor-soal="${nomor}" aria-label="Laporkan soal" title="Laporkan soal"><span aria-hidden="true">!</span></button>${edit}</div>`;
 }
 function sumberSoalObjek(s) {
   return Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id)) ? 'bawaan' : 'personal';
