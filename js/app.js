@@ -735,6 +735,7 @@ async function sinkron() {
 // Dipanggil setelah masuk atau saat aplikasi dibuka dalam keadaan sudah masuk
 async function mulaiSesi() {
   if (!AkunApp.sesi()) return;
+    $('nav-laporan-admin').hidden = false;
   if (window.obMemuat) window.obMemuat(); // tahan dashboard sampai status onboarding jelas
   // Kalau data di browser ini milik akun lain, bersihkan dulu sebelum mengambil data akun yang baru masuk
   const uid = AkunApp.sesi().user_id;
