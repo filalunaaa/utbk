@@ -1641,8 +1641,8 @@ body.esl-terbuka{overflow:hidden}
 
 /* Mobile parity: keep the homepage chart and segmented controls consistent with desktop.
    Scoped to the homepage chart and narrow viewports so desktop styling is unchanged. */
-
   }
+}
 /* tampilan pengaturan */
 @media (max-width: 899px) {
   #dash-pengaturan.dash-gear {
