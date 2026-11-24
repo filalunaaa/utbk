@@ -695,7 +695,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .setup-grid{display:grid;gap:18px;grid-template-columns:minmax(0,1fr);align-items:start}
 .setup-kolom{display:grid;gap:18px;min-width:0}
 .setup-kolom .card,.setup-ringkas{margin:0}
-.kartu-judul{display:flex;align-items:center;gap:10px;font-size:1rem;margin:0 0 2px}
+.kartu-judul{display:flex;align-items:center;gap:10px;font-size:1rem;margin:0 0 14px}
 .kartu-judul .no{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:800;flex-shrink:0}
 .setup-ringkas .info{margin:14px 0}
 .ringkas-baris{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.9rem}
