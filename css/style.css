@@ -1618,6 +1618,29 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   filter:none;
 }
 
+/* Dashboard ringkasan: ikuti palet tema gelap, bukan warna terang tetap */
+:root[data-theme="dark"] .sum-grid>.sum-card{
+  background:var(--card);
+  color:var(--text);
+  border-color:var(--border);
+}
+:root[data-theme="dark"] .sum-grid>.sum-card:hover,
+:root[data-theme="dark"] .sum-grid>.sum-card:active{
+  background:#1b2738;
+  color:var(--text);
+  border-color:var(--border);
+}
+:root[data-theme="dark"] .sum-grid>.sum-card .sum-ik{
+  background:var(--primary-soft);
+  color:var(--accent);
+}
+:root[data-theme="dark"] .sum-grid>.sum-card b{
+  color:var(--text);
+}
+:root[data-theme="dark"] .sum-grid>.sum-card>span:last-child{
+  color:var(--muted);
+}
+
 
 /* mobile kartu Mulai Belajar */
 @media(max-width:899px){
