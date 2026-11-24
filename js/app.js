@@ -3700,6 +3700,10 @@ $('opsi-list').addEventListener('input', (e) => {
   sesi.jawab[sesi.i] = v === '' ? null : Number(v);
   if (sesi.mode === 'latihan' && !sesi.kunci[sesi.i]) $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
 });
+$('opsi-list').addEventListener('change', (e) => {
+  if (!sesi || sesi.mode !== 'tryout' || !e.target.matches('.isian-input')) return;
+  renderUjianUI();
+});
 $('opsi-list').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.matches('.isian-input') && !$('btn-aksi').disabled) $('btn-aksi').click();
 });
@@ -3724,6 +3728,7 @@ $('opsi-list').addEventListener('click', (e) => {
     opsi.setAttribute('aria-checked', String(terpilih));
   });
   if (sesi.mode === 'latihan') $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
+  else renderUjianUI(); // Perbarui warna nomor segera setelah jawaban Try Out dipilih.
 });
 $('btn-aksi').addEventListener('click', () => {
   const { mode, i, soal, kunci, jawab } = sesi;
@@ -3760,9 +3765,9 @@ function renderUjianUI() {
     return skor === 1 ? 'status-benar' : skor > 0 ? 'status-parsial' : 'status-salah';
   };
   const gayaStatusNavigasi = (status) => {
-    if (status === 'status-benar') return 'background:var(--benar-soft);border:2px solid var(--benar);color:var(--benar);';
-    if (status === 'status-salah') return 'background:var(--salah-soft);border:2px solid var(--salah);color:var(--salah);';
-    if (status === 'status-parsial') return 'background:var(--warning-soft);border:2px solid var(--warning);color:#9a6700;';
+    if (status === 'status-benar') return 'background:#ecfdf3;border:2px solid #16a34a;color:#15803d;';
+    if (status === 'status-salah') return 'background:#fff1f2;border:2px solid #e11d48;color:#be123c;';
+    if (status === 'status-parsial') return 'background:#fff7d6;border:2px solid #b7791f;color:#8a5a00;';
     return '';
   };
   $('ex-status').textContent = `${soal.filter((s, k) => sudah(k)).length}/${n} terjawab`;
