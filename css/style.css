@@ -1741,3 +1741,25 @@ body.esl-terbuka{overflow:hidden}
     stroke: var(--primary) !important;
   }
 }
+/* mobile */
+@media (max-width: 768px) {
+  #kartu-grafik .seg {
+    background: var(--card) !important;
+  }
+
+  #kartu-grafik .seg button {
+    background: var(--card) !important;
+    color: var(--accent) !important;
+  }
+
+  #kartu-grafik .seg button[aria-pressed="true"] {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+  }
+
+  #menu .qa-ik {
+    background: var(--primary-soft) !important;
+    color: var(--accent) !important;
+  }
+}
