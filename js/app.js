@@ -1360,7 +1360,23 @@ function buatModalLaporanSoal() {
 
   $('form-laporan-soal').addEventListener('submit', kirimLaporanSoal);
 }
+function tampilkanToast(teks) {
+  const lama = document.getElementById('notifikasi-pytago');
+  if (lama) lama.remove();
 
+  const toast = document.createElement('div');
+  toast.id = 'notifikasi-pytago';
+  toast.className = 'toast-neon';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  toast.textContent = teks;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 3500);
+}
 function bukaModalLaporanSoal() {
   if (!sesi || !sesi.aktif) return;
 
@@ -1420,7 +1436,7 @@ async function kirimLaporanSoal(e) {
     });
 
     $('modal-laporan-soal').hidden = true;
-    alert('Berhasil dikirim. Thx a lot udah bantu ningkatin kualitas soal kami!.');
+    tampilkanToast('✓ Berhasil dikirim. Thx a lot udah bantu ningkatin kualitas soal kami!');
   } catch (err) {
     pesan.textContent = 'Gagal mengirim laporan: ' + err.message;
   } finally {
