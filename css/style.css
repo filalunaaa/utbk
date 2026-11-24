@@ -1641,6 +1641,39 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   color:var(--muted);
 }
 
+/* Hover kartu dan blok interaktif: pertahankan warna gelap pada tema dark */
+:root[data-theme="dark"] #menu .qa:hover,
+:root[data-theme="dark"] #menu .qa:active,
+:root[data-theme="dark"] .set-kat:hover,
+:root[data-theme="dark"] .set-kat:active,
+:root[data-theme="dark"] .rs-kartu:hover,
+:root[data-theme="dark"] .rs-kartu:active,
+:root[data-theme="dark"] .sx-kartu:hover,
+:root[data-theme="dark"] .sx-kartu:active,
+:root[data-theme="dark"] .wadah-folder>summary:hover,
+:root[data-theme="dark"] .kartu-soal>summary:hover,
+:root[data-theme="dark"] .pratinjau-soal:hover,
+:root[data-theme="dark"] .pratinjau-soal:active,
+:root[data-theme="dark"] .set-det>summary:hover,
+:root[data-theme="dark"] #btn-keluar-ujian:hover,
+:root[data-theme="dark"] .dash-gear:hover{
+  background:color-mix(in srgb,var(--text) 5%,var(--card)) !important;
+  color:var(--text);
+  border-color:var(--border);
+  box-shadow:none;
+  filter:none;
+  text-shadow:none;
+}
+:root[data-theme="dark"] .qa:hover *,
+:root[data-theme="dark"] .set-kat:hover *,
+:root[data-theme="dark"] .rs-kartu:hover *,
+:root[data-theme="dark"] .sx-kartu:hover *,
+:root[data-theme="dark"] .wadah-folder>summary:hover *,
+:root[data-theme="dark"] .kartu-soal>summary:hover *,
+:root[data-theme="dark"] .pratinjau-soal:hover *{
+  color:inherit;
+}
+
 
 /* mobile kartu Mulai Belajar */
 @media(max-width:899px){
