@@ -1459,6 +1459,15 @@ async function kirimLaporanSoal(e) {
   question_source: sesi.sumberSoal[sesi.i],
   category: kategori,
   description: deskripsi || null
+      body: {
+  user_id: akun.user_id,
+  question_id: String(s.id),
+  question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
+  question_source: sesi.sumberSoal[sesi.i],
+  category: kategori,
+  description: deskripsi || null,
+  status: 'selesai'
+}
 }
     });
 
