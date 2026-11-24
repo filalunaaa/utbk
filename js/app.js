@@ -757,15 +757,6 @@ tampilkanPanelAdmin();
   } catch (e) {
     console.warn('Sinkronisasi gagal:', e);
   }
-  try {
-  const a = await rest(`admin_users?user_id=eq.${AkunApp.sesi().user_id}&select=user_id`);
-ADMIN = !!(a && a.length);
-
-} catch (e) {
-  ADMIN = false;
-}
-
-tampilkanPanelAdmin();
 
 if (ADMIN) {
   try {
