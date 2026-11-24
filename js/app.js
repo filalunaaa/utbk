@@ -1338,7 +1338,8 @@ function renderSoal() {
   $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
   if (adaIsian(s)) {
     const j = jawab[i];
-    const kelasIsi = kunci[i] ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
+    const evaluasiAktif = mode === 'latihan' && kunci[i];
+    const kelasIsi = evaluasiAktif ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
     $('opsi-list').innerHTML = `<div class="isian">
       <input id="inp-isian" aria-label="Jawaban Anda (bilangan cacah)" class="input isian-input${kelasIsi}" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
         placeholder="Contoh: 24" value="${j === null || j === undefined ? '' : esc(j)}" ${kunci[i] ? 'disabled' : ''}>
@@ -1346,7 +1347,7 @@ function renderSoal() {
   } else {
     $('opsi-list').innerHTML = s.opsi.map((o, k) => {
       let kelas = 'opsi';
-      if (kunci[i]) {
+      if (evaluasiAktif) {
         const skorAkhir = skorJawaban(s, jawab[i]);
         if (kunciOpsi(s, k)) {
           kelas += skorAkhir > 0 && skorAkhir < 1 && dipilih(s, jawab[i], k) ? ' parsial' : ' benar';
@@ -1357,8 +1358,8 @@ function renderSoal() {
   }
 
   const fb = $('feedback');
-  fb.hidden = !kunci[i];
-  if (kunci[i]) {
+  fb.hidden = !evaluasiAktif;
+  if (evaluasiAktif) {
     const benar = jawabBenar(s, jawab[i]);
     const skor = skorJawaban(s, jawab[i]);
     fb.className = 'feedback ' + (skor === 1 ? 'benar' : skor > 0 ? 'parsial' : 'salah');
