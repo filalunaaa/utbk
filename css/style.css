@@ -1763,3 +1763,9 @@ body.esl-terbuka{overflow:hidden}
     color: var(--accent) !important;
   }
 }
+/* tampilan pengaturan */
+@media (max-width: 899px) {
+  #dash-pengaturan.dash-gear {
+    display: inline-flex !important;
+  }
+}
