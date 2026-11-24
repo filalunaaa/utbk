@@ -1517,35 +1517,73 @@ function renderTombolEditSoal(s) {
     baris.appendChild(btn);
   }
 }
+function bukaEditorSoalDariLaporan(id) {
+  if (!ADMIN) return;
+
+  const soal = SOAL.find((s) => String(s.id) === String(id));
+
+  if (!soal || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(id))) {
+    alert('Soal bawaan tidak ditemukan. Muat ulang bank soal terlebih dahulu.');
+    return;
+  }
+
+  soalLaporanTarget = soal;
+  bukaEditorSoalLive();
+}
+
 function bukaEditorSoalLive() {
-if (!ADMIN) return;
-const tombol = $('esl-simpan'), pesan = $('esl-pesan');
-const lama = soalLaporanTarget || (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
-if (!lama) return;
+  if (!ADMIN) return;
+
+  const s = soalLaporanTarget ||
+    (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+
   if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
+
   buatEditorSoalLive();
   editorSoalLiveFokus = document.activeElement;
+
   const el = $('editor-soal-live');
+
   $('esl-meta').textContent = String(s.id) + ' · ' + namaMapel(s.mataPelajaran) + ' · ' + s.topik + ' · ' + tipeSoal(s);
   $('esl-soal').value = s.soal || '';
   $('esl-pembahasan').value = s.pembahasan || '';
+
   const tipe = tipeSoal(s);
-  const jumlahOpsi = tipe === 'kompleks' ? Math.max(4, Math.min(5, (s.opsi || []).length || 5)) : 5;
+  const jumlahOpsi = tipe === 'kompleks'
+    ? Math.max(4, Math.min(5, (s.opsi || []).length || 5))
+    : 5;
+
   $('esl-opsi-wrap').dataset.jumlah = String(jumlahOpsi);
-  $('esl-opsi-wrap').innerHTML = tipe === 'isian' ? '<p class="esl-hint">Soal isian bilangan cacah tidak menggunakan opsi.</p>' :
-    '<div class="esl-label">Pilihan jawaban</div>' + Array.from({length:jumlahOpsi},(_,i) =>
-      '<label class="esl-label" for="esl-opsi-' + i + '">Opsi ' + HURUF[i] + '</label><textarea class="input esl-area esl-opsi" id="esl-opsi-' + i + '" rows="2">' + esc((s.opsi||[])[i]||'') + '</textarea>'
-    ).join('');
+
+  $('esl-opsi-wrap').innerHTML = tipe === 'isian'
+    ? '<p class="esl-hint">Soal isian bilangan cacah tidak menggunakan opsi.</p>'
+    : '<div class="esl-label">Pilihan jawaban</div>' +
+      Array.from({ length: jumlahOpsi }, (_, i) =>
+        '<label class="esl-label" for="esl-opsi-' + i + '">Opsi ' + HURUF[i] +
+        '</label><textarea class="input esl-area esl-opsi" id="esl-opsi-' + i +
+        '" rows="2">' + esc((s.opsi || [])[i] || '') + '</textarea>'
+      ).join('');
+
   if (tipe === 'pg') {
-    $('esl-kunci-wrap').innerHTML = '<label class="esl-label" for="esl-kunci-pg">Kunci jawaban</label><select class="input" id="esl-kunci-pg">' +
-      HURUF.map((h,i)=>'<option value="' + i + '" ' + (Number(s.jawaban)===i?'selected':'') + '>' + h + '</option>').join('') + '</select>';
+    $('esl-kunci-wrap').innerHTML =
+      '<label class="esl-label" for="esl-kunci-pg">Kunci jawaban</label><select class="input" id="esl-kunci-pg">' +
+      HURUF.map((h, i) =>
+        '<option value="' + i + '" ' + (Number(s.jawaban) === i ? 'selected' : '') + '>' + h + '</option>'
+      ).join('') + '</select>';
   } else if (tipe === 'kompleks') {
-    $('esl-kunci-wrap').innerHTML = '<fieldset class="esl-fieldset"><legend class="esl-label">Kunci jawaban — pilih semua yang benar</legend><div class="esl-kunci-grid">' +
-      HURUF.slice(0, jumlahOpsi).map((h,i)=>'<label><input type="checkbox" data-esl-kunci value="' + i + '" ' + ((Array.isArray(s.jawaban)&&s.jawaban.includes(i))?'checked':'') + '> ' + h + '</label>').join('') +
-      '</div></fieldset>';
+    $('esl-kunci-wrap').innerHTML =
+      '<fieldset class="esl-fieldset"><legend class="esl-label">Kunci jawaban — pilih semua yang benar</legend><div class="esl-kunci-grid">' +
+      HURUF.slice(0, jumlahOpsi).map((h, i) =>
+        '<label><input type="checkbox" data-esl-kunci value="' + i + '" ' +
+        ((Array.isArray(s.jawaban) && s.jawaban.includes(i)) ? 'checked' : '') + '> ' + h + '</label>'
+      ).join('') + '</div></fieldset>';
   } else {
-    $('esl-kunci-wrap').innerHTML = '<label class="esl-label" for="esl-kunci-isian">Kunci jawaban (bilangan cacah)</label><input class="input" id="esl-kunci-isian" type="number" min="0" step="1" value="' + Number(s.jawaban) + '">';
+    $('esl-kunci-wrap').innerHTML =
+      '<label class="esl-label" for="esl-kunci-isian">Kunci jawaban (bilangan cacah)</label>' +
+      '<input class="input" id="esl-kunci-isian" type="number" min="0" step="1" value="' +
+      Number(s.jawaban) + '">';
   }
+
   $('esl-pesan').textContent = '';
   $('esl-simpan').disabled = false;
   el.hidden = false;
@@ -1554,16 +1592,28 @@ if (!lama) return;
 }
 function tutupEditorSoalLive() {
   const el = $('editor-soal-live');
+
+  soalLaporanTarget = null;
+
   if (!el) return;
+
   el.hidden = true;
   document.body.classList.remove('esl-terbuka');
-  if (editorSoalLiveFokus && editorSoalLiveFokus.focus) editorSoalLiveFokus.focus();
+
+  if (editorSoalLiveFokus && editorSoalLiveFokus.focus) {
+    editorSoalLiveFokus.focus();
+  }
 }
 async function simpanEditorSoalLive(e) {
   e.preventDefault();
-  if (!ADMIN || !sesi || !sesi.aktif) return;
-  const tombol = $('esl-simpan'), pesan = $('esl-pesan');
-  const lama = sesi.soal[sesi.i];
+if (!ADMIN) return;
+
+const tombol = $('esl-simpan');
+const pesan = $('esl-pesan');
+const lama = soalLaporanTarget ||
+  (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+
+if (!lama) return;
   const tipe = tipeSoal(lama);
   const soal = $('esl-soal').value.trim();
   const pembahasan = $('esl-pembahasan').value.trim();
