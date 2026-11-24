@@ -1829,3 +1829,33 @@ body.esl-terbuka{overflow:hidden}
   color: inherit;
 }
 
+/* Navigasi nomor soal saat latihan: satu baris, geser horizontal */
+#ex-nav.ex-nav{
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:7px;
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:7px 2px 12px;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+  scroll-snap-type:x proximity;
+}
+#ex-nav.ex-nav button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 40px;
+  width:40px;
+  min-width:40px;
+  scroll-snap-align:start;
+}
+#ex-nav.ex-nav::-webkit-scrollbar{height:6px}
+#ex-nav.ex-nav::-webkit-scrollbar-track{background:transparent}
+#ex-nav.ex-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+
