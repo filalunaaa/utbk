@@ -1861,21 +1861,24 @@ body.esl-terbuka{overflow:hidden}
 
 
 
-/* Status hasil penilaian pada navigasi nomor soal */
-#ex-nav.ex-nav button.status-benar{
-  background:var(--benar-soft);
-  border-color:var(--benar);
-  color:var(--benar);
+/* Warna status nomor soal: tetap terlihat meskipun nomor sedang aktif */
+#ex-nav.ex-nav button.status-benar,
+#ex-nav.ex-nav button.status-benar.aktif{
+  background:var(--benar-soft) !important;
+  border-color:var(--benar) !important;
+  color:var(--benar) !important;
 }
-#ex-nav.ex-nav button.status-salah{
-  background:var(--salah-soft);
-  border-color:var(--salah);
-  color:var(--salah);
+#ex-nav.ex-nav button.status-salah,
+#ex-nav.ex-nav button.status-salah.aktif{
+  background:var(--salah-soft) !important;
+  border-color:var(--salah) !important;
+  color:var(--salah) !important;
 }
-#ex-nav.ex-nav button.status-parsial{
-  background:var(--warning-soft);
-  border-color:var(--warning);
-  color:#9a6700;
+#ex-nav.ex-nav button.status-parsial,
+#ex-nav.ex-nav button.status-parsial.aktif{
+  background:var(--warning-soft) !important;
+  border-color:var(--warning) !important;
+  color:#9a6700 !important;
 }
 #ex-nav.ex-nav button.aktif{
   outline:2px solid var(--primary);
