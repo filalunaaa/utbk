@@ -2762,6 +2762,107 @@ function pindahkanSoal(id, folderId) {
 }
 
 // ---------- Bank soal ----------
+
+async function muatLaporanAdmin() {
+  if (!ADMIN) return;
+
+  const wadah = $('daftar-laporan-admin');
+  const ringkasan = $('ringkasan-laporan-admin');
+
+  wadah.innerHTML = '<p class="muted">Memuat laporan...</p>';
+
+  try {
+    const laporan = await rest(
+      'laporan_soal?select=id,user_id,question_id,question_title,category,description,status,admin_reply,created_at,replied_at&order=created_at.desc&limit=100'
+    );
+
+    const jumlah = laporan.length;
+    const menunggu = laporan.filter(x => x.status === 'menunggu').length;
+    const diproses = laporan.filter(x => x.status === 'diproses').length;
+    const selesai = laporan.filter(x => x.status === 'selesai').length;
+
+    ringkasan.innerHTML = `
+      <div class="card">
+        <strong>${jumlah}</strong>
+        <span>Total laporan</span>
+      </div>
+      <div class="card">
+        <strong>${menunggu}</strong>
+        <span>Menunggu</span>
+      </div>
+      <div class="card">
+        <strong>${diproses}</strong>
+        <span>Diproses</span>
+      </div>
+      <div class="card">
+        <strong>${selesai}</strong>
+        <span>Selesai</span>
+      </div>
+    `;
+
+    if (!jumlah) {
+      wadah.innerHTML = '<p class="muted">Belum ada laporan soal.</p>';
+      return;
+    }
+
+    const kategori = {
+      soal_salah: 'Soal salah',
+      opsi_tidak_sesuai: 'Opsi tidak sesuai',
+      kunci_jawaban_salah: 'Kunci jawaban salah',
+      pembahasan_salah: 'Pembahasan salah',
+      gambar_bermasalah: 'Gambar bermasalah',
+      lainnya: 'Lainnya'
+    };
+
+    const status = {
+      menunggu: 'Menunggu',
+      diproses: 'Diproses',
+      selesai: 'Selesai',
+      ditolak: 'Ditolak'
+    };
+
+    wadah.innerHTML = laporan.map(x => {
+      const tanggal = new Date(x.created_at).toLocaleString('id-ID', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      });
+
+      return `
+        <article class="laporan-item">
+          <div class="laporan-item-head">
+            <strong>${esc(x.question_title || 'Soal tanpa judul')}</strong>
+            <span class="laporan-status">
+              ${esc(status[x.status] || x.status)}
+            </span>
+          </div>
+          <p class="muted">
+            ID laporan: ${esc(x.id)} · ID soal: ${esc(x.question_id)}
+          </p>
+          <p><strong>Kategori:</strong>
+            ${esc(kategori[x.category] || x.category)}
+          </p>
+          <p><strong>Keterangan pengguna:</strong></p>
+          <p>${esc(x.description || 'Tidak ada keterangan tambahan.')}</p>
+          <small class="muted">Dikirim: ${esc(tanggal)}</small>
+        </article>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error('Gagal memuat laporan:', err);
+    wadah.innerHTML = `
+      <p class="muted">
+        Gagal memuat laporan. Periksa koneksi atau izin akses admin.
+      </p>
+      <button class="btn btn-secondary" id="btn-ulangi-muat-laporan">
+        Coba lagi
+      </button>
+    `;
+
+    $('btn-ulangi-muat-laporan').addEventListener('click', muatLaporanAdmin);
+  }
+}
+
 function tampilkanPanelAdmin() {
   $('kartu-admin').hidden = !ADMIN;
   $('nav-laporan-admin').hidden = !ADMIN;
