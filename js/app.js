@@ -1711,6 +1711,8 @@ if (!lama) return;
     DefaultSoal.simpanCache();
     pesan.textContent = 'Tersimpan. Pengguna lain akan menerima pembaruan otomatis dalam sekitar 15 detik.';
     if (sesi && sesi.aktif) renderSoal();
+    if ($('review') && !$('review').hidden) renderReviewIsi();
+    if ($('riwayat-detail') && !$('riwayat-detail').hidden) renderDetailSesi();
 
 if (soalLaporanTarget) {
   try {
