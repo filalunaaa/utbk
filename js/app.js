@@ -3753,7 +3753,9 @@ function renderUjianUI() {
   $('ex-pos').textContent = `${i + 1} / ${n}`;
   const sudah = (k) => (mode === 'latihan' ? kunci[k] : jawab[k] !== null && jawab[k] !== undefined);
   const statusNavigasi = (k) => {
-    if (mode !== 'latihan' || !kunci[k]) return sudah(k) ? 'terjawab' : '';
+    // Latihan dinilai setelah tombol Jawab; Try Out dinilai dari jawaban yang sudah dipilih.
+    const sudahDinilai = mode === 'latihan' ? Boolean(kunci[k]) : jawab[k] !== null && jawab[k] !== undefined;
+    if (!sudahDinilai) return '';
     const skor = skorJawaban(soal[k], jawab[k]);
     return skor === 1 ? 'status-benar' : skor > 0 ? 'status-parsial' : 'status-salah';
   };
