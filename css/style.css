@@ -1847,7 +1847,7 @@ body.esl-terbuka{overflow:hidden}
   max-width:100%;
   overflow-x:auto;
   overflow-y:hidden;
-  padding:7px 2px 12px;
+  padding:7px 6px 12px;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-x:contain;
   scrollbar-width:thin;
