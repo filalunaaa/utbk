@@ -798,7 +798,8 @@ const ProfilApp = {
 let DETIK_PER_SOAL = PengaturanApp.ambil().waktuPerSoal; // jatah waktu Try Out per soal
 // Jumlah soal yang dipilih di halaman atur latihan ('semua' = semua soal yang cocok)
 function jumlahDipilih(n) {
-  const j = Number(nilai('jumlah')) || 5;
+  const pilihJumlah = $('pilih-jumlah');
+  const j = Number(pilihJumlah ? pilihJumlah.value : 5) || 5;
   return Math.min(n, j);
 }
 const HURUF = ['A', 'B', 'C', 'D', 'E'];
