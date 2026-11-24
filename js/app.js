@@ -1392,6 +1392,7 @@ function renderSoal() {
 
 
 // ---------- Laporan soal ----------
+let konteksLaporanSoal = null;
 function buatModalLaporanSoal() {
   if ($('modal-laporan-soal')) return;
 
@@ -1464,8 +1465,9 @@ function tampilkanToast(teks) {
     toast.remove();
   }, 3500);
 }
-function bukaModalLaporanSoal() {
-  if (!sesi || !sesi.aktif) return;
+function bukaModalLaporanSoal(soalArg, sumberArg, nomorArg) {
+  const s = soalArg || (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+  if (!s) return;
 
   const akun = AkunApp.sesi();
   if (!akun) {
@@ -1473,13 +1475,13 @@ function bukaModalLaporanSoal() {
     return;
   }
 
-  const s = sesi.soal[sesi.i];
-  if (!s) return;
-
+  konteksLaporanSoal = {
+    soal: s,
+    sumber: sumberArg || (sesi && sesi.aktif && sesi.soal[sesi.i] === s ? sesi.sumberSoal[sesi.i] : (Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id)) ? 'bawaan' : 'personal')),
+    nomor: nomorArg || (sesi && sesi.aktif && sesi.soal[sesi.i] === s ? sesi.i + 1 : null)
+  };
   buatModalLaporanSoal();
-
-  $('lapor-meta').textContent =
-    `Soal ${sesi.i + 1} · ${namaMapel(s.mataPelajaran)} · ${s.topik}`;
+  $('lapor-meta').textContent = `${konteksLaporanSoal.nomor ? 'Soal ' + konteksLaporanSoal.nomor + ' · ' : ''}${namaMapel(s.mataPelajaran)} · ${s.topik}`;
 
   $('lapor-kategori').value = '';
   $('lapor-deskripsi').value = '';
@@ -1493,9 +1495,9 @@ async function kirimLaporanSoal(e) {
   e.preventDefault();
 
   const akun = AkunApp.sesi();
-  if (!akun || !sesi || !sesi.aktif) return;
+  if (!akun || !konteksLaporanSoal || !konteksLaporanSoal.soal) return;
 
-  const s = sesi.soal[sesi.i];
+  const s = konteksLaporanSoal.soal;
   const kategori = $('lapor-kategori').value;
   const deskripsi = $('lapor-deskripsi').value.trim();
   const tombol = $('lapor-kirim');
@@ -1518,7 +1520,7 @@ await rest('laporan_soal', {
     user_id: akun.user_id,
     question_id: String(s.id),
     question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
-    question_source: sesi.sumberSoal[sesi.i],
+    question_source: konteksLaporanSoal.sumber,
     category: kategori,
     description: deskripsi || null,
     status: 'baru'
@@ -1542,6 +1544,7 @@ $('btn-laporkan-soal').addEventListener('click', bukaModalLaporanSoal);
 
 let editorSoalLiveFokus = null;
 let soalLaporanTarget = null;
+let soalEditorTarget = null;
 function buatEditorSoalLive() {
   if ($('editor-soal-live')) return;
   const el = document.createElement('div');
@@ -1597,7 +1600,7 @@ function bukaEditorSoalDariLaporan(id) {
 function bukaEditorSoalLive() {
   if (!ADMIN) return;
 
-  const s = soalLaporanTarget ||
+  const s = soalLaporanTarget || soalEditorTarget ||
     (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
 
   if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
@@ -1657,6 +1660,7 @@ function tutupEditorSoalLive() {
   const el = $('editor-soal-live');
 
   soalLaporanTarget = null;
+  soalEditorTarget = null;
 
   if (!el) return;
 
@@ -1673,7 +1677,7 @@ if (!ADMIN) return;
 
 const tombol = $('esl-simpan');
 const pesan = $('esl-pesan');
-const lama = soalLaporanTarget ||
+const lama = soalLaporanTarget || soalEditorTarget ||
   (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
 
 if (!lama) return;
@@ -1881,6 +1885,22 @@ function renderLaporan() {
     <p class="label">Per mata pelajaran</p>${mapel.map(baris).join('')}`;
 }
 
+function aksiSoalReviewHTML(s, sumber, nomor) {
+  const edit = ADMIN && Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))
+    ? `<button type="button" class="btn btn-secondary btn-kecil esl-trigger" data-edit-soal-review="${esc(s.id)}">Edit soal</button>` : '';
+  return `<div class="aksi-soal-review" style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn btn-secondary btn-kecil" data-lapor-soal="${esc(s.id)}" data-sumber-soal="${esc(sumber)}" data-nomor-soal="${nomor}" aria-label="Laporkan soal" title="Laporkan soal">!</button>${edit}</div>`;
+}
+function sumberSoalObjek(s) {
+  return Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id)) ? 'bawaan' : 'personal';
+}
+function bukaEditorSoalReview(id) {
+  if (!ADMIN) return;
+  const s = SOAL.find(x => String(x.id) === String(id));
+  if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(id))) return;
+  soalEditorTarget = s;
+  bukaEditorSoalLive();
+}
+
 // ---------- Review ----------
 let filterReview = 'semua'; // 'semua' | 'benar' | 'salah' | 'kosong'
 // Isi halaman review sesuai filter yang dipilih (tanpa mengubah posisi scroll)
@@ -1909,6 +1929,7 @@ function renderReviewIsi() {
             <p class="rev-ket"><span>Jawabanmu: <b>${jawabanKamu(s, jawab[k])}</b></span><span>Jawaban benar: <b>${esc(kunciHuruf(s))}</b></span></p>
             <div class="opsi-list">${opsi}</div></div>
           <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+          ${aksiSoalReviewHTML(s, sesi.sumberSoal && sesi.sumberSoal[k] ? sesi.sumberSoal[k] : sumberSoalObjek(s), k + 1)}
         </div>
       </div>
     </div>`;
@@ -2160,6 +2181,7 @@ function renderDetailSesi() {
         <div class="opsi-list">${opsiReviewHTML(s, kosongJ(r.j) ? null : r.j)}</div>
         <p class="rev-ket" style="margin:12px 0"><span>Jawabanmu: <b>${teksJawabanmu(s, r.j)}</b></span><span>Kunci: <b>${esc(kunciHuruf(s))}</b></span></p>
         <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+        ${aksiSoalReviewHTML(s, sumberSoalObjek(s), i + 1)}
       </div></details>`;
   }).join('');
   const lagi = tampilDaftar.length > rdState.batas
@@ -2408,6 +2430,10 @@ $('isi-statistik').addEventListener('click', (e) => {
   }
 });
 $('riwayat-detail').addEventListener('click', (e) => {
+  const lapor = e.target.closest('[data-lapor-soal]');
+  if (lapor) { const s = petaSoal().get(String(lapor.dataset.laporSoal)); if (s) bukaModalLaporanSoal(s, lapor.dataset.sumberSoal, Number(lapor.dataset.nomorSoal)); return; }
+  const edit = e.target.closest('[data-edit-soal-review]');
+  if (edit) { bukaEditorSoalReview(edit.dataset.editSoalReview); return; }
   const pt = e.target.closest('.petak');
   if (pt) {
     let el = document.getElementById('sx-' + pt.dataset.no);
@@ -4934,6 +4960,10 @@ $('daftar-review').addEventListener('change', (e) => {
   }
 });
 $('daftar-review').addEventListener('click', (e) => {
+  const lapor = e.target.closest('[data-lapor-soal]');
+  if (lapor) { const s = sesi && sesi.soal ? sesi.soal.find(x => String(x.id) === lapor.dataset.laporSoal) : null; if (s) bukaModalLaporanSoal(s, lapor.dataset.sumberSoal, Number(lapor.dataset.nomorSoal)); return; }
+  const edit = e.target.closest('[data-edit-soal-review]');
+  if (edit) { bukaEditorSoalReview(edit.dataset.editSoalReview); return; }
   if (e.target.closest('#rev-prev')) geserReview(-1);
   else if (e.target.closest('#rev-next')) geserReview(1);
   else { const g = e.target.closest('[data-goto]'); const tr = $('track-review'); if (g && tr) tr.scrollTo({ left: Number(g.dataset.goto) * tr.clientWidth, behavior: 'smooth' }); }
