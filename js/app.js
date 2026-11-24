@@ -884,7 +884,7 @@ function hapusSesiAktif() {
 function jalankanTimerSesi() {
   if (!sesi || sesi.mode !== 'tryout') return;
   const tik = () => {
-    $('timer').innerHTML = `<svg class="timer-clock" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="13" r="8.5"></circle><path d="M9 2.5h6M12 4.5V2.5"></path><path class="timer-clock-minute" d="M12 13V8"></path><path class="timer-clock-hand" d="M12 13V7"></path><circle class="timer-clock-pin" cx="12" cy="13" r="1"></circle></svg><span class="timer-value">Sisa ${format(sesi.sisa)}</span>`;
+    $('timer').innerHTML = `<svg class="timer-clock" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="13" r="8.5"></circle><path d="M9 2.5h6M12 4.5V2.5"></path><path class="timer-clock-minute" d="M12 13V8"></path><path class="timer-clock-hand" d="M12 13V7"></path><circle class="timer-clock-pin" cx="12" cy="13" r="1"></circle></svg><span class="timer-value">${format(sesi.sisa)}</span>`;
     const pw = PengaturanApp.ambil().peringatanWaktu !== false;
     $('timer').classList.toggle('habis', pw && sesi.sisa <= 30);
     $('timer').classList.toggle('hampir', pw && sesi.sisa > 30 && sesi.sisa <= 120);
