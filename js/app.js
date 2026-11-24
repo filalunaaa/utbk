@@ -1335,14 +1335,14 @@ function renderSoal() {
   $('bar').style.width = ((i + 1) / soal.length) * 100 + '%';
   $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
   renderTombolEditSoal(s);
+  const evaluasiAktif = mode === 'latihan' && kunci[i];
   $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
   if (adaIsian(s)) {
     const j = jawab[i];
-    const evaluasiAktif = mode === 'latihan' && kunci[i];
     const kelasIsi = evaluasiAktif ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
     $('opsi-list').innerHTML = `<div class="isian">
       <input id="inp-isian" aria-label="Jawaban Anda (bilangan cacah)" class="input isian-input${kelasIsi}" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
-        placeholder="Contoh: 24" value="${j === null || j === undefined ? '' : esc(j)}" ${kunci[i] ? 'disabled' : ''}>
+        placeholder="Contoh: 24" value="${j === null || j === undefined ? '' : esc(j)}" ${evaluasiAktif ? 'disabled' : ''}>
       <p class="muted" style="margin:4px 0 0;font-size:.8rem">Angka bulat, tanpa koma atau minus.</p></div>`;
   } else {
     $('opsi-list').innerHTML = s.opsi.map((o, k) => {
@@ -3839,9 +3839,9 @@ function renderUjianUI() {
     return `<button type="button" data-k="${k}" class="${[k === i ? 'aktif' : '', status].filter(Boolean).join(' ')}" style="${gayaStatusNavigasi(status)}" aria-label="Soal ${k + 1}, ${labelStatus}"${k === i ? ' aria-current="true"' : ''}${mode === 'latihan' && k > i && !kunci[k - 1] ? ' disabled' : ''}>${k + 1}</button>`;
   }).join('');
   document.querySelectorAll('#opsi-list .opsi').forEach((o) => {
-    o.tabIndex = kunci[i] ? -1 : 0; o.setAttribute('role', adaGanda(soal[i]) ? 'checkbox' : 'radio');
+    o.tabIndex = mode === 'latihan' && kunci[i] ? -1 : 0; o.setAttribute('role', adaGanda(soal[i]) ? 'checkbox' : 'radio');
     o.setAttribute('aria-checked', String(o.classList.contains('terpilih')));
-    if (kunci[i] && !o.classList.contains('benar') && !o.classList.contains('salah')) o.classList.add('nonaktif');
+    if (mode === 'latihan' && kunci[i] && !o.classList.contains('benar') && !o.classList.contains('salah')) o.classList.add('nonaktif');
   });
   const inp = $('inp-isian'); if (inp) { inp.setAttribute('pattern', '[0-9]*'); inp.setAttribute('enterkeyhint', 'done'); }
 }
