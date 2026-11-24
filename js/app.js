@@ -1648,10 +1648,29 @@ if (!lama) return;
     if (sesi && sesi.aktif) renderSoal();
 
 if (soalLaporanTarget) {
-  soalLaporanTarget = null;
-  muatLaporanAdmin();
-}
+  try {
+    await rest(
+      'laporan_soal?question_id=eq.' + encodeURIComponent(id) + '&status=neq.selesai',
+      {
+        method: 'PATCH',
+        prefer: 'return=representation',
+        body: {
+          status: 'selesai'
+        }
+      }
+    );
 
+    soalLaporanTarget = null;
+    await muatLaporanAdmin();
+
+  } catch (err) {
+    console.error('Gagal memperbarui status laporan:', err);
+    pesan.textContent =
+      'Soal berhasil disimpan, tetapi status laporan gagal diperbarui: ' + err.message;
+    tombol.disabled = false;
+    return;
+  }
+}
 setTimeout(tutupEditorSoalLive, 700);
   } catch (err) {
     pesan.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : 'Periksa koneksi dan izin admin.');
