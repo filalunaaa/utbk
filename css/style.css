@@ -1780,3 +1780,52 @@ body.esl-terbuka{overflow:hidden}
   background: #dc2626;
   color: #fff;
 }
+
+/* Dark theme: override every remaining hard-coded light hover on interactive bank/dashboard controls */
+:root[data-theme="dark"] .btn-secondary:hover:enabled,
+:root[data-theme="dark"] .btn-secondary:active:enabled,
+:root[data-theme="dark"] .bar-tabel button:hover,
+:root[data-theme="dark"] .editor-toolbar button:hover,
+:root[data-theme="dark"] .ikon-btn:hover,
+:root[data-theme="dark"] .rs-lihat:hover,
+:root[data-theme="dark"] .mt-nama:hover,
+:root[data-theme="dark"] .mt-chev:hover,
+:root[data-theme="dark"] .mt-hasil:hover,
+:root[data-theme="dark"] .mt-anak:hover,
+:root[data-theme="dark"] .fcombo-btn:hover,
+:root[data-theme="dark"] .fcombo-list button:hover,
+:root[data-theme="dark"] .nl-trigger:hover:not(:disabled),
+:root[data-theme="dark"] .nl-opsi:hover,
+:root[data-theme="dark"] .nl-nav:hover:not(:disabled),
+:root[data-theme="dark"] .nl-judul-kal:hover,
+:root[data-theme="dark"] .nl-hari:hover:not(:disabled),
+:root[data-theme="dark"] .nl-bln:hover:not(:disabled),
+:root[data-theme="dark"] .nl-teks-btn:hover:not(:disabled),
+:root[data-theme="dark"] .wadah-folder > summary:hover,
+:root[data-theme="dark"] .kartu-soal > summary:hover,
+:root[data-theme="dark"] .kartu-soal > summary:active,
+:root[data-theme="dark"] #btn-ke-form:hover:enabled,
+:root[data-theme="dark"] #btn-tambah-folder:hover:enabled,
+:root[data-theme="dark"] #btn-pratinjau-semua:hover:enabled {
+  background: var(--hover) !important;
+  color: var(--text) !important;
+  border-color: var(--border);
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+/* Primary actions retain their brand color instead of inheriting neutral hover */
+:root[data-theme="dark"] #btn-ke-form.btn-primary:hover:enabled,
+:root[data-theme="dark"] #btn-cetak.btn-primary:hover:enabled {
+  background: var(--primary-dark) !important;
+  color: #fff !important;
+}
+
+/* The content inside clickable bank rows follows the row's foreground color */
+:root[data-theme="dark"] .wadah-folder > summary:hover *,
+:root[data-theme="dark"] .kartu-soal > summary:hover *,
+:root[data-theme="dark"] .kartu-soal > summary:active * {
+  color: inherit;
+}
+
