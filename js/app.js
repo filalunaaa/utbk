@@ -997,7 +997,13 @@ function tampil(id) {
   const tombolProfil = $('btn-profil');
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
-  if (id === 'setup') { if (!window._dariMateri) window._subAktif = null; window._dariMateri = false; terapkanDefaultSetup(); syncBlokWaktu(); ringkasSesi(); }
+  if (id === 'setup') {
+    if (!window._dariMateri) window._subAktif = null;
+    window._dariMateri = false;
+    terapkanDefaultSetup();
+    syncBlokWaktu();
+    hitungSoal();
+  }
   if (AkunApp.sesi()) sinkron().catch(() => {});
   document.querySelectorAll('.nav-link').forEach((a) => a.classList.toggle('aktif', a.dataset.hal === aktif));
   window.scrollTo(0, 0);
@@ -4457,11 +4463,13 @@ $('btn-kembali-publik').addEventListener('click', () => {
 // ---------- Pengaturan: latihan default, profil publik, hapus akun ----------
 function terapkanDefaultSetup() {
   const p = PengaturanApp.ambil();
-  const t = p.ingatTerakhir && p.konfigTerakhir ? p.konfigTerakhir : null;
-  const mode = t ? t.mode : (p.modeDefault || 'latihan'), jml = t ? t.jumlah : String(p.jumlahDefault || '5'), mp = t ? t.mapel : (p.mapelDefault || 'semua');
+  // Setiap masuk kembali ke Atur Latihan, pulihkan konfigurasi default.
+  const mode = p.modeDefault || 'latihan';
+  const jml = String(p.jumlahDefault || '5');
+  const mp = p.mapelDefault || 'semua';
   document.querySelectorAll('input[name="mode"]').forEach((i) => (i.checked = i.value === mode));
   const pilihJumlah = $('pilih-jumlah');
-  pilihJumlah.value = ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50'].includes(String(jml)) ? String(jml) : '5';
+  pilihJumlah.value = ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50'].includes(jml) ? jml : '5';
   document.querySelectorAll('input[name="mapel"]').forEach((i) => (i.checked = i.value === mp));
 }
 $('pengaturan').addEventListener('change', (e) => {
