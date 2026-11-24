@@ -153,7 +153,12 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
           </div>
           <div id="blok-waktu" hidden>
             <p class="label">Waktu per soal (Try Out)</p>
-            <div class="pilihan" id="pilih-waktu"></div>
+            <select class="input" id="pilih-waktu" name="waktu" aria-label="Waktu per soal">
+              <option value="60">60 detik</option>
+              <option value="90">90 detik</option>
+              <option value="120">120 detik</option>
+              <option value="180">180 detik</option>
+            </select>
           </div>
           <p class="label">Tingkat kesulitan</p>
           <select class="input" id="pilih-level" name="level" aria-label="Tingkat kesulitan">
