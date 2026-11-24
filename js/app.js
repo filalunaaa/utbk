@@ -2750,6 +2750,7 @@ function pindahkanSoal(id, folderId) {
 // ---------- Bank soal ----------
 function tampilkanPanelAdmin() {
   $('kartu-admin').hidden = !ADMIN;
+  $('nav-laporan-admin').hidden = !ADMIN;
   if (!ADMIN) $('sw-admin').checked = false;
 }
 function terapkanModeAdmin() {
