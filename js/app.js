@@ -1304,7 +1304,133 @@ function renderSoal() {
 }
 
 
-// ---------- Edit soal langsung saat latihan (admin) ----------
+// ---------- Edit soal langsung s// ---------- Laporan soal ----------
+function buatModalLaporanSoal() {
+  if ($('modal-laporan-soal')) return;
+
+  const el = document.createElement('div');
+  el.id = 'modal-laporan-soal';
+  el.className = 'editor-soal-live';
+  el.hidden = true;
+
+  el.innerHTML = `
+    <section class="editor-soal-live-panel" role="dialog" aria-modal="true" aria-labelledby="lapor-judul">
+      <header class="esl-head">
+        <div>
+          <span class="esl-eyebrow">LAPORAN PENGGUNA</span>
+          <h2 id="lapor-judul">Laporkan Soal</h2>
+          <p id="lapor-meta" class="muted"></p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-kecil" data-lapor-tutup>Tutup</button>
+      </header>
+
+      <form id="form-laporan-soal">
+        <label class="esl-label" for="lapor-kategori">Apa masalah yang kamu temukan?</label>
+        <select id="lapor-kategori" class="input" required>
+          <option value="">Pilih kategori laporan</option>
+          <option value="soal_salah">Soal atau pertanyaan salah</option>
+          <option value="opsi_tidak_sesuai">Pilihan jawaban tidak sesuai pembahasan</option>
+          <option value="kunci_jawaban_salah">Kunci jawaban salah</option>
+          <option value="pembahasan_salah">Pembahasan salah</option>
+          <option value="gambar_bermasalah">Gambar bermasalah</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+
+        <label class="esl-label" for="lapor-deskripsi">Keterangan tambahan (opsional)</label>
+        <textarea id="lapor-deskripsi" class="input esl-area" rows="4"
+          maxlength="2000" placeholder="Jelaskan bagian yang menurutmu bermasalah..."></textarea>
+
+        <p id="lapor-pesan" class="esl-pesan" role="status" aria-live="polite"></p>
+
+        <footer class="esl-actions">
+          <button type="button" class="btn btn-secondary" data-lapor-tutup>Batal</button>
+          <button type="submit" class="btn btn-primary" id="lapor-kirim">Kirim laporan</button>
+        </footer>
+      </form>
+    </section>
+  `;
+
+  document.body.appendChild(el);
+
+  el.addEventListener('click', (e) => {
+    if (e.target === el || e.target.closest('[data-lapor-tutup]')) {
+      el.hidden = true;
+    }
+  });
+
+  $('form-laporan-soal').addEventListener('submit', kirimLaporanSoal);
+}
+
+function bukaModalLaporanSoal() {
+  if (!sesi || !sesi.aktif) return;
+
+  const akun = AkunApp.sesi();
+  if (!akun) {
+    alert('Silakan masuk ke akun Pytago terlebih dahulu untuk melaporkan soal.');
+    return;
+  }
+
+  const s = sesi.soal[sesi.i];
+  if (!s) return;
+
+  buatModalLaporanSoal();
+
+  $('lapor-meta').textContent =
+    `Soal ${sesi.i + 1} · ${namaMapel(s.mataPelajaran)} · ${s.topik}`;
+
+  $('lapor-kategori').value = '';
+  $('lapor-deskripsi').value = '';
+  $('lapor-pesan').textContent = '';
+
+  $('modal-laporan-soal').hidden = false;
+  $('lapor-kategori').focus();
+}
+
+async function kirimLaporanSoal(e) {
+  e.preventDefault();
+
+  const akun = AkunApp.sesi();
+  if (!akun || !sesi || !sesi.aktif) return;
+
+  const s = sesi.soal[sesi.i];
+  const kategori = $('lapor-kategori').value;
+  const deskripsi = $('lapor-deskripsi').value.trim();
+  const tombol = $('lapor-kirim');
+  const pesan = $('lapor-pesan');
+
+  if (!kategori) {
+    pesan.textContent = 'Pilih kategori laporan terlebih dahulu.';
+    return;
+  }
+
+  tombol.disabled = true;
+  pesan.textContent = 'Mengirim laporan...';
+
+  try {
+    await rest('laporan_soal', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: {
+        user_id: akun.user_id,
+        question_id: String(s.id),
+        question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
+        category: kategori,
+        description: deskripsi || null
+      }
+    });
+
+    $('modal-laporan-soal').hidden = true;
+    alert('Berhasil dikirim. Thx a lot udah bantu ningkatin kualitas soal kami!.');
+  } catch (err) {
+    pesan.textContent = 'Gagal mengirim laporan: ' + err.message;
+  } finally {
+    tombol.disabled = false;
+  }
+}
+
+// Hubungkan tombol dengan formulir laporan.
+$('btn-laporkan-soal').addEventListener('click', bukaModalLaporanSoal);aat latihan (admin) ----------
+
 let editorSoalLiveFokus = null;
 function buatEditorSoalLive() {
   if ($('editor-soal-live')) return;
