@@ -1705,6 +1705,10 @@ if (!lama) return;
     });
     if (!Array.isArray(hasilSimpan) || !hasilSimpan.length) throw new Error('Server tidak mengonfirmasi perubahan. Periksa hak akses admin.');
     Object.assign(lama, data, { id });
+    if (sesi && Array.isArray(sesi.soal)) {
+      const diSesi = sesi.soal.find(x => String(x.id) === id);
+      if (diSesi) Object.assign(diSesi, data, { id });
+    }
     const diBank = SOAL.find(x=>String(x.id)===id);
     if (diBank) Object.assign(diBank, data, { id });
     DefaultSoal.asli[id] = kanon(sinId(lama));
