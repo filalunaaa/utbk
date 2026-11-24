@@ -1596,8 +1596,8 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
     border-color:var(--border);
   }
   #menu .qa-ik{
-    background:#f1f5f9;
-    color:#345675;
+    background:var(--primary-soft);
+  color:var(--accent);
     box-shadow:none!important;
     filter:none!important;
     text-shadow:none!important;
@@ -1605,10 +1605,6 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
   :root[data-theme="dark"] #menu .qa:hover,
   :root[data-theme="dark"] #menu .qa:active{
     background:#1b2738;
-  }
-  :root[data-theme="dark"] #menu .qa-ik{
-    background:#1b2738;
-    color:#a9bdd4;
   }
 }
 
@@ -1645,9 +1641,7 @@ body.esl-terbuka{overflow:hidden}
 
 /* Mobile parity: keep the homepage chart and segmented controls consistent with desktop.
    Scoped to the homepage chart and narrow viewports so desktop styling is unchanged. */
-  #menu .qa-ik {
-    background: var(--primary-soft) !important;
-    color: var(--accent) !important;
+
   }
 /* tampilan pengaturan */
 @media (max-width: 899px) {
