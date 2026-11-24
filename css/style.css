@@ -1859,3 +1859,25 @@ body.esl-terbuka{overflow:hidden}
 #ex-nav.ex-nav::-webkit-scrollbar-track{background:transparent}
 #ex-nav.ex-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
 
+
+
+/* Status hasil penilaian pada navigasi nomor soal */
+#ex-nav.ex-nav button.status-benar{
+  background:var(--benar-soft);
+  border-color:var(--benar);
+  color:var(--benar);
+}
+#ex-nav.ex-nav button.status-salah{
+  background:var(--salah-soft);
+  border-color:var(--salah);
+  color:var(--salah);
+}
+#ex-nav.ex-nav button.status-parsial{
+  background:var(--warning-soft);
+  border-color:var(--warning);
+  color:#9a6700;
+}
+#ex-nav.ex-nav button.aktif{
+  outline:2px solid var(--primary);
+  outline-offset:2px;
+}
