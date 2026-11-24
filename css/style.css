@@ -1283,7 +1283,7 @@ html.ob-on body{overflow:hidden}
 .ob-f{display:flex;flex-direction:column;gap:6px;min-width:0}
 .ob-f>label,.ob-f>.ob-lab{font-size:.84rem;font-weight:700;color:var(--ob-navy)}
 .ob-f small{font-size:.76rem;color:var(--ob-muted)}
-.ob-input{width:100%;min-height:44px;padding:10px 14px;border:1.5px solid #cfe0fa;border-radius:12px;background:#fff;color:#10244d;font:inherit;font-size:.95rem}
+.ob-input{width:100%;min-height:44px;padding:10px 14px;border:1.5px solid var(--ob-line);border-radius:12px;background:#fff;color:#10244d;font:inherit;font-size:.95rem}
 textarea.ob-input{resize:vertical;min-height:84px;line-height:1.45}
 .ob-input:focus{outline:none;border-color:var(--ob-blue);box-shadow:none}
 .ob-input:focus-visible{outline:2px solid #9ca3af;outline-offset:2px}
