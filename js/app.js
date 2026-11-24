@@ -2850,17 +2850,12 @@ async function muatLaporanAdmin() {
       'laporan_soal?select=id,user_id,question_id,question_title,question_source,category,description,status,admin_reply,created_at,replied_at&order=created_at.desc&limit=100'
     );
 
-   const jumlah = laporan.length;
-const selesai = laporan.filter(x => x.status === 'selesai').length;
-
+  const laporanAktif = laporan.filter(x => x.status !== 'selesai');
+const jumlah = laporanAktif.length;
 ringkasan.innerHTML = `
   <div class="card">
     <strong>${jumlah}</strong>
     <span>Total laporan</span>
-  </div>
-  <div class="card">
-    <strong>${selesai}</strong>
-    <span>Selesai</span>
   </div>
 `;
     if (!jumlah) {
@@ -2884,7 +2879,7 @@ ringkasan.innerHTML = `
       ditolak: 'Ditolak'
     };
 
-    wadah.innerHTML = laporan.map(x => {
+    wadah.innerHTML = laporanAktif.map(x => {
       const tanggal = new Date(x.created_at).toLocaleString('id-ID', {
         dateStyle: 'medium',
         timeStyle: 'short'
