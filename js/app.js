@@ -1212,7 +1212,7 @@ function soalTerfilter() {
 function ringkasSesi() {
   const teks = (nm) => { const i = document.querySelector(`input[name="${nm}"]:checked`); return i && i.nextElementSibling ? i.nextElementSibling.textContent : '-'; };
   const n = soalTerfilter().length, jml = jumlahDipilih(n), mode = nilai('mode');
-  const wEl = document.querySelector('input[name="waktu"]:checked');
+  const wEl = $('pilih-waktu');
   const waktu = wEl ? Number(wEl.value) : DETIK_PER_SOAL;
   const lv = ({ semua: 'Semua tingkat', mudah: 'Mudah', sedang: 'Sedang', sulit: 'Sulit' })[nilai('level')] || 'Semua tingkat';
   const b = (a, v) => `<div class="ringkas-baris"><span>${a}</span><b>${v}</b></div>`;
@@ -4774,8 +4774,7 @@ document.querySelectorAll('input[name="mode"]').forEach((r) => r.addEventListene
 
 function renderPengaturan() {
   const p = PengaturanApp.ambil();
-  $('pilih-waktu').innerHTML = [60, 90, 120, 180].map((o) =>
-    `<label class="chip"><input type="radio" name="waktu" value="${o}" ${o === p.waktuPerSoal ? 'checked' : ''}><span>${o} detik</span></label>`).join('');
+  $('pilih-waktu').value = String(p.waktuPerSoal || 60);
   $('pilih-waktu-set').innerHTML = [60, 90, 120, 180].map((o) =>
     `<label class="chip"><input type="radio" name="set-waktu" value="${o}" ${o === p.waktuPerSoal ? 'checked' : ''}><span>${o} detik</span></label>`).join('');
   document.querySelectorAll('input[name="tema"]').forEach((i) => (i.checked = i.value === temaTersimpan()));
@@ -4806,6 +4805,7 @@ $('pilih-waktu').addEventListener('change', (e) => {
   const v = Number(e.target.value);
   PengaturanApp.simpan({ ...PengaturanApp.ambil(), waktuPerSoal: v });
   DETIK_PER_SOAL = v;
+  ringkasSesi();
 });
 $('btn-ke-setup').addEventListener('click', () => tampil('setup'));
 $('setup').addEventListener('change', ringkasSesi);
