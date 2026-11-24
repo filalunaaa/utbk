@@ -3814,9 +3814,9 @@ function renderUjianUI() {
   $('ex-pos').textContent = `${i + 1} / ${n}`;
   const sudah = (k) => (mode === 'latihan' ? kunci[k] : jawab[k] !== null && jawab[k] !== undefined);
   const statusNavigasi = (k) => {
-    // Nilai latihan setelah dikonfirmasi; nilai Try Out dari jawaban yang sudah dipilih.
-    const sudahDinilai = Boolean(kunci[k]) || (mode === 'tryout' && jawab[k] !== null && jawab[k] !== undefined);
-    if (!sudahDinilai) return '';
+    // Kebenaran hanya boleh ditampilkan setelah tombol "Jawab" dikonfirmasi di mode Latihan.
+    // Try Out tidak mengungkap benar/salah selama ujian berlangsung.
+    if (mode !== 'latihan' || !kunci[k]) return '';
     const skor = skorJawaban(soal[k], jawab[k]);
     return skor === 1 ? 'status-benar' : skor > 0 ? 'status-parsial' : 'status-salah';
   };
