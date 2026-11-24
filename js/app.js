@@ -3757,7 +3757,8 @@ $('opsi-list').addEventListener('input', (e) => {
 });
 $('opsi-list').addEventListener('change', (e) => {
   if (!sesi || sesi.mode !== 'tryout' || !e.target.matches('.isian-input')) return;
-  renderUjianUI();
+  // Try Out hanya memperbarui jumlah soal terjawab; jangan evaluasi atau warnai status benar/salah.
+  $('ex-status').textContent = `${sesi.jawab.filter((j) => j !== null && j !== undefined).length}/${sesi.soal.length} terjawab`;
 });
 $('opsi-list').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.target.matches('.isian-input') && !$('btn-aksi').disabled) $('btn-aksi').click();
@@ -3783,8 +3784,12 @@ $('opsi-list').addEventListener('click', (e) => {
     opsi.setAttribute('aria-checked', String(terpilih));
   });
   simpanSesiAktif();
-  if (sesi.mode === 'latihan') $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
-  else renderUjianUI(); // Perbarui warna nomor segera setelah jawaban Try Out dipilih.
+  if (sesi.mode === 'latihan') {
+    $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
+  } else {
+    // Di Try Out, navigasi tidak diberi warna berdasarkan benar/salah.
+    $('ex-status').textContent = `${sesi.jawab.filter((j) => j !== null && j !== undefined).length}/${sesi.soal.length} terjawab`;
+  }
 });
 $('btn-aksi').addEventListener('click', () => {
   const { mode, i, soal, kunci, jawab } = sesi;
