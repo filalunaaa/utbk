@@ -2865,7 +2865,7 @@ async function muatLaporanAdmin() {
 
 function tampilkanPanelAdmin() {
   $('kartu-admin').hidden = !ADMIN;
-  $('nav-laporan-admin').hidden = !ADMIN;
+  $('nav-laporan-admin').style.visibility = ADMIN ? 'visible' : 'hidden';
   if (!ADMIN) $('sw-admin').checked = false;
 }
 function terapkanModeAdmin() {
