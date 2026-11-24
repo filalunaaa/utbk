@@ -1478,6 +1478,7 @@ $('btn-laporkan-soal').addEventListener('click', bukaModalLaporanSoal);
 // ---------- Edit soal langsung saat latihan (admin) ----------
 
 let editorSoalLiveFokus = null;
+let soalLaporanTarget = null;
 function buatEditorSoalLive() {
   if ($('editor-soal-live')) return;
   const el = document.createElement('div');
@@ -1517,8 +1518,10 @@ function renderTombolEditSoal(s) {
   }
 }
 function bukaEditorSoalLive() {
-  if (!ADMIN || !sesi || !sesi.aktif) return;
-  const s = sesi.soal[sesi.i];
+if (!ADMIN) return;
+const tombol = $('esl-simpan'), pesan = $('esl-pesan');
+const lama = soalLaporanTarget || (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+if (!lama) return;
   if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
   buatEditorSoalLive();
   editorSoalLiveFokus = document.activeElement;
@@ -1590,8 +1593,14 @@ async function simpanEditorSoalLive(e) {
     DefaultSoal.asli[id] = kanon(sinId(lama));
     DefaultSoal.simpanCache();
     pesan.textContent = 'Tersimpan. Pengguna lain akan menerima pembaruan otomatis dalam sekitar 15 detik.';
-    renderSoal();
-    setTimeout(tutupEditorSoalLive, 700);
+    if (sesi && sesi.aktif) renderSoal();
+
+if (soalLaporanTarget) {
+  soalLaporanTarget = null;
+  muatLaporanAdmin();
+}
+
+setTimeout(tutupEditorSoalLive, 700);
   } catch (err) {
     pesan.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : 'Periksa koneksi dan izin admin.');
     tombol.disabled = false;
@@ -2786,7 +2795,7 @@ async function muatLaporanAdmin() {
 
   try {
     const laporan = await rest(
-      'laporan_soal?select=id,user_id,question_id,question_title,category,description,status,admin_reply,created_at,replied_at&order=created_at.desc&limit=100'
+      'laporan_soal?select=id,user_id,question_id,question_title,question_source,category,description,status,admin_reply,created_at,replied_at&order=created_at.desc&limit=100'
     );
 
     const jumlah = laporan.length;
@@ -2840,27 +2849,51 @@ async function muatLaporanAdmin() {
         timeStyle: 'short'
       });
 
-      return `
-        <article class="laporan-item">
-          <div class="laporan-item-head">
-            <strong>${esc(x.question_title || 'Soal tanpa judul')}</strong>
-            <span class="laporan-status">
-              ${esc(status[x.status] || x.status)}
-            </span>
-          </div>
-          <p class="muted">
-            ID laporan: ${esc(x.id)} · ID soal: ${esc(x.question_id)}
-          </p>
-          <p><strong>Kategori:</strong>
-            ${esc(kategori[x.category] || x.category)}
-          </p>
-          <p><strong>Keterangan pengguna:</strong></p>
-          <p>${esc(x.description || 'Tidak ada keterangan tambahan.')}</p>
-          <small class="muted">Dikirim: ${esc(tanggal)}</small>
-        </article>
-      `;
-    }).join('');
+     return `
+  <article class="laporan-item">
+    <div class="laporan-item-head">
+      <strong>${esc(x.question_title || 'Soal tanpa judul')}</strong>
+      <span class="laporan-status">
+        ${esc(status[x.status] || x.status)}
+      </span>
+    </div>
 
+    <p class="muted">
+      ID laporan: ${esc(x.id)} · ID soal: ${esc(x.question_id)}
+    </p>
+
+    <p><strong>Sumber soal:</strong>
+      ${x.question_source === 'bawaan' ? 'Soal bawaan Pytago' :
+        x.question_source === 'personal' ? 'Soal personal pengguna' :
+        'Belum tercatat (laporan lama)'}
+    </p>
+
+    <p><strong>Kategori:</strong>
+      ${esc(kategori[x.category] || x.category)}
+    </p>
+
+    <p><strong>Keterangan pengguna:</strong></p>
+    <p>${esc(x.description || 'Tidak ada keterangan tambahan.')}</p>
+
+    <small class="muted">Dikirim: ${esc(tanggal)}</small>
+
+    ${x.question_source === 'bawaan' ? `
+      <div style="margin-top:12px">
+        <button type="button"
+          class="btn btn-secondary btn-kecil"
+          data-edit-laporan="${esc(x.question_id)}">
+          Edit Soal
+        </button>
+      </div>
+    ` : ''}
+  </article>
+`;
+    }).join('');
+wadah.querySelectorAll('[data-edit-laporan]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    bukaEditorSoalDariLaporan(btn.dataset.editLaporan);
+  });
+});
   } catch (err) {
     console.error('Gagal memuat laporan:', err);
     wadah.innerHTML = `
