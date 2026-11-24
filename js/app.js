@@ -2915,7 +2915,7 @@ ringkasan.innerHTML = `
     </p>
 
     <p><strong>Sumber soal:</strong>
-      ${x.question_source === 'bawaan' ? 'Soal bawaan Pytago' :
+      ${x.question_source === 'bawaan' ? 'Soal bawaan' :
         x.question_source === 'personal' ? 'Soal personal pengguna' :
         'Belum tercatat (laporan lama)'}
     </p>
