@@ -3752,8 +3752,17 @@ function renderUjianUI() {
   $('ex-pct').textContent = Math.round(((i + 1) / n) * 100) + '%';
   $('ex-pos').textContent = `${i + 1} / ${n}`;
   const sudah = (k) => (mode === 'latihan' ? kunci[k] : jawab[k] !== null && jawab[k] !== undefined);
+  const statusNavigasi = (k) => {
+    if (mode !== 'latihan' || !kunci[k]) return sudah(k) ? 'terjawab' : '';
+    const skor = skorJawaban(soal[k], jawab[k]);
+    return skor === 1 ? 'status-benar' : skor > 0 ? 'status-parsial' : 'status-salah';
+  };
   $('ex-status').textContent = `${soal.filter((s, k) => sudah(k)).length}/${n} terjawab`;
-  $('ex-nav').innerHTML = soal.map((s, k) => `<button type="button" data-k="${k}" class="${k === i ? 'aktif' : sudah(k) ? 'terjawab' : ''}" aria-label="Soal ${k + 1}${sudah(k) ? ', sudah dijawab' : ', kosong'}"${k === i ? ' aria-current="true"' : ''}${mode === 'latihan' && k > i && !kunci[k - 1] ? ' disabled' : ''}>${k + 1}</button>`).join('');
+  $('ex-nav').innerHTML = soal.map((s, k) => {
+    const status = statusNavigasi(k);
+    const labelStatus = status === 'status-benar' ? 'benar' : status === 'status-parsial' ? 'parsial' : status === 'status-salah' ? 'salah' : sudah(k) ? 'sudah dijawab' : 'kosong';
+    return `<button type="button" data-k="${k}" class="${[k === i ? 'aktif' : '', status].filter(Boolean).join(' ')}" aria-label="Soal ${k + 1}, ${labelStatus}"${k === i ? ' aria-current="true"' : ''}${mode === 'latihan' && k > i && !kunci[k - 1] ? ' disabled' : ''}>${k + 1}</button>`;
+  }).join('');
   document.querySelectorAll('#opsi-list .opsi').forEach((o) => {
     o.tabIndex = kunci[i] ? -1 : 0; o.setAttribute('role', adaGanda(soal[i]) ? 'checkbox' : 'radio');
     o.setAttribute('aria-checked', String(o.classList.contains('terpilih')));
