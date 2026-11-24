@@ -582,7 +582,7 @@ function ubahFotoJadiAvatar(file) {
   });
 }
 
-const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil', 'utbk_avatar', 'utbk_sesi_dimigrasi', 'utbk_onboarding_lokal'];
+const KUNCI_DATA_AKUN = [...Object.keys(SYNC), ...Object.keys(SYNC_OPSIONAL), 'utbk_profil', 'utbk_avatar', 'utbk_sesi_dimigrasi', 'utbk_onboarding_lokal', 'utbk_sesi_aktif'];
 function bersihkanDataAkunLokal() {
   KUNCI_DATA_AKUN.concat('utbk_pemilik').forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
   terakhirDikirim = {};
@@ -864,6 +864,71 @@ function opsiReviewHTML(s, j) {
 }
 const $ = (id) => document.getElementById(id);
 let sesi = null;
+const KUNCI_SESI_AKTIF = 'utbk_sesi_aktif';
+
+// Simpan snapshot sesi agar refresh/penutupan tab tidak menghapus progres pengerjaan.
+function simpanSesiAktif() {
+  if (!sesi || !sesi.aktif) return;
+  const data = {
+    mode: sesi.mode, soal: sesi.soal, sumberSoal: sesi.sumberSoal,
+    aktif: true, i: sesi.i, mulai: sesi.mulai, statAwal: sesi.statAwal,
+    jawab: sesi.jawab, kunci: sesi.kunci, sisa: sesi.sisa,
+    disimpanPada: Date.now()
+  };
+  try { localStorage.setItem(KUNCI_SESI_AKTIF, JSON.stringify(data)); }
+  catch (e) { console.warn('Progres sesi belum dapat disimpan di perangkat:', e); }
+}
+function hapusSesiAktif() {
+  try { localStorage.removeItem(KUNCI_SESI_AKTIF); } catch (e) {}
+}
+function jalankanTimerSesi() {
+  if (!sesi || sesi.mode !== 'tryout') return;
+  const tik = () => {
+    $('timer').textContent = 'Sisa ' + format(sesi.sisa);
+    const pw = PengaturanApp.ambil().peringatanWaktu !== false;
+    $('timer').classList.toggle('habis', pw && sesi.sisa <= 30);
+    $('timer').classList.toggle('hampir', pw && sesi.sisa > 30 && sesi.sisa <= 120);
+    if (pw && sesi.sisa === 30) peringatanWaktu30();
+  };
+  tik();
+  sesi.timer = setInterval(() => {
+    if (!sesi || !sesi.aktif) return;
+    sesi.sisa = Math.max(0, sesi.sisa - 1);
+    tik();
+    if (sesi.sisa <= 0) selesai();
+    else if (sesi.sisa % 5 === 0) simpanSesiAktif();
+  }, 1000);
+}
+function pulihkanSesiAktif() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(KUNCI_SESI_AKTIF) || 'null'); } catch (e) {}
+  if (!data || !data.aktif || !Array.isArray(data.soal) || !data.soal.length ||
+      !Array.isArray(data.jawab) || !Array.isArray(data.kunci) ||
+      data.jawab.length !== data.soal.length || data.kunci.length !== data.soal.length) {
+    hapusSesiAktif();
+    return false;
+  }
+  const sekarang = Date.now();
+  const sisa = Number(data.sisa);
+  sesi = {
+    ...data,
+    i: Math.min(Math.max(Number(data.i) || 0, 0), data.soal.length - 1),
+    sisa: data.mode === 'tryout'
+      ? Math.max(0, (Number.isFinite(sisa) ? sisa : data.soal.length * DETIK_PER_SOAL) -
+          Math.floor(Math.max(0, sekarang - (Number(data.disimpanPada) || sekarang)) / 1000))
+      : sisa,
+    timer: null, aktif: true
+  };
+  $('timer').hidden = sesi.mode !== 'tryout';
+  tampil('kuis');
+  $('ex-detail').open = window.innerWidth >= 900;
+  renderSoal();
+  if (sesi.mode === 'tryout') {
+    if (sesi.sisa <= 0) selesai();
+    else jalankanTimerSesi();
+  }
+  return true;
+}
 let editId = null;           // id soal bank yang sedang diedit (null = soal baru)
 let filterAktif = 'semua';   // filter daftar bank: 'semua' | 'none' | id folder
 let editorAktif = null;      // editor (area) yang terakhir dipakai
@@ -1257,21 +1322,8 @@ aktif: true, i: 0, mulai: Date.now(), timer: null,
   };
   $('timer').hidden = sesi.mode !== 'tryout';
   rekamKonfigTerakhir();
-  if (sesi.mode === 'tryout') {
-    const tik = () => {
-      $('timer').textContent = 'Sisa ' + format(sesi.sisa);
-      const pw = PengaturanApp.ambil().peringatanWaktu !== false;
-      $('timer').classList.toggle('habis', pw && sesi.sisa <= 30);
-      $('timer').classList.toggle('hampir', pw && sesi.sisa > 30 && sesi.sisa <= 120);
-      if (pw && sesi.sisa === 30) peringatanWaktu30();
-    };
-    tik();
-    sesi.timer = setInterval(() => {
-      sesi.sisa--;
-      tik();
-      if (sesi.sisa <= 0) selesai();
-    }, 1000);
-  }
+  simpanSesiAktif();
+  if (sesi.mode === 'tryout') jalankanTimerSesi();
   tampil('kuis');
   $('ex-detail').open = window.innerWidth >= 900;
   renderSoal();
@@ -1333,6 +1385,7 @@ function renderSoal() {
     btn.disabled = false;
   }
   renderUjianUI();
+  simpanSesiAktif();
   rumus($('kuis'));
 }
 
@@ -1753,6 +1806,7 @@ function selesai() {
   filterReview = 'semua';
   clearInterval(sesi.timer);
   sesi.aktif = false;
+  hapusSesiAktif();
   const { mode, soal, jawab, kunci } = sesi;
   const durasi = Math.min(Math.round((Date.now() - sesi.mulai) / 1000), soal.length * DETIK_PER_SOAL);
   if (mode === 'latihan') jawab.forEach((j, k) => { if (!kunci[k]) jawab[k] = null; });
@@ -3698,6 +3752,7 @@ $('opsi-list').addEventListener('input', (e) => {
   const v = e.target.value.replace(/\D/g, '');
   if (v !== e.target.value) e.target.value = v;
   sesi.jawab[sesi.i] = v === '' ? null : Number(v);
+  simpanSesiAktif();
   if (sesi.mode === 'latihan' && !sesi.kunci[sesi.i]) $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
 });
 $('opsi-list').addEventListener('change', (e) => {
@@ -3727,6 +3782,7 @@ $('opsi-list').addEventListener('click', (e) => {
     opsi.classList.toggle('terpilih', terpilih);
     opsi.setAttribute('aria-checked', String(terpilih));
   });
+  simpanSesiAktif();
   if (sesi.mode === 'latihan') $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
   else renderUjianUI(); // Perbarui warna nomor segera setelah jawaban Try Out dipilih.
 });
@@ -3797,7 +3853,11 @@ function konfirmUjian(judul, teks, aksi) {
   aksi.forEach((a) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + (a.kelas || 'btn-secondary'); b.textContent = a.label; b.onclick = () => { $('modal-ex').hidden = true; if (a.fn) a.fn(); }; w.appendChild(b); });
   $('modal-ex').hidden = false; w.firstChild.focus();
 }
-function batalSesi() { if (sesi) { clearInterval(sesi.timer); sesi.timer = null; sesi.aktif = false; } tampil('menu'); }
+function batalSesi() {
+  if (sesi) { clearInterval(sesi.timer); sesi.timer = null; sesi.aktif = false; }
+  hapusSesiAktif();
+  tampil('menu');
+}
 function akhiriDenganKonfirmasi() {
   if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri !== false) {
     const k = sesi.jawab.filter((j) => j === null || j === undefined).length;
@@ -4878,7 +4938,11 @@ segarkanSoalBawaan();
 (async () => {
   if (window.obMemuat) window.obMemuat();
   const baruMasuk = await tanganiRedirectOAuth();
-  if (AkunApp.sesi()) await mulaiSesi(); else if (window.tutupOnboarding) window.tutupOnboarding();
+  if (AkunApp.sesi()) await mulaiSesi();
+  else if (window.adaProgresOnboarding && window.adaProgresOnboarding()) window.mulaiOnboardingPublik();
+  else if (window.tutupOnboarding) window.tutupOnboarding();
+  // Pulihkan sesi latihan/try out setelah data dan tampilan akun selesai diinisialisasi.
+  pulihkanSesiAktif();
   if (baruMasuk) { renderProfil(false); renderSalam(); }
 })();
 // Welcome page: pintu masuk bagi pengunjung baru
@@ -5201,8 +5265,16 @@ segarkanSoalBawaan();
     if ((AkunApp.sesi() || /access_token=/.test(location.hash)) && !(s && s.selesai)) tampilMemuat();
   };
   // Dipanggil setelah data akun terambil. Menentukan: tampilkan onboarding, atau langsung ke dashboard.
+  window.adaProgresOnboarding = function () {
+    const s = st.ambil();
+    return !!(s && !s.selesai);
+  };
   window.mulaiOnboardingPublik = function () {
-  const s = st.ambil();
+  let s = st.ambil();
+  if (!s || s.selesai) {
+    st.simpan({ selesai: false, tahap: 0, ptn: '', prodi: '' });
+    s = st.ambil();
+  }
 
   if (s && s.selesai) {
     tahap = TOTAL;
