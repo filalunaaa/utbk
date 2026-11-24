@@ -812,8 +812,8 @@ body[data-hal="kuis"] .container{padding-top:0}
 .ex-kanan .timer{display:inline-flex;align-items:center;gap:6px;font-size:.95rem;font-variant-numeric:tabular-nums;background:var(--primary-soft);padding:4px 9px;border-radius:9px;white-space:nowrap}
 .timer-clock{width:16px;height:16px;flex:0 0 16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .timer-clock-minute,.timer-clock-hand{transform-box:view-box;transform-origin:12px 13px}
-.timer-clock-minute{animation:tryout-clock-minute 60s linear infinite}
-.timer-clock-hand{animation:tryout-clock-tick 4s steps(60,end) infinite}
+.timer-clock-minute{animation:tryout-clock-minute 3600s linear infinite}
+.timer-clock-hand{animation:tryout-clock-tick 60s steps(60,end) infinite}
 .timer-clock-pin{fill:currentColor;stroke:none}
 @keyframes tryout-clock-minute{to{transform:rotate(360deg)}}
 @keyframes tryout-clock-tick{to{transform:rotate(360deg)}}
