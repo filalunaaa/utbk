@@ -1449,27 +1449,20 @@ async function kirimLaporanSoal(e) {
   pesan.textContent = 'Mengirim laporan...';
 
   try {
-    await rest('laporan_soal', {
-      method: 'POST',
-      prefer: 'return=minimal',
-    body: {
-  user_id: akun.user_id,
-  question_id: String(s.id),
-  question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
-  question_source: sesi.sumberSoal[sesi.i],
-  category: kategori,
-  description: deskripsi || null
-      body: {
-  user_id: akun.user_id,
-  question_id: String(s.id),
-  question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
-  question_source: sesi.sumberSoal[sesi.i],
-  category: kategori,
-  description: deskripsi || null,
-  status: 'selesai'
-}
-}
-    });
+   
+await rest('laporan_soal', {
+  method: 'POST',
+  prefer: 'return=minimal',
+  body: {
+    user_id: akun.user_id,
+    question_id: String(s.id),
+    question_title: `${namaMapel(s.mataPelajaran)} · ${s.topik}`,
+    question_source: sesi.sumberSoal[sesi.i],
+    category: kategori,
+    description: deskripsi || null,
+    status: 'selesai'
+  }
+});
 
     $('modal-laporan-soal').hidden = true;
     tampilkanToast('✓ Berhasil dikirim. Thx a lot udah bantu ningkatin kualitas soal kami!');
