@@ -219,10 +219,16 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     <div class="card ex-card">
       <div class="ex-prog"><span id="ex-prog"></span><span id="ex-pct"></span></div>
       <div class="progress"><div class="progress-bar" id="bar"></div></div>
-      <div class="baris-info"><span class="muted" id="info-nomor"></span></div>
-      <div class="lapor-soal-wrap">
-  <button type="button" class="btn btn-secondary btn-kecil" id="btn-laporkan-soal">
-    Laporkan soal
+     <div class="baris-info">
+  <span class="muted" id="info-nomor"></span>
+  <button
+    type="button"
+    class="btn-lapor-icon"
+    id="btn-laporkan-soal"
+    aria-label="Laporkan soal"
+    title="Laporkan soal"
+  >
+    <span aria-hidden="true">!</span>
   </button>
 </div>
       <details id="ex-detail" class="ex-detail"><summary>Daftar soal</summary><div id="ex-nav" class="ex-nav"></div></details>
