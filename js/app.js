@@ -1460,7 +1460,7 @@ await rest('laporan_soal', {
     question_source: sesi.sumberSoal[sesi.i],
     category: kategori,
     description: deskripsi || null,
-    status: 'selesai'
+    status: 'baru'
   }
 });
 
@@ -2872,13 +2872,10 @@ ringkasan.innerHTML = `
       lainnya: 'Lainnya'
     };
 
-    const status = {
-      menunggu: 'Menunggu',
-      diproses: 'Diproses',
-      selesai: 'Selesai',
-      ditolak: 'Ditolak'
-    };
-
+   const status = {
+  baru: 'Baru',
+  selesai: 'Selesai'
+};
     wadah.innerHTML = laporanAktif.map(x => {
       const tanggal = new Date(x.created_at).toLocaleString('id-ID', {
         dateStyle: 'medium',
