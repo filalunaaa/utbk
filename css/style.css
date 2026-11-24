@@ -1499,14 +1499,57 @@ html[data-anim="kurang"] .berita-refresh.is-loading svg{animation:berita-spin .7
 
 
 
-/* Kontrol Pengaturan dan Keluar: desktop vs mobile */
-#btn-keluar-ujian svg{display:none}
-#btn-keluar-ujian span{display:inline}
-@media(max-width:899px){
-  .dash-gear{display:none}
-  #btn-keluar-ujian{width:40px;height:40px;min-width:40px;padding:0;display:inline-flex;align-items:center;justify-content:center}
-  #btn-keluar-ujian svg{display:block;width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  #btn-keluar-ujian span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Tombol Keluar: ikon konsisten di desktop dan mobile */
+#btn-keluar-ujian,
+#btn-keluar-ujian:hover,
+#btn-keluar-ujian:active {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #345675;
+  background: transparent;
+  border: 1px solid var(--border);
+  box-shadow: none;
+  filter: none;
+  text-shadow: none;
+}
+
+#btn-keluar-ujian svg {
+  display: block;
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: #345675;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#btn-keluar-ujian span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+#btn-keluar-ujian:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+#btn-keluar-ujian:focus-visible {
+  outline: 2px solid rgba(52, 86, 117, .22);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 
