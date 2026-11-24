@@ -750,14 +750,22 @@ async function mulaiSesi() {
     console.warn('Sinkronisasi gagal:', e);
   }
   try {
-    const a = await rest(`admin_users?user_id=eq.${AkunApp.sesi().user_id}&select=user_id`);
-    ADMIN = !!(a && a.length);
-  } catch (e) { ADMIN = false; }
-  if (ADMIN) {
-    try { await DefaultSoal.muat(); }
-    catch (e) { console.warn('Daftar soal server belum termuat untuk editor admin:', e); }
+  const a = await rest(`admin_users?user_id=eq.${AkunApp.sesi().user_id}&select=user_id`);
+ADMIN = !!(a && a.length);
+
+} catch (e) {
+  ADMIN = false;
+}
+
+tampilkanPanelAdmin();
+
+if (ADMIN) {
+  try {
+    await DefaultSoal.muat();
+  } catch (e) {
+    console.warn('Daftar soal server belum termuat untuk editor admin:', e);
   }
-  tampilkanPanelAdmin();
+}
   renderSemuaBank();
   renderBeranda();
   renderSalam();
