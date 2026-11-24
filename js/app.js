@@ -742,6 +742,14 @@ async function mulaiSesi() {
   if (pemilik && pemilik !== uid) bersihkanDataAkunLokal();
   try { localStorage.setItem('utbk_pemilik', uid); } catch (e) {}
   try {
+  const a = await rest(`admin_users?user_id=eq.${uid}&select=user_id`);
+  ADMIN = !!(a && a.length);
+} catch (e) {
+  ADMIN = false;
+}
+
+tampilkanPanelAdmin();
+  try {
     await pullData();
     const adaProfil = await pullProfil();
     if (!adaProfil && ProfilApp.ambil()) await pushProfil();
