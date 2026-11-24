@@ -968,6 +968,21 @@ function isiOpsi(html) {
   return `<div class="opsi-isi konten">${sanitize(html)}</div>`;
 }
 function tampil(id) {
+  const aktif = ({
+  materi: 'materi',
+  statistik: 'statistik',
+  riwayatdetail: 'statistik',
+  bank: 'bank',
+  'laporan-admin': 'laporan-admin',
+  pengaturan: 'pengaturan',
+  setup: 'setup',
+  kuis: 'setup',
+  hasil: 'setup',
+  review: 'setup',
+  rekomendasi: 'rekomendasi',
+  profil: 'profil',
+  publik: 'profil'
+})[id] || 'menu';
   document.querySelectorAll('.halaman').forEach((h) => (h.hidden = h.id !== id));
   const aktif = ({ materi: 'materi', statistik: 'statistik', riwayatdetail: 'statistik', bank: 'bank', pengaturan: 'pengaturan', setup: 'setup', kuis: 'setup', hasil: 'setup', review: 'setup', rekomendasi: 'rekomendasi', profil: 'profil', publik: 'profil' })[id] || 'menu';
   document.body.dataset.hal = id;
@@ -3790,9 +3805,10 @@ document.querySelectorAll('.nav-link').forEach((a) => a.addEventListener('click'
   else if (a.dataset.hal === 'bank') renderBank();
   else if (a.dataset.hal === 'pengaturan') { renderPengaturan(); tampil('pengaturan'); }
   else if (a.dataset.hal === 'setup') tampil('setup');
-  else if (a.dataset.hal === 'rekomendasi') { renderRekomendasi(); tampil('rekomendasi'); }
-  else if (a.dataset.hal === 'profil') { renderProfil(!ProfilApp.ambil()); tampil('profil'); }
-  else tampil('menu');
+ else if (a.dataset.hal === 'rekomendasi') { renderRekomendasi(); tampil('rekomendasi'); }
+else if (a.dataset.hal === 'profil') { renderProfil(!ProfilApp.ambil()); tampil('profil'); }
+else if (a.dataset.hal === 'laporan-admin' && ADMIN) tampil('laporan-admin');
+else tampil('menu');
 }));
 
 buatEditor('ed-soal', 'Tulis teks soal di sini...', false);
