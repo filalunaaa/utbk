@@ -155,23 +155,29 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
             <p class="label">Waktu per soal (Try Out)</p>
             <div class="pilihan" id="pilih-waktu"></div>
           </div>
+          <p class="label">Tingkat kesulitan</p>
+          <select class="input" id="pilih-level" name="level" aria-label="Tingkat kesulitan">
+            <option value="semua" selected>Semua tingkat</option>
+            <option value="mudah">Mudah</option>
+            <option value="sedang">Sedang</option>
+            <option value="sulit">Sulit</option>
+          </select>
         </div>
         <div class="card">
-          <h3 class="kartu-judul"><span class="no">3</span>Jumlah dan kesulitan</h3>
+          <h3 class="kartu-judul"><span class="no">3</span>Jumlah soal</h3>
           <p class="label">Jumlah soal</p>
-          <div class="pilihan seg-r" id="pilih-jumlah" role="radiogroup" aria-label="Jumlah soal">
-            <label class="chip"><input type="radio" name="jumlah" value="5" checked><span>5</span></label>
-            <label class="chip"><input type="radio" name="jumlah" value="10"><span>10</span></label>
-            <label class="chip"><input type="radio" name="jumlah" value="15"><span>15</span></label>
-            <label class="chip"><input type="radio" name="jumlah" value="20"><span>20</span></label>
-            <label class="chip"><input type="radio" name="jumlah" value="semua"><span>Semua</span></label>
-          </div>
-          <p class="label">Tingkat kesulitan</p>
-          <div class="pilihan" id="pilih-level">
-            <label class="chip"><input type="checkbox" value="mudah" checked><span>Mudah</span></label>
-            <label class="chip"><input type="checkbox" value="sedang" checked><span>Sedang</span></label>
-            <label class="chip"><input type="checkbox" value="sulit" checked><span>Sulit</span></label>
-          </div>
+          <select class="input" id="pilih-jumlah" name="jumlah" aria-label="Jumlah soal">
+            <option value="5" selected>5 soal</option>
+            <option value="10">10 soal</option>
+            <option value="15">15 soal</option>
+            <option value="20">20 soal</option>
+            <option value="25">25 soal</option>
+            <option value="30">30 soal</option>
+            <option value="35">35 soal</option>
+            <option value="40">40 soal</option>
+            <option value="45">45 soal</option>
+            <option value="50">50 soal</option>
+          </select>
         </div>
       </div>
       <aside class="card setup-ringkas" aria-label="Ringkasan sesi">
