@@ -3683,6 +3683,7 @@ $('pilih-sumber').addEventListener('change', buatTopik);
 $('pilih-mapel').addEventListener('change', buatTopik);
 $('pilih-topik').addEventListener('change', hitungSoal);
 $('pilih-level').addEventListener('change', hitungSoal);
+$('pilih-jumlah').addEventListener('change', hitungSoal);
 $('btn-mulai').addEventListener('click', mulai);
 
 // Soal isian: simpan angka yang diketik (hanya digit)
