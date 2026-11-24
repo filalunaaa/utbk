@@ -4635,7 +4635,6 @@ const LOGO_GOOGLE = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA
 function akunHTML(sesi) {
   if (sesi) {
     return `<div class="akun-box">
-      <p class="label">Akun</p>
       <p class="muted" style="margin:0">Masuk sebagai <strong>${esc(sesi.email)}</strong>. Data kamu tersimpan di akun dan ikut ke perangkat lain.</p>
       <div class="aksi aksi-kiri"><button class="btn btn-secondary btn-kecil" data-akun="keluar">Keluar</button></div>
     </div>`;
