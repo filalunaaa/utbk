@@ -1304,7 +1304,7 @@ function renderSoal() {
 }
 
 
-// ---------- Edit soal langsung s// ---------- Laporan soal ----------
+// ---------- Laporan soal ----------
 function buatModalLaporanSoal() {
   if ($('modal-laporan-soal')) return;
 
@@ -1429,7 +1429,10 @@ async function kirimLaporanSoal(e) {
 }
 
 // Hubungkan tombol dengan formulir laporan.
-$('btn-laporkan-soal').addEventListener('click', bukaModalLaporanSoal);aat latihan (admin) ----------
+$('btn-laporkan-soal').addEventListener('click', bukaModalLaporanSoal);
+
+
+// ---------- Edit soal langsung saat latihan (admin) ----------
 
 let editorSoalLiveFokus = null;
 function buatEditorSoalLive() {
