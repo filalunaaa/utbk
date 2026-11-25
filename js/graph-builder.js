@@ -1,4 +1,4 @@
-/* Nalarin Graph Builder — graph configuration editor and student renderer. */
+/* Nalarine Graph Builder — graph configuration editor and student renderer. */
 (function () {
   'use strict';
 
@@ -521,7 +521,7 @@
     return validation(getEditorValue());
   }
 
-  window.NalarinGraph = {
+  window.NalarineGraph = {
     graphHTML: graphHTML,
     renderAll: renderAll,
     initEditor: initEditor,
