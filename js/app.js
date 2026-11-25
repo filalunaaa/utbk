@@ -1,3 +1,6 @@
+// Tampilkan shortcut Koleksi Soal hanya pada perangkat Android.
+if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('perangkat-android');
+
 // Simpan & baca statistik di localStorage
 const Penyimpanan = {
   KEY: 'utbk_testing_stats',
