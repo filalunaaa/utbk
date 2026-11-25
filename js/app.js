@@ -2390,7 +2390,7 @@ function kemampuanSubHTML() {
       <td><span class="kem-nama">${esc(n.nama)}</span><small>${esc((n.r ? n.r.nama : '') + (n.t ? ' › ' + n.t.nama : ''))}</small></td>
       <td><span class="kem-pct">${u.acc}%</span><div class="kem-bar" aria-hidden="true"><i class="st-${k}" style="width:${Math.max(2, u.acc)}%"></i></div><small>${u.b} dari ${u.n} percobaan</small></td>
       <td><span class="mt-badge st-${k}">${LABEL_KEM[k]}</span></td>
-      <td class="kem-aksi"><button type="button" class="btn btn-secondary btn-kecil" data-kem-latih="${esc(n.id)}" aria-label="Latihan ${esc(n.nama)}">Latih</button></td>
+      <td class="kem-aksi"><button type="button" class="btn btn-secondary btn-kecil kem-latih-btn" data-kem-latih="${esc(n.id)}" aria-label="Latih ${esc(n.nama)}" title="Latih ${esc(n.nama)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg></button></td>
     </tr>`).join('');
   const K = M.K;
   return judul + `<p class="muted" style="margin:0">Akurasi dihitung dari semua percobaanmu di subtopik tersebut. Urutan teratas adalah yang paling perlu diperkuat.</p>
