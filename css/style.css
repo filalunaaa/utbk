@@ -2,7 +2,7 @@
 :root{--primary:#1068f8;--primary-dark:#0a4fc4;--primary-soft:#eaf2ff;--text:#10244d;--muted:#43536f;--bg:#ffffff;--card:#ffffff;--border:#e1e7f3;--benar:#16a34a;--benar-soft:#ecfdf3;--salah:#e11d48;--salah-soft:#fff1f2;--warning:#b7791f;--warning-soft:#fff7d6;--accent:#0a56d6;--hover:#d9e7ff;--radius:12px;--shadow:none;}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
-body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg) url("../assets/nalarin-math-bg.webp") center top/cover fixed no-repeat;color:var(--text);line-height:1.6}
+body{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background-color:var(--bg);background-image:url("../assets/nalarin-math-bg.webp");background-position:0 0;background-size:768px 512px;background-repeat:repeat;background-attachment:fixed;color:var(--text);line-height:1.6}
 h2{font-size:1.25rem;margin-bottom:8px}
 h3{font-size:1.1rem;margin:10px 0 6px}
 p{margin-bottom:12px}
