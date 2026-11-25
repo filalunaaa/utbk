@@ -1945,4 +1945,4 @@ body.mode-tamu .bottomnav{display:none!important}
 .koleksi-kunci-isi .koleksi-opsi{display:block;line-height:1.65}.koleksi-kunci-isi .koleksi-opsi>b{display:inline}.koleksi-kunci-isi .koleksi-opsi-isi{display:inline}.koleksi-kunci-isi .koleksi-opsi-isi p,.koleksi-kunci-isi .koleksi-opsi-isi div{display:inline;margin:0}.koleksi-kunci-isi .koleksi-opsi-isi p+p:before,.koleksi-kunci-isi .koleksi-opsi-isi div+div:before{content:' ';white-space:pre}
 
 /* Latar ilustrasi matematika hanya untuk tema terang. */
-:root[data-theme="dark"] body{background-image:none}
+:root[data-theme="dark"] body{background-image:url("../assets/nalarin-math-bg-dark.webp");background-position:0 0;background-size:480px 320px;background-repeat:repeat;background-attachment:fixed}
