@@ -1257,7 +1257,7 @@ function buatTopik() {
   const dikenal = new Set(), grup = [];
   Object.keys(TAKSONOMI).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => {
     r.topik.forEach((tp) => dikenal.add(tp.nama));
-    if (mapel !== 'semua' && k !== mapel) return;
+    if (mapel !== 'semua' && k !== namaMapelTaksonomi(mapel)) return;
     const topik = r.topik.filter((tp) => !(r.sembunyiKosong && !jTopik[tp.nama]));
     if (topik.length) grup.push({ kunci: k + '|' + r.id, nama: r.nama, mapel: k, topik });
   }));
@@ -1289,6 +1289,11 @@ function buatTopik() {
   $('pilih-topik').innerHTML = catatan + html;
   hitungSoal();
 }
+// Saat PK/PM berubah, bangun ulang topik sesuai kunci taksonomi (nama lengkap).
+document.querySelectorAll('input[name="mapel"]').forEach((i) => i.addEventListener('change', () => {
+  buatTopik();
+  sinkronFolderUI();
+}));
 // Aksi di dalam pemilih: pilih/kosongkan per rumpun, buka subtopik, buka/tutup rumpun
 $('pilih-topik').addEventListener('click', (e) => {
   const aksi = e.target.closest('[data-pv]');
