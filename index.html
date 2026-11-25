@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/style.css?v=20261125-2">
+<link rel="stylesheet" href="css/style.css?v=20261125-3">
 <script>
 window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
 </script>
@@ -61,7 +61,9 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
     <a href="#" class="nav-link nl aktif" data-hal="menu" aria-label="Beranda"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Beranda</span></a>
     <a href="#" class="nav-link nl" data-hal="materi" aria-label="Jelajahi Materi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="18" cy="17" r="3"/></svg><span>Jelajahi Materi</span></a>
     <a href="#" class="nav-link nl" data-hal="setup" aria-label="Atur Latihan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span>Atur Latihan</span></a>
-    <a href="#" class="nav-link nl" data-hal="bank" aria-label="Bank Soal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H19"/></svg><span>Bank Soal</span></a>
+    <a href="#" class="nav-link nl" data-hal="koleksi" aria-label="Koleksi Soal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2H20v19H8.5A2.5 2.5 0 0 1 6 18.5z"/><path d="M6 5H4v15h14"/><path d="m13 7 1.5 1.5L17 6"/></svg><span>Koleksi Soal</span></a>
+    <a href="#" class="nav-link nl" data-hal="koleksi" aria-label="Koleksi Soal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2H20v19H8.5A2.5 2.5 0 0 1 6 18.5z"/><path d="M6 5H4v15h14"/><path d="m13 7 1.5 1.5L17 6"/></svg><span>Koleksi</span></a>
+  <a href="#" class="nav-link nl" data-hal="bank" aria-label="Bank Soal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H19"/></svg><span>Bank Soal</span></a>
     <a href="#" class="nav-link nl" data-hal="laporan-admin" aria-label="Laporan Soal" id="nav-laporan-admin" hidden>
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 9v4" />
@@ -257,6 +259,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <details id="ex-detail" class="ex-detail"><summary>Daftar soal</summary><div id="ex-nav" class="ex-nav"></div></details>
       <div class="teks-soal" id="teks-soal"></div>
       <div class="opsi-list" id="opsi-list"></div>
+      <div class="area-koleksi-soal"><button type="button" id="btn-koleksi-soal" class="btn-koleksi" aria-pressed="false">☆ Simpan soal</button></div>
       <div class="feedback" id="feedback" hidden></div>
       <div class="aksi ex-foot">
         <button class="btn btn-secondary" id="btn-prev">Sebelumnya</button>
@@ -489,6 +492,8 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <div id="daftar-custom"></div>
     </div>
   </section>
+
+  <section id="koleksi" class="halaman" hidden><div class="sec-head"><div><h1>📌 Koleksi Soal</h1><p class="muted">Soal yang ingin kamu pelajari kembali.</p></div></div><div id="isi-koleksi-soal"></div></section>
 
   <section id="riwayatdetail" class="halaman" hidden>
     <div id="riwayat-detail"><div id="rd-isi"></div></div>
