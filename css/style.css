@@ -1929,3 +1929,12 @@ body.mode-tamu .bottomnav{display:none!important}
 .ikon-judul-halaman{width:22px;height:22px;display:inline-block;vertical-align:-4px;margin-right:8px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .judul-halaman-baris{display:flex;align-items:center;gap:8px}
 .judul-halaman-baris .ikon-judul-halaman{margin-right:0}
+
+
+/* Koleksi Soal diakses dari halaman Statistik khusus perangkat mobile */
+.statistik-koleksi-link{display:none}
+@media(max-width:899px){
+  .statistik-koleksi-link{display:flex;align-items:center;gap:10px;margin:14px 0;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-weight:600;text-decoration:none}
+  .statistik-koleksi-link svg{width:21px;height:21px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .statistik-koleksi-link:active{background:var(--primary-soft);color:var(--accent)}
+}
