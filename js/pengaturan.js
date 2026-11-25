@@ -1,6 +1,6 @@
 // ===== Pusat Pengaturan: data, tampilan, ekspor, manajemen data =====
 var PENG_DEF={peringatanWaktu:true,konfirmAkhiri:true,tampilTimer:true,ukuranTeks:'normal',animasi:'normal',ukuranSoal:'normal',jarakBaris:'normal',lebarSoal:'normal',modeDefault:'latihan',jumlahDefault:'5',mapelDefault:'semua',ingatTerakhir:false};
-var PENG_OK={ukuranTeks:['kecil','normal','besar'],animasi:['normal','kurang'],ukuranSoal:['kecil','normal','besar'],jarakBaris:['rapat','normal','lega'],lebarSoal:['sempit','normal','lebar'],modeDefault:['latihan','tryout'],jumlahDefault:['5','10','15','20','semua'],mapelDefault:['semua','PK','PM']};
+var PENG_OK={ukuranTeks:['kecil','normal','besar'],animasi:['normal','kurang'],ukuranSoal:['kecil','normal','besar'],jarakBaris:['rapat','normal','lega'],lebarSoal:['sempit','normal','lebar'],modeDefault:['latihan','tryout'],jumlahDefault:['5','10','15','20','25','30','35','40','45','50','semua'],mapelDefault:['semua','PK','PM']};
 var KONTAK_BANTUAN='testingwebutbk@gmail.com';var VERSI_APP='0.9.0-beta';
 function toastNeon(msg,err){var t=document.createElement('div');t.className='toast-neon'+(err?' err':'');t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2400)}
 function pengaturan(){var p=Object.assign({},PENG_DEF,PengaturanApp.ambil());if(p.mapelDefault==='Pengetahuan Kuantitatif')p.mapelDefault='PK';if(p.mapelDefault==='Penalaran Matematika')p.mapelDefault='PM';return p}
