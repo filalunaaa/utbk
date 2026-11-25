@@ -19,7 +19,7 @@
 <meta name="theme-color" content="#ffffff">
 <script>
 // Welcome page: tampil hanya untuk pengunjung baru (belum masuk, belum punya profil, belum pernah menekan tombol di halaman ini)
-(function(){try{var L=localStorage;if(!L.getItem('nalarin_welcome_seen')&&!L.getItem('utbk_sesi')&&!L.getItem('utbk_profil')&&!/access_token=|error_description=|^#\/u\//.test(location.hash))document.documentElement.classList.add('welcome-on')}catch(e){}})();
+(function(){try{var L=localStorage;if((sessionStorage.getItem('pytago_google_login_pending')==='1'||(!L.getItem('nalarin_welcome_seen')&&!L.getItem('utbk_sesi')&&!L.getItem('utbk_profil')))&&!/access_token=|error_description=|^#\\/u\\//.test(location.hash))document.documentElement.classList.add('welcome-on')}catch(e){}})();
 </script>
 <script src="js/theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
