@@ -1,5 +1,5 @@
 
-// ===== Nalarin UI: dropdown, combobox, dan date picker kustom (komponen bersama) =====
+// ===== Nalarine UI: dropdown, combobox, dan date picker kustom (komponen bersama) =====
 // Mengganti popup bawaan browser untuk <select>, <input list="..."> (datalist), dan <input type="date">.
 // Elemen asli tetap ada di DOM (tersembunyi), jadi value, event, dan validasi lama tetap bekerja.
 // Elemen yang dirender belakangan (onboarding, form profil, dll.) otomatis ikut diganti.
@@ -340,5 +340,5 @@
   new MutationObserver(function (muts) {
     muts.forEach(function (m) { [].forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1 && !(n.classList && (n.classList.contains('nl-pop') || n.classList.contains('nl-dim')))) pindai(n); }); });
   }).observe(document.body, { childList: true, subtree: true });
-  window.NalarinUI = { pindai: pindai, tutup: function () { tutup(false); } };
+  window.NalarineUI = { pindai: pindai, tutup: function () { tutup(false); } };
 })();
