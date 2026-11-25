@@ -3324,7 +3324,7 @@ function bacaForm() {
   const tipe = nilai('f-tipe');
   const tpPilih = topikTaxById($('f-topiktax').value);
   if (!$('f-rumpun').value || !tpPilih) return { error: 'Pilih rumpun dan topik materi dulu.' };
-  if (tpPilih.mapel !== nilai('f-mapel')) return { error: 'Topik tidak sesuai dengan mata pelajaran yang dipilih.' };
+  if (tpPilih.mapel !== namaMapelTaksonomi(nilai('f-mapel'))) return { error: 'Topik tidak sesuai dengan mata pelajaran yang dipilih.' };
   if (tpPilih.topik.sub.length && !$('f-sub').value) return { error: 'Pilih subtopik untuk topik ini.' };
   const topik = tpPilih.topik.nama;
   const meta = bacaMeta();
@@ -3527,12 +3527,17 @@ function topikTaxById(id) {
   }
   return null;
 }
+// Kode mapel pada soal/form berbeda dari nama kunci pada objek TAKSONOMI.
+function namaMapelTaksonomi(mapel) {
+  return ({ PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' })[mapel] || mapel;
+}
 // Cari topik dari nama resmi atau nama lama. Hanya dipakai kalau hasilnya pasti satu.
 function cariTopikTax(mapel, nama) {
   if (!nama || typeof TAKSONOMI === 'undefined') return null;
   const n = String(nama).trim().toLowerCase();
+  const kunciMapel = namaMapelTaksonomi(mapel);
   const hasil = [];
-  Object.keys(TAKSONOMI).filter((k) => !mapel || k === mapel).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => r.topik.forEach((tp) => {
+  Object.keys(TAKSONOMI).filter((k) => !mapel || k === kunciMapel).forEach((k) => TAKSONOMI[k].rumpun.forEach((r) => r.topik.forEach((tp) => {
     if (tp.nama.toLowerCase() === n || (tp.legacy || []).some((x) => x.toLowerCase() === n)) hasil.push({ mapel: k, rumpun: r, topik: tp });
   })));
   return hasil.length === 1 ? hasil[0] : null;
@@ -3545,13 +3550,15 @@ function namaTopikResmi(s) {
   return m ? m.topik.nama : (s.topik || '');
 }
 function renderRumpunForm(terpilih) {
-  const k = nilai('f-mapel');
+  const k = namaMapelTaksonomi(nilai('f-mapel'));
+  const rumpun = (typeof TAKSONOMI !== 'undefined' && TAKSONOMI[k] && Array.isArray(TAKSONOMI[k].rumpun)) ? TAKSONOMI[k].rumpun : [];
   $('f-rumpun').innerHTML = '<option value="">— pilih rumpun —</option>' +
-    TAKSONOMI[k].rumpun.map((r) => `<option value="${esc(r.id)}"${r.id === terpilih ? ' selected' : ''}>${esc(r.nama)}</option>`).join('');
+    rumpun.map((r) => `<option value="${esc(r.id)}"${r.id === terpilih ? ' selected' : ''}>${esc(r.nama)}</option>`).join('');
 }
 function renderTopikForm(rumpunId, terpilih) {
-  const k = nilai('f-mapel');
-  const r = TAKSONOMI[k].rumpun.find((x) => x.id === rumpunId);
+  const k = namaMapelTaksonomi(nilai('f-mapel'));
+  const rumpun = typeof TAKSONOMI !== 'undefined' && TAKSONOMI[k] && Array.isArray(TAKSONOMI[k].rumpun) ? TAKSONOMI[k].rumpun : [];
+  const r = rumpun.find((x) => x.id === rumpunId);
   $('f-topiktax').innerHTML = '<option value="">— pilih topik —</option>' +
     (r ? r.topik.map((tp) => `<option value="${esc(tp.id)}"${tp.id === terpilih ? ' selected' : ''}>${esc(tp.nama)}</option>`).join('') : '');
   $('f-topiktax').disabled = !r;
@@ -3633,7 +3640,7 @@ function optionsSub(mapel, terpilih, opsi) {
   const semua = BankSoal.ambil();
   const hit = (id) => semua.filter((s) => (s.subtopikId === id || (s.subtopikIds || []).includes(id))).length;
   let h = opsi.depan;
-  Object.keys(TAKSONOMI).filter((k) => !mapel || k === mapel).forEach((k) => {
+  Object.keys(TAKSONOMI).filter((k) => !mapel || k === namaMapelTaksonomi(mapel)).forEach((k) => {
     TAKSONOMI[k].rumpun.forEach((r) => r.topik.forEach((tp) => {
       if (!tp.sub.length || (opsi.topik && tp.nama !== opsi.topik)) return;
       h += `<optgroup label="${esc((mapel ? '' : k + ' · ') + r.nama + ' › ' + tp.nama)}">` + tp.sub.map((sb) =>
