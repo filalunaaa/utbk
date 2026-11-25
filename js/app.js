@@ -4840,6 +4840,7 @@ async function tanganiRedirectOAuth() {
     const u = await r.json().catch(() => ({}));
     if (!r.ok || !u.id) throw new Error(u.msg || u.message || 'Akun tidak terbaca');
     simpanSesiDariRespon({ access_token: at, refresh_token: q.get('refresh_token'), expires_in: Number(q.get('expires_in')) || 3600, user: u }, u.email);
+    try { sessionStorage.removeItem('pytago_google_login_pending'); } catch (e) {}
     return true;
   } catch (e) {
     alert('Masuk dengan Google gagal: ' + e.message);
@@ -5002,7 +5003,7 @@ segarkanSoalBawaan();
   // Dipanggil setelah keluar akun: kembali ke halaman Welcome
   window.tampilWelcome=function(){try{localStorage.removeItem('nalarin_welcome_seen')}catch(e){}root.classList.add('welcome-on');lain(function(el){el.inert=true});w.scrollTop=0};
   $('wl-mulai').addEventListener('click',function(){   tutup();   window.mulaiOnboardingPublik(); });
-  $('wl-masuk').addEventListener('click',function(){tutup();aksiAkun('google')});
+  $('wl-masuk').addEventListener('click',function(){try{sessionStorage.setItem('pytago_google_login_pending','1')}catch(e){}aksiAkun('google')});
   $('wl-lokal').addEventListener('click',function(){tutup();tampil('menu')});
   // Kalau ternyata sudah ada sesi (mis. kembali dari login Google), halaman ini tidak perlu tampil
   window.addEventListener('hashchange',function(){if(root.classList.contains('welcome-on')&&AkunApp.sesi())tutup()});
