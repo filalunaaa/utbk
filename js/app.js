@@ -4441,15 +4441,33 @@ function tampilBerita(basi) {
       <div class="muted">${esc(b.sumber || '')}${b.tanggal ? ' · ' + esc(fmtTglBerita(b.tanggal)) : ''}</div></li>`).join('')}</ul>
     <p class="muted" style="margin:10px 0 0;font-size:.82rem">Berita dari media, bukan pengumuman resmi. Info resmi ada di <a href="https://portal.snpmb.id" target="_blank" rel="noopener">portal SNPMB</a>.</p>`;
 }
+const BERITA_API_CADANGAN = 'https://id.nalarine.workers.dev/api/berita';
+async function ambilBeritaDariServer() {
+  const endpoint = [];
+  if (location.protocol === 'http:' || location.protocol === 'https:') endpoint.push('/api/berita');
+  endpoint.push(BERITA_API_CADANGAN);
+  let errorTerakhir;
+  for (const url of [...new Set(endpoint)]) {
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      if (!Array.isArray(data) || !data.length) throw new Error('Data berita tidak valid');
+      return data;
+    } catch (e) {
+      errorTerakhir = e;
+    }
+  }
+  throw errorTerakhir || new Error('Server berita tidak dapat dijangkau');
+}
 function renderBerita(paksa) {
   const el = $('kartu-berita');
   if (_berita.p) return _berita.p;
   if (!paksa && _berita.data && Date.now() - _berita.t < BERITA_TTL) { tampilBerita(); return Promise.resolve(); }
   if (!paksa && !_berita.data && Date.now() - _berita.gagal < 60000) { el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Berita belum bisa dimuat.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>'; return Promise.resolve(); }
   if (!_berita.data) el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Memuat berita...</p>';
-  _berita.p = fetch('/api/berita').then((r) => { if (!r.ok) throw new Error('gagal'); return r.json(); })
+  _berita.p = ambilBeritaDariServer()
     .then(async (data) => {
-      if (!Array.isArray(data) || !data.length) throw new Error('kosong');
       if (_beritaRefreshMulai) await jedaAnimasiRefresh();
       _berita.data = data; _berita.t = Date.now(); _berita.gagal = 0;
       try { sessionStorage.setItem('neon_berita', JSON.stringify({ t: _berita.t, data })); } catch (e) {}
@@ -4459,7 +4477,7 @@ function renderBerita(paksa) {
       if (_beritaRefreshMulai) await jedaAnimasiRefresh();
       _berita.gagal = Date.now();
       if (_berita.data) tampilBerita(true);
-      else el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Berita belum bisa dimuat. Pastikan aplikasi dibuka dari internet, bukan dari file di komputer.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>';
+      else el.innerHTML = '<h2>Berita Pendidikan Terbaru</h2><p class="muted">Berita belum bisa dimuat dari server. Periksa koneksi internet, lalu coba lagi.</p><button type="button" class="btn btn-secondary btn-kecil" data-berita="muat">Coba lagi</button>';
     })
     .finally(() => { _berita.p = null; });
   return _berita.p;
