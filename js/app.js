@@ -2280,7 +2280,7 @@ function renderDetailSesi() {
     const s = peta.get(r.id);
     const lb = { benar: 'Benar', parsial: 'Kurang lengkap', salah: 'Salah', kosong: 'Kosong' }[s0];
     if (!s) return `<div class="sx ${s0}" id="sx-${i}"><div class="sx-isi" style="padding-top:12px"><span class="sx-no" style="display:inline-flex">${i + 1}</span> <span class="muted">Soal ini sudah dihapus dari bank, jadi pembahasannya tidak tersedia.</span></div></div>`;
-    return `<details class="sx ${s0}" id="sx-${i}"${s0 === 'benar' ? '' : ' open'}>
+    return `<details class="sx ${s0}" id="sx-${i}">
       <summary><span class="sx-no">${i + 1}</span><span class="sx-prev">${esc(previewTeks(s.soal))}</span><span class="badge ${s0}" style="margin:0">${lb}</span></summary>
       <div class="sx-isi">
         <div class="teks-soal" style="margin-top:4px">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div>
