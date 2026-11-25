@@ -1892,3 +1892,15 @@ body.esl-terbuka{overflow:hidden}
   outline:none;
   box-shadow:inset 0 0 0 2px var(--primary);
 }
+
+
+/* Mode tamu: fokus pada latihan, bukan dashboard atau fitur akun. */
+body.mode-tamu .side-nav{display:none!important}
+body.mode-tamu #btn-riwayat-sesi,
+body.mode-tamu #laporan-kemajuan{display:none!important}
+.guest-notice{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px;padding:14px 16px;border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:12px;background:var(--card);color:var(--text)}
+.guest-notice[hidden]{display:none!important}
+.guest-notice strong{display:block;font-size:.9rem;margin-bottom:3px}
+.guest-notice p{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}
+.guest-notice .btn{flex-shrink:0}
+@media(max-width:520px){.guest-notice{align-items:flex-start;flex-direction:column}.guest-notice .btn{width:100%}}
