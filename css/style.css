@@ -1904,3 +1904,5 @@ body.mode-tamu #laporan-kemajuan{display:none!important}
 .guest-notice p{margin:0;color:var(--muted);font-size:.82rem;line-height:1.5}
 .guest-notice .btn{flex-shrink:0}
 @media(max-width:520px){.guest-notice{align-items:flex-start;flex-direction:column}.guest-notice .btn{width:100%}}
+
+body.mode-tamu .bottomnav{display:none!important}
