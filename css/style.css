@@ -1952,7 +1952,7 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 /* Riwayat sesi: peta nomor dan kumpulan soal menggunakan navigasi horizontal. */
 .gm-petak{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 9px;scrollbar-width:thin;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
 .gm-petak .petak{flex:0 0 34px}
-.sx-list-horizontal{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 14px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.sx-list-horizontal{display:flex;align-items:flex-start;gap:12px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 14px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .sx-list-horizontal>.sx{flex:0 0 min(88%,680px);min-width:min(88%,680px);margin:0;scroll-snap-align:start;align-self:flex-start}
 .sx-list-horizontal>.sx:not([open]){min-height:76px}
 .sx-list-horizontal>.sx[open]{max-height:72vh;overflow-y:auto;overscroll-behavior-y:contain}
