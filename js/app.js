@@ -10,6 +10,7 @@ const Penyimpanan = {
     try { localStorage.setItem(this.KEY, JSON.stringify(data)); } catch (e) {}
   },
   catat(soal, skor) {
+    if (!AkunApp.sesi()) return;
     const d = this.ambil();
     d.total++;
     d.benar = bulatSkor((d.benar || 0) + skor);
@@ -36,7 +37,7 @@ const PilihanStat = {
     try { localStorage.setItem(this.KEY, JSON.stringify(d)); } catch (e) {}
   },
   catat(soal, pilihan) {
-    if (adaIsian(soal)) return; // soal isian tidak punya pilihan untuk dianalisis
+    if (!AkunApp.sesi() || adaIsian(soal)) return; // soal isian tidak punya pilihan untuk dianalisis
     const d = this.ambil();
     const k = String(soal.id);
     d[k] = d[k] || { total: 0, pilih: [0, 0, 0, 0, 0] };
@@ -71,6 +72,7 @@ const Riwayat = {
     try { localStorage.setItem(this.KEY, JSON.stringify(a)); } catch (e) {}
   },
   catat(soal, jawaban, skor) {
+    if (!AkunApp.sesi()) return;
     const a = this.ambil();
     a.push({ id: String(soal.id), topik: soal.topik, mapel: soal.mataPelajaran,
       j: jawaban === undefined ? null : jawaban, b: skor === 1, sc: skor, t: Date.now() });
@@ -93,6 +95,7 @@ const RiwayatSesi = {
     try { localStorage.setItem(this.KEY, JSON.stringify(a)); } catch (e) {}
   },
   catat(e) {
+    if (!AkunApp.sesi()) return;
     const a = this.ambil();
     a.push(e);
     this.simpan(a.slice(-this.MAKS));
@@ -868,7 +871,7 @@ const KUNCI_SESI_AKTIF = 'utbk_sesi_aktif';
 
 // Simpan snapshot sesi agar refresh/penutupan tab tidak menghapus progres pengerjaan.
 function simpanSesiAktif() {
-  if (!sesi || !sesi.aktif) return;
+  if (!AkunApp.sesi() || !sesi || !sesi.aktif) return;
   const data = {
     mode: sesi.mode, soal: sesi.soal, sumberSoal: sesi.sumberSoal,
     aktif: true, i: sesi.i, mulai: sesi.mulai, statAwal: sesi.statAwal,
@@ -1042,6 +1045,8 @@ function isiOpsi(html) {
   return `<div class="opsi-isi konten">${sanitize(html)}</div>`;
 }
 function tampil(id) {
+  terapkanAksesTamu();
+  if (!AkunApp.sesi() && !['setup', 'kuis', 'hasil', 'review'].includes(id)) id = 'setup';
   const aktif = ({
     materi: 'materi',
     statistik: 'statistik',
@@ -1063,6 +1068,13 @@ function tampil(id) {
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
   if (id === 'setup') {
+    if (!AkunApp.sesi()) {
+      const latihan = document.querySelector('input[name="mode"][value="latihan"]');
+      if (latihan) latihan.checked = true;
+      const bawaan = document.querySelector('input[name="sumber"][value="bawaan"]');
+      if (bawaan) bawaan.checked = true;
+      renderPilihSumber();
+    }
     if (!window._dariMateri) window._subAktif = null;
     window._dariMateri = false;
     terapkanDefaultSetup();
@@ -1076,16 +1088,46 @@ function tampil(id) {
 const nilai = (name) => { const el = document.querySelector(`input[name="${name}"]:checked, select[name="${name}"]`); return el ? el.value : ''; };
 const centang = (wadah) => [...document.querySelectorAll(`#${wadah} input:checked`)].map((i) => i.value);
 
+// ---------- Hak akses pengguna tamu ----------
+// Pengunjung tanpa sesi hanya dapat mengerjakan latihan dari bank soal bawaan.
+function terapkanAksesTamu() {
+  const tamu = !AkunApp.sesi();
+  document.body.classList.toggle('mode-tamu', tamu);
+  const nav = document.querySelector('.side-nav');
+  if (nav) nav.hidden = tamu;
+  const tryout = document.querySelector('input[name="mode"][value="tryout"]');
+  if (tryout) {
+    const label = tryout.closest('label');
+    if (label) label.hidden = tamu;
+    if (tamu) {
+      const latihan = document.querySelector('input[name="mode"][value="latihan"]');
+      if (latihan) latihan.checked = true;
+    }
+  }
+  let notice = $('guest-notice');
+  if (!notice) {
+    notice = document.createElement('aside');
+    notice.id = 'guest-notice';
+    notice.className = 'guest-notice';
+    notice.innerHTML = '<div><strong>Mode tamu</strong><p>Kamu bisa mencoba latihan dan melihat pembahasan. Progres, riwayat, statistik, serta fitur akun tersedia setelah masuk.</p></div><button type="button" class="btn btn-primary btn-kecil" id="guest-login">Masuk</button>';
+    const setup = $('setup');
+    if (setup) setup.insertBefore(notice, setup.firstChild);
+    notice.querySelector('#guest-login').addEventListener('click', () => aksiAkun('google'));
+  }
+  notice.hidden = !tamu;
+}
+
 // ---------- Menu & filter ----------
 // Pilihan sumber soal: semua, bawaan, bank saya, lalu tiap folder
 function renderPilihSumber() {
-  const cur = document.querySelector('input[name="sumber"]:checked')?.value || 'semua';
-  const folders = BankFolder.ambil();
-  const adaTanpa = BankSoal.ambil().some((s) => !s.folderId);
-  const dasar = [['semua', 'Semua soal'], ['bawaan', 'Soal bawaan'], ['bank', 'Bank saya']];
+  const tamu = !AkunApp.sesi();
+  const cur = document.querySelector('input[name="sumber"]:checked')?.value || (tamu ? 'bawaan' : 'semua');
+  const folders = tamu ? [] : BankFolder.ambil();
+  const adaTanpa = !tamu && BankSoal.ambil().some((s) => !s.folderId);
+  const dasar = tamu ? [['bawaan', 'Soal bawaan']] : [['semua', 'Semua soal'], ['bawaan', 'Soal bawaan'], ['bank', 'Bank saya']];
   const fol = folders.map((f) => ['f:' + f.id, f.nama]).concat(adaTanpa ? [['g:none', 'Belum dikelompokkan']] : []);
   const ada = (v) => dasar.some((o) => o[0] === v) || fol.some((o) => o[0] === v);
-  const val = ada(cur) ? cur : 'semua';
+  const val = tamu ? 'bawaan' : (ada(cur) ? cur : 'semua');
   const radio = (v, t, lbl) => `<label class="chip"><input type="radio" name="sumber" value="${esc(v)}" ${v === val ? 'checked' : ''}><span>${esc(lbl || t)}</span></label>`;
   const ikFolder = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
   const ikPanah = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
@@ -1308,6 +1350,13 @@ function hitungSoal() {
 
 // ---------- Sesi soal ----------
 function mulai() {
+  if (!AkunApp.sesi()) {
+    const latihan = document.querySelector('input[name="mode"][value="latihan"]');
+    if (latihan) latihan.checked = true;
+    const bawaan = document.querySelector('input[name="sumber"][value="bawaan"]');
+    if (bawaan) bawaan.checked = true;
+    if (nilai('mode') !== 'latihan') return tampilkanToast('Mode tamu hanya dapat menggunakan fitur Latihan.');
+  }
   migrasiSesiLama();
  const soal = acak(soalTerfilter()).slice(0, jumlahDipilih(Infinity));
 const sumberSoalSesi = soal.map((s) =>
@@ -1357,6 +1406,8 @@ function renderSoal() {
     }).join('');
   }
 
+  const tombolLapor = $('btn-laporkan-soal');
+  if (tombolLapor) tombolLapor.hidden = !AkunApp.sesi();
   const fb = $('feedback');
   fb.hidden = !evaluasiAktif;
   if (evaluasiAktif) {
@@ -1984,12 +2035,14 @@ function renderReview() {
 const kosongJ = (j) => j === null || j === undefined || (Array.isArray(j) && !j.length);
 const skorRiwayat = (r) => Number.isFinite(Number(r.sc)) ? Number(r.sc) : (r.b ? 1 : 0);
 function catatSesi(mode, soal, jawab, durasi, benar) {
+  if (!AkunApp.sesi()) return;
   if (!soal.some((s, k) => !kosongJ(jawab[k]))) return; // tidak ada satu pun soal dijawab: tidak dicatat
   const item = soal.map((s, k) => ({ id: String(s.id), j: kosongJ(jawab[k]) ? null : jawab[k], b: !!jawabBenar(s, jawab[k]), sc: skorJawaban(s, jawab[k]), m: s.mataPelajaran || '', tp: s.topik || '' }));
   RiwayatSesi.catat({ id: 's' + Date.now(), t: Date.now(), mode, d: durasi, n: soal.length, b: benar, item });
 }
 // Data try out lama (Riwayat per soal) dijadikan sesi sekali saja: soal yang dicatat berdekatan (< 5 menit) dianggap satu sesi
 function migrasiSesiLama() {
+  if (!AkunApp.sesi()) return;
   try {
     if (localStorage.getItem('utbk_sesi_dimigrasi')) return;
     localStorage.setItem('utbk_sesi_dimigrasi', '1');
@@ -4988,6 +5041,8 @@ segarkanSoalBawaan();
   // Pulihkan sesi latihan/try out setelah data dan tampilan akun selesai diinisialisasi.
   pulihkanSesiAktif();
   if (baruMasuk) { renderProfil(false); renderSalam(); }
+  terapkanAksesTamu();
+  if (!AkunApp.sesi() && !document.documentElement.classList.contains('welcome-on')) tampil('setup');
 })();
 // Welcome page: pintu masuk bagi pengunjung baru
 (function(){
@@ -5004,7 +5059,7 @@ segarkanSoalBawaan();
   window.tampilWelcome=function(){try{localStorage.removeItem('nalarin_welcome_seen')}catch(e){}root.classList.add('welcome-on');lain(function(el){el.inert=true});w.scrollTop=0};
   $('wl-mulai').addEventListener('click',function(){   tutup();   window.mulaiOnboardingPublik(); });
   $('wl-masuk').addEventListener('click',function(){try{sessionStorage.setItem('pytago_google_login_pending','1')}catch(e){}aksiAkun('google')});
-  $('wl-lokal').addEventListener('click',function(){tutup();tampil('menu')});
+  $('wl-lokal').addEventListener('click',function(){tutup();terapkanAksesTamu();tampil('setup')});
   // Kalau ternyata sudah ada sesi (mis. kembali dari login Google), halaman ini tidak perlu tampil
   window.addEventListener('hashchange',function(){if(root.classList.contains('welcome-on')&&AkunApp.sesi())tutup()});
 })();
