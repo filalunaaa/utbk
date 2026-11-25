@@ -1,9 +1,9 @@
 // ===== Pusat Pengaturan: data, tampilan, ekspor, manajemen data =====
-var PENG_DEF={peringatanWaktu:true,konfirmAkhiri:true,tampilTimer:true,ukuranTeks:'normal',animasi:'normal',ukuranSoal:'normal',jarakBaris:'normal',lebarSoal:'normal',mapelDefault:'semua',ingatTerakhir:false};
-var PENG_OK={ukuranTeks:['kecil','normal','besar'],animasi:['normal','kurang'],ukuranSoal:['kecil','normal','besar'],jarakBaris:['rapat','normal','lega'],lebarSoal:['sempit','normal','lebar'],mapelDefault:['semua','PK','PM']};
+var PENG_DEF={peringatanWaktu:true,konfirmAkhiri:true,tampilTimer:true,ukuranTeks:'normal',animasi:'normal',ukuranSoal:'normal',jarakBaris:'normal',lebarSoal:'normal',modeDefault:'latihan',jumlahDefault:'5',mapelDefault:'semua',ingatTerakhir:false};
+var PENG_OK={ukuranTeks:['kecil','normal','besar'],animasi:['normal','kurang'],ukuranSoal:['kecil','normal','besar'],jarakBaris:['rapat','normal','lega'],lebarSoal:['sempit','normal','lebar'],modeDefault:['latihan','tryout'],jumlahDefault:['5','10','15','20','semua'],mapelDefault:['semua','PK','PM']};
 var KONTAK_BANTUAN='testingwebutbk@gmail.com';var VERSI_APP='0.9.0-beta';
 function toastNeon(msg,err){var t=document.createElement('div');t.className='toast-neon'+(err?' err':'');t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove()},2400)}
-function pengaturan(){return Object.assign({},PENG_DEF,PengaturanApp.ambil())}
+function pengaturan(){var p=Object.assign({},PENG_DEF,PengaturanApp.ambil());if(p.mapelDefault==='Pengetahuan Kuantitatif')p.mapelDefault='PK';if(p.mapelDefault==='Penalaran Matematika')p.mapelDefault='PM';return p}
 function simpanPeng(patch){
   var k={};Object.keys(patch).forEach(function(a){var v=patch[a];if(!(a in PENG_DEF))return;if(typeof PENG_DEF[a]==='boolean')v=!!v;else if(PENG_OK[a]&&PENG_OK[a].indexOf(v)<0)return;k[a]=v});
   var baru=Object.assign({},PengaturanApp.ambil(),k);
@@ -24,7 +24,7 @@ function statusSinkron(){var s=AkunApp.sesi(),t=+localStorage.getItem('neon_sink
   if(!s)return 'Belum masuk akun: data hanya tersimpan di perangkat ini.';
   return 'Akun: '+(s.email||'masuk')+'. '+(g?'Sinkronisasi terakhir gagal ('+new Date(+g).toLocaleString('id-ID')+').':t?'Sinkron terakhir: '+new Date(t).toLocaleString('id-ID')+'.':'Belum ada sinkronisasi yang tercatat di sesi ini.')}
 function isiPanelBaru(){var p=pengaturan();
-  document.querySelectorAll('#pengaturan [data-set]').forEach(function(el){var v=p[el.dataset.set];if(el.type==='checkbox')el.checked=!!v;else el.checked=el.value===String(v)});
+  document.querySelectorAll('#pengaturan [data-set]').forEach(function(el){var v=p[el.dataset.set];if(el.type==='checkbox')el.checked=!!v;else if(el.tagName==='SELECT')el.value=String(v==null?'':v);else el.checked=el.value===String(v)});
   var pr=ProfilApp.ambil()||{},s=AkunApp.sesi();
   $('set-nama').textContent=pr.nama||'Belum mengisi profil';$('set-user').textContent=pr.username?'@'+pr.username:'Username belum diatur';
   $('set-status').textContent=s?'Akun masuk'+(s.email?' · '+s.email:''):'Mode lokal (belum masuk)';
