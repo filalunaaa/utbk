@@ -2346,7 +2346,7 @@ function grafikStatHTML() {
   return kepala + `<div class="grafik-grid">
     <div class="grafik-kartu lebar"><h3>Akurasi harian</h3>${garisHTML(data)}</div>
     <div class="grafik-kartu"><h3>Akurasi per topik (terlemah dulu)</h3>${bar}<div class="legenda"><span><i class="lv-rendah"></i>&lt; 50%</span><span><i class="lv-sedang"></i>50-74%</span><span><i class="lv-tinggi"></i>&ge; 75%</span></div></div>
-    <div class="grafik-kartu"><h3>Perbandingan PK dan PM</h3><div class="bandingan">${banding}</div></div>
+    <div class="grafik-kartu"><h3>Perbandingan Pengetahuan Kuantitatif dan Penalaran Matematika</h3><div class="bandingan">${banding}</div></div>
   </div><p class="muted" style="margin:10px 0 0">Grafik dihitung dari riwayat pengerjaan terbaru (maksimal 600 soal tersimpan).</p>`;
 }
 // Warna solid untuk bar statistik sesuai level nilai (tanpa gradasi)
@@ -3164,7 +3164,7 @@ function validasiSoal(daftar) {
     const err = [], per = [];
     const id = String(s.id);
     if (idPernah.has(id)) err.push('ID kembar dengan soal no. ' + (idPernah.get(id) + 1)); else idPernah.set(id, n);
-    if (!['PK', 'PM'].includes(s.mataPelajaran)) err.push('Mata pelajaran harus PK atau PM (sekarang: ' + s.mataPelajaran + ')');
+    if (!['PK', 'PM'].includes(s.mataPelajaran)) err.push('Mata pelajaran harus Pengetahuan Kuantitatif atau Penalaran Matematika (sekarang: ' + namaMapel(s.mataPelajaran) + ')');
     if (!['mudah', 'sedang', 'sulit'].includes(s.tingkatKesulitan)) err.push('Tingkat kesulitan tidak valid (' + s.tingkatKesulitan + ')');
     if (!String(s.topik || '').trim()) err.push('Topik kosong');
     if (kosong(s.soal)) err.push('Teks soal kosong');
@@ -3245,7 +3245,7 @@ function renderEditorStat() {
   $('editor-stat').innerHTML = '<div class="es-baris kepala"><span></span><span>Total</span><span>Benar</span><span></span></div>'
     + baris('all', 'Keseluruhan', d, true)
     + '<div class="es-judul">Per mata pelajaran</div>'
-    + Object.entries(mapel).map(([k, v]) => baris('mapel', k, v, true)).join('')
+    + Object.entries(mapel).map(([k, v]) => baris('mapel', namaMapel(k), v, true)).join('')
     + '<div class="es-judul">Per topik</div><div id="stat-topik">'
     + Object.entries(d.topik || {}).map(([k, v]) => baris('topik', k, v, false)).join('') + '</div>';
 }
@@ -3669,7 +3669,7 @@ function lolosFilterBank(s) {
 function ringkasanBank(semua, tampil) {
   const n = (m) => semua.filter((s) => s.mataPelajaran === m).length;
   const t = (a, b, c) => `<div class="stat-tile"><span>${a}</span><strong>${b}</strong>${c ? `<small>${c}</small>` : ''}</div>`;
-  $('ringkasan-bank').innerHTML = t('Total soal', semua.length) + t('PK', n('PK'), 'Pengetahuan Kuantitatif') + t('PM', n('PM'), 'Penalaran Matematika') + t('Ditampilkan', tampil);
+  $('ringkasan-bank').innerHTML = t('Total soal', semua.length) + t('Pengetahuan Kuantitatif', n('PK')) + t('Penalaran Matematika', n('PM')) + t('Ditampilkan', tampil);
 }
 function renderDaftarCustom() {
   const semua = BankSoal.ambil();
