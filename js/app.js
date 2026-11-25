@@ -5002,7 +5002,7 @@ segarkanSoalBawaan();
   // Dipanggil setelah keluar akun: kembali ke halaman Welcome
   window.tampilWelcome=function(){try{localStorage.removeItem('nalarin_welcome_seen')}catch(e){}root.classList.add('welcome-on');lain(function(el){el.inert=true});w.scrollTop=0};
   $('wl-mulai').addEventListener('click',function(){   tutup();   window.mulaiOnboardingPublik(); });
-  $('wl-masuk').addEventListener('click',function(){keAkun(true)});
+  $('wl-masuk').addEventListener('click',function(){tutup();aksiAkun('google')});
   $('wl-lokal').addEventListener('click',function(){tutup();tampil('menu')});
   // Kalau ternyata sudah ada sesi (mis. kembali dari login Google), halaman ini tidak perlu tampil
   window.addEventListener('hashchange',function(){if(root.classList.contains('welcome-on')&&AkunApp.sesi())tutup()});
