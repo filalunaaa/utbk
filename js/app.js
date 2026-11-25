@@ -1095,6 +1095,8 @@ function terapkanAksesTamu() {
   document.body.classList.toggle('mode-tamu', tamu);
   const nav = document.querySelector('.side-nav');
   if (nav) nav.hidden = tamu;
+  const navBawah = document.querySelector('.bottomnav');
+  if (navBawah) navBawah.hidden = tamu;
   const tryout = document.querySelector('input[name="mode"][value="tryout"]');
   if (tryout) {
     const label = tryout.closest('label');
