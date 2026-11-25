@@ -1277,7 +1277,8 @@ function buatTopik() {
   const html = grup.map((g) => {
     const totalSoal = g.topik.reduce((t, tp) => t + (jTopik[tp.nama] || 0), 0);
     const jmlSub = g.topik.reduce((t, tp) => t + (tp.sub || []).length, 0);
-    const tag = g.mapel ? `<span class="pv-tag">${esc(g.mapel)}</span>` : '';
+    const kodeMapel = g.mapel === 'Pengetahuan Kuantitatif' ? 'PK' : g.mapel === 'Penalaran Matematika' ? 'PM' : g.mapel;
+    const tag = g.mapel ? `<span class="pv-tag"><span class="mapel-label-lengkap">${esc(g.mapel)}</span><span class="mapel-label-singkat">${esc(kodeMapel)}</span></span>` : '';
     const bukaGrup = window._pvBuka && window._pvBuka.has(g.kunci);
     return `<div class="pv-grup${bukaGrup ? '' : ' tutup'}" data-kunci="${esc(g.kunci)}">
       <div class="pv-head">
