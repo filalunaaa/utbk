@@ -5,10 +5,14 @@ const API_HEADERS = {
   "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=300"
 };
 
-const FEED =
+const FEEDS = [
   "https://news.google.com/rss/search?q=" +
-  encodeURIComponent('UTBK OR SNBT OR SNPMB OR TKA OR "Tes Kemampuan Akademik"') +
-  "&hl=id&gl=ID&ceid=ID:id";
+    encodeURIComponent('UTBK OR SNBT OR SNPMB OR TKA OR "Tes Kemampuan Akademik"') +
+    "&hl=id&gl=ID&ceid=ID:id",
+  "https://www.bing.com/news/search?q=" +
+    encodeURIComponent('UTBK OR SNBT OR SNPMB OR "Tes Kemampuan Akademik"') +
+    "&format=rss"
+];
 
 function decodeXml(value) {
   return value
@@ -23,24 +27,17 @@ function decodeXml(value) {
 
 function readTag(tag, block) {
   const match = block.match(
-    new RegExp("<" + tag + "[^>]*>([\\s\\S]*?)</" + tag + ">")
+    new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + tag + ">", "i")
   );
   return match ? decodeXml(match[1]) : "";
 }
 
-async function berita() {
-  const response = await fetch(FEED, {
-    headers: { "User-Agent": "Mozilla/5.0" }
-  });
-  if (!response.ok) throw new Error("News feed returned " + response.status);
-
-  const xml = await response.text();
-  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
-    .slice(0, 15)
+function parseFeed(xml) {
+  const items = [...xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)]
     .map((match) => {
       const block = match[1];
       let judul = readTag("title", block);
-      const sumber = readTag("source", block);
+      const sumber = readTag("source", block) || readTag("news:source", block);
       if (sumber && judul.endsWith(" - " + sumber)) {
         judul = judul.slice(0, -(sumber.length + 3));
       }
@@ -50,11 +47,36 @@ async function berita() {
         tanggal: readTag("pubDate", block),
         link: readTag("link", block)
       };
-    });
+    })
+    .filter((item) => item.judul && item.link);
 
-  return Response.json(items, {
-    headers: API_HEADERS
+  const unik = new Map();
+  items.forEach((item) => {
+    const key = item.link || item.judul;
+    if (!unik.has(key)) unik.set(key, item);
   });
+  return [...unik.values()].slice(0, 15);
+}
+
+async function ambilDariFeed(url) {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; PytagoNews/1.0)",
+      "Accept": "application/rss+xml, application/xml, text/xml, */*"
+    },
+    signal: AbortSignal.timeout(9000)
+  });
+  if (!response.ok) throw new Error("Feed returned HTTP " + response.status);
+
+  const xml = await response.text();
+  const items = parseFeed(xml);
+  if (!items.length) throw new Error("Feed tidak berisi berita yang dapat dibaca");
+  return items;
+}
+
+async function berita() {
+  const hasil = await Promise.any(FEEDS.map((url) => ambilDariFeed(url)));
+  return Response.json(hasil, { headers: API_HEADERS });
 }
 
 export default {
@@ -73,10 +95,19 @@ export default {
       }
       try {
         return await berita();
-      } catch {
+      } catch (error) {
+        console.error("Gagal mengambil feed berita:", error);
         return Response.json(
-          { error: "Berita belum bisa dimuat" },
-          { status: 500, headers: API_HEADERS }
+          { error: "Sumber berita sedang tidak dapat dijangkau" },
+          {
+            status: 502,
+            headers: {
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "GET, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type",
+              "Cache-Control": "no-store"
+            }
+          }
         );
       }
     }
