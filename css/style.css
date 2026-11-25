@@ -1119,6 +1119,8 @@ table.kem-tabel{width:100%;border-collapse:collapse;font-size:.9rem;min-width:42
 .kem-bar i{display:block;height:100%;border-radius:999px;background:var(--muted)}
 .kem-bar i.st-sedang{background:var(--primary)}.kem-bar i.st-perlu{background:var(--warning)}.kem-bar i.st-dikuasai{background:var(--benar)}
 .kem-aksi{text-align:right;white-space:nowrap}
+.kem-latih-btn{width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.kem-latih-btn svg{width:17px;height:17px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .kem-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;color:var(--muted);font-size:.82rem}
 
 /* ===== Sistem filter Nalarin (komponen bersama) ===== */
