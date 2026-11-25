@@ -1,3 +1,10 @@
+const API_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=300"
+};
+
 const FEED =
   "https://news.google.com/rss/search?q=" +
   encodeURIComponent('UTBK OR SNBT OR SNPMB OR TKA OR "Tes Kemampuan Akademik"') +
@@ -46,9 +53,7 @@ async function berita() {
     });
 
   return Response.json(items, {
-    headers: {
-      "Cache-Control": "public, max-age=0, s-maxage=600, stale-while-revalidate=300"
-    }
+    headers: API_HEADERS
   });
 }
 
@@ -57,12 +62,21 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/berita") {
+      if (request.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: API_HEADERS });
+      }
+      if (request.method !== "GET") {
+        return Response.json(
+          { error: "Method tidak diizinkan" },
+          { status: 405, headers: API_HEADERS }
+        );
+      }
       try {
         return await berita();
       } catch {
         return Response.json(
           { error: "Berita belum bisa dimuat" },
-          { status: 500 }
+          { status: 500, headers: API_HEADERS }
         );
       }
     }
