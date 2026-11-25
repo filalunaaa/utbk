@@ -1933,13 +1933,11 @@ body.mode-tamu .bottomnav{display:none!important}
 .judul-halaman-baris .ikon-judul-halaman{margin-right:0}
 
 
-/* Koleksi Soal diakses dari halaman Statistik khusus perangkat mobile */
-.statistik-koleksi-link{display:none}
-@media(max-width:899px) and (pointer:coarse){
-  .statistik-koleksi-link{display:flex;align-items:center;gap:10px;margin:14px 0;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-weight:600;text-decoration:none}
-  .statistik-koleksi-link svg{width:21px;height:21px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  .statistik-koleksi-link:active{background:var(--primary-soft);color:var(--accent)}
-}
+/* Koleksi Soal di halaman Statistik hanya ditampilkan pada perangkat Android */
+.statistik-koleksi-link{display:none!important}
+.perangkat-android .statistik-koleksi-link{display:flex!important;align-items:center;gap:10px;margin:14px 0;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-weight:600;text-decoration:none}
+.perangkat-android .statistik-koleksi-link svg{width:21px;height:21px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.perangkat-android .statistik-koleksi-link:active{background:var(--primary-soft);color:var(--accent)}
 
 .koleksi-filter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end;margin:16px 0 8px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--card)}.koleksi-filter label{display:grid;gap:5px;min-width:0;font-size:.8rem;font-weight:700}.koleksi-filter .input{width:100%;min-width:0}.koleksi-filter-hasil{font-size:.8rem;margin:0 0 12px}.koleksi-subtopik{font-size:.78rem}@media(max-width:650px){.koleksi-filter{grid-template-columns:1fr 1fr}.koleksi-filter label:first-child{grid-column:1/-1}.koleksi-filter [data-koleksi-filter-reset]{grid-column:1/-1;width:100%}}
 
