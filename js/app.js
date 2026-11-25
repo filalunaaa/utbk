@@ -1392,7 +1392,7 @@ const KoleksiSoal = {
  ada(id){return this.ambil().some(x=>String(x.id)===String(id));},
  toggle(s){if(!AkunApp.sesi()){alert('Masuk dengan Google untuk menyimpan soal.');return false;}const d=this.ambil(),id=String(s.id);if(d.some(x=>String(x.id)===id)){this.simpan(d.filter(x=>String(x.id)!==id));tampilkanToast('Soal dihapus dari koleksi.');}else{d.unshift({id,soal:JSON.parse(JSON.stringify(s)),status:'belum',disimpanPada:Date.now()});this.simpan(d);tampilkanToast('Soal disimpan ke Koleksi Soal.');}renderTombolKoleksi();return true;}
 };
-function renderTombolKoleksi(){const b=$('btn-koleksi-soal');if(!b||!sesi||!sesi.soal||!sesi.soal[sesi.i])return;const ok=KoleksiSoal.ada(sesi.soal[sesi.i].id);b.textContent=ok?'Tersimpan':'Simpan soal';b.classList.toggle('is-saved',ok);b.setAttribute('aria-pressed',String(ok));}
+function renderTombolKoleksi(){const b=$('btn-koleksi-soal');if(!b||!sesi||!sesi.soal||!sesi.soal[sesi.i])return;const ok=KoleksiSoal.ada(sesi.soal[sesi.i].id);b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>'+(ok?'Tersimpan':'Simpan soal')+'</span>';b.classList.toggle('is-saved',ok);b.setAttribute('aria-pressed',String(ok));}
 const FILTER_KOLEKSI={mapel:'',topik:'',subtopik:''};
 function subtopikKoleksi(s){const ids=idSub(s),out=[];for(const k of Object.keys(TAKSONOMI))for(const r of TAKSONOMI[k].rumpun)for(const tp of r.topik)for(const sb of (tp.sub||[]))if(ids.includes(sb.id))out.push({id:sb.id,nama:sb.nama});return out;}
 function renderKoleksiSoal(){
