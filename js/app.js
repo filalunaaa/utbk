@@ -488,7 +488,8 @@ const SYNC = {
   utbk_bank_custom: 'bank_soal',
   utbk_bank_folder: 'bank_folder',
   utbk_pilihan_stat: 'pilihan_stat',
-  utbk_pengaturan: 'pengaturan'
+  utbk_pengaturan: 'pengaturan',
+  pytago_koleksi_soal: 'koleksi_soal'
 };
 // Riwayat dikirim terpisah: kalau server menolaknya, data lain tetap tersinkron
 const SYNC_OPSIONAL = { utbk_riwayat: 'riwayat', utbk_riwayat_sesi: 'riwayat_sesi', utbk_onboarding: 'onboarding', utbk_avatar: 'avatar' };
@@ -1051,6 +1052,7 @@ function tampil(id) {
     materi: 'materi',
     statistik: 'statistik',
     riwayatdetail: 'statistik',
+    koleksi: 'koleksi',
     bank: 'bank',
     'laporan-admin': 'laporan-admin',
     pengaturan: 'pengaturan',
@@ -1067,6 +1069,7 @@ function tampil(id) {
   const tombolProfil = $('btn-profil');
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
+  if (id === 'koleksi') renderKoleksiSoal();
   if (id === 'setup') {
     if (!AkunApp.sesi()) {
       const latihan = document.querySelector('input[name="mode"][value="latihan"]');
@@ -1380,6 +1383,20 @@ aktif: true, i: 0, mulai: Date.now(), timer: null,
   renderSoal();
 }
 
+
+/* Koleksi Soal: tersimpan per akun dan disinkronkan melalui data_pengguna. */
+const KoleksiSoal = {
+ KEY:'pytago_koleksi_soal',
+ ambil(){try{const d=JSON.parse(localStorage.getItem(this.KEY));return Array.isArray(d)?d:[];}catch(e){return[];}},
+ simpan(d){if(!AkunApp.sesi())return false;try{localStorage.setItem(this.KEY,JSON.stringify(d));sinkron().catch(()=>{});return true;}catch(e){return false;}},
+ ada(id){return this.ambil().some(x=>String(x.id)===String(id));},
+ toggle(s){if(!AkunApp.sesi()){alert('Masuk dengan Google untuk menyimpan soal.');return false;}const d=this.ambil(),id=String(s.id);if(d.some(x=>String(x.id)===id)){this.simpan(d.filter(x=>String(x.id)!==id));tampilkanToast('Soal dihapus dari koleksi.');}else{d.unshift({id,soal:JSON.parse(JSON.stringify(s)),status:'belum',disimpanPada:Date.now()});this.simpan(d);tampilkanToast('Soal disimpan ke Koleksi Soal.');}renderTombolKoleksi();return true;}
+};
+function renderTombolKoleksi(){const b=$('btn-koleksi-soal');if(!b||!sesi||!sesi.soal||!sesi.soal[sesi.i])return;const ok=KoleksiSoal.ada(sesi.soal[sesi.i].id);b.textContent=ok?'★ Tersimpan':'☆ Simpan soal';b.classList.toggle('is-saved',ok);b.setAttribute('aria-pressed',String(ok));}
+function renderKoleksiSoal(){const el=$('isi-koleksi-soal');if(!el)return;if(!AkunApp.sesi()){el.innerHTML='<div class="card koleksi-empty"><p>🔒 Masuk untuk menyimpan koleksi soal.</p><button class="btn btn-primary" id="koleksi-masuk" type="button">Masuk dengan Google</button></div>';const b=$('koleksi-masuk');if(b)b.onclick=()=>aksiAkun('google');return;}const d=KoleksiSoal.ambil(),c={belum:0,proses:0,kuasai:0};d.forEach(x=>c[x.status||'belum']++);const cards=d.map((x)=>{const s=x.soal||{},st=x.status||'belum';return `<article class="card koleksi-item"><div class="koleksi-meta"><span class="pill-mapel">${esc(s.mataPelajaran||'Soal')}</span><span class="muted">${esc(s.topik||'Tanpa topik')}</span></div><div class="koleksi-teks">${konten(s.soal||'Konten soal tidak tersedia.')}</div><details class="koleksi-pembahasan"><summary>📖 Lihat pembahasan</summary><div class="feedback">${konten(s.pembahasan||'Pembahasan belum tersedia.')}</div></details><div class="koleksi-actions"><label>Status<select class="input" data-koleksi-status="${esc(x.id)}"><option value="belum" ${st==='belum'?'selected':''}>Belum dipelajari</option><option value="proses" ${st==='proses'?'selected':''}>Sedang dipelajari</option><option value="kuasai" ${st==='kuasai'?'selected':''}>Dikuasai</option></select></label><button class="btn btn-secondary btn-kecil" type="button" data-koleksi-hapus="${esc(x.id)}">🗑 Hapus</button></div></article>`;}).join('');el.innerHTML=`<div class="koleksi-ringkas"><div><b>📌 ${d.length}</b><span>Total soal</span></div><div><b>${c.belum}</b><span>Belum dipelajari</span></div><div><b>${c.proses}</b><span>Sedang dipelajari</span></div><div><b>${c.kuasai}</b><span>Dikuasai</span></div></div>${d.length?'<div class="koleksi-list">'+cards+'</div>':'<div class="card koleksi-empty"><div>🔖</div><h3>Belum ada soal tersimpan</h3><p class="muted">Tekan ☆ Simpan soal saat latihan.</p></div>'}`;}
+$('isi-koleksi-soal').addEventListener('change',e=>{const b=e.target.closest('[data-koleksi-status]');if(!b)return;const d=KoleksiSoal.ambil(),x=d.find(v=>String(v.id)===b.dataset.koleksiStatus);if(x){x.status=b.value;KoleksiSoal.simpan(d);renderKoleksiSoal();}});
+$('isi-koleksi-soal').addEventListener('click',e=>{const b=e.target.closest('[data-koleksi-hapus]');if(!b)return;KoleksiSoal.simpan(KoleksiSoal.ambil().filter(x=>String(x.id)!==b.dataset.koleksiHapus));renderKoleksiSoal();tampilkanToast('Soal dihapus dari koleksi.');});
+
 function renderSoal() {
   const { soal, jawab, kunci, i, mode } = sesi;
   const s = soal[i];
@@ -1408,6 +1425,7 @@ function renderSoal() {
     }).join('');
   }
 
+  renderTombolKoleksi();
   const tombolLapor = $('btn-laporkan-soal');
   if (tombolLapor) tombolLapor.hidden = !AkunApp.sesi();
   const fb = $('feedback');
@@ -1591,6 +1609,7 @@ await rest('laporan_soal', {
 
 // Hubungkan tombol dengan formulir laporan.
 $('btn-laporkan-soal').addEventListener('click', bukaModalLaporanSoal);
+$('btn-koleksi-soal').addEventListener('click', () => { if(sesi&&sesi.aktif) KoleksiSoal.toggle(sesi.soal[sesi.i]); });
 
 
 // ---------- Edit soal langsung saat latihan (admin) ----------
@@ -4188,6 +4207,7 @@ document.querySelectorAll('.nav-link').forEach((a) => a.addEventListener('click'
   else if (a.dataset.hal === 'bank') renderBank();
   else if (a.dataset.hal === 'pengaturan') { renderPengaturan(); tampil('pengaturan'); }
   else if (a.dataset.hal === 'setup') tampil('setup');
+  else if (a.dataset.hal === 'koleksi') { renderKoleksiSoal(); tampil('koleksi'); }
  else if (a.dataset.hal === 'rekomendasi') { renderRekomendasi(); tampil('rekomendasi'); }
 else if (a.dataset.hal === 'profil') { renderProfil(!ProfilApp.ambil()); tampil('profil'); }
 else if (a.dataset.hal === 'laporan-admin' && ADMIN) {
