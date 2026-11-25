@@ -1964,3 +1964,17 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 #pilih-mapel .mapel-label{display:inline;color:inherit}
 #pilih-mapel .chip input:checked+span .mapel-label,
 #pilih-mapel .chip input:checked+span .mapel-label::after{color:#fff!important}
+
+/* ===== Atur Latihan: pilihan mata pelajaran, spasi proporsional =====
+   Segmen selebar isinya dengan padding seragam, sehingga "Semua", PK/PM, dan
+   nama lengkap sama-sama punya ruang kiri-kanan yang sama. Tidak lagi dibagi rata. */
+#pilih-mapel.pilihan.seg-r{display:inline-flex !important;width:fit-content !important;max-width:100%;gap:4px;padding:4px;box-sizing:border-box}
+#pilih-mapel.pilihan.seg-r .chip{flex:0 1 auto !important;min-width:0}
+#pilih-mapel.pilihan.seg-r .chip span{width:auto !important;min-height:40px;padding:0 18px;white-space:nowrap}
+@media(max-width:600px){
+  #pilih-mapel.pilihan.seg-r{width:fit-content !important}
+  #pilih-mapel.pilihan.seg-r .chip{flex:0 0 auto !important}
+  #pilih-mapel.pilihan.seg-r .chip span{width:auto !important;padding:0 20px}
+  #pilih-mapel + .seg-ket{margin-top:8px}
+}
+#flt-setup{margin-top:10px}
