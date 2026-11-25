@@ -74,8 +74,29 @@ async function ambilDariFeed(url) {
   return items;
 }
 
+
+async function ambilDariApiVercel() {
+  const response = await fetch("https://nalarin-id.vercel.app/api/berita", {
+    headers: { "Accept": "application/json" },
+    signal: AbortSignal.timeout(12000)
+  });
+  if (!response.ok) throw new Error("API Vercel returned HTTP " + response.status);
+
+  const data = await response.json();
+  if (!Array.isArray(data) || !data.length) {
+    throw new Error("API Vercel tidak mengembalikan daftar berita");
+  }
+
+  const items = data
+    .filter((item) => item && item.judul && item.link)
+    .slice(0, 15);
+
+  if (!items.length) throw new Error("Format berita dari API Vercel tidak valid");
+  return items;
+}
+
 async function berita() {
-  const hasil = await Promise.any(FEEDS.map((url) => ambilDariFeed(url)));
+  const hasil = await Promise.any([ambilDariApiVercel(), ...FEEDS.map((url) => ambilDariFeed(url))]);
   return Response.json(hasil, { headers: API_HEADERS });
 }
 
