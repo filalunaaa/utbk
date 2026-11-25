@@ -1960,3 +1960,8 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 
 /* Android: pisahkan pilihan mata pelajaran agar label panjang tidak saling bertumpuk. */
 @media(max-width:600px){.perangkat-android #pilih-mapel{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}.perangkat-android #pilih-mapel>.chip{display:flex;width:100%;min-width:0;box-sizing:border-box;align-items:center;white-space:normal;line-height:1.35;padding:11px 13px}.perangkat-android #pilih-mapel>.chip span{min-width:0;overflow-wrap:anywhere}}
+
+/* Label singkat PK/PM hanya untuk perangkat Android. */
+.mapel-label-singkat{display:none}
+html.perangkat-android #pilih-mapel .mapel-label-lengkap,html.perangkat-android .pv-tag .mapel-label-lengkap{display:none}
+html.perangkat-android #pilih-mapel .mapel-label-singkat,html.perangkat-android .pv-tag .mapel-label-singkat{display:inline}
