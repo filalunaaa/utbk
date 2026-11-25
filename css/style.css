@@ -1964,8 +1964,8 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 /* Label mapel: nama lengkap di desktop, singkatan di Android. */
 #pilih-mapel .mapel-label{display:inline;color:inherit}
 html.perangkat-android #pilih-mapel .mapel-label,
-html.perangkat-android .pv-tag .mapel-label{font-size:0!important}
-html.perangkat-android #pilih-mapel .mapel-label::after,
-html.perangkat-android .pv-tag .mapel-label::after{content:attr(data-short);font-size:.84rem;color:inherit}
+html.perangkat-android .pv-tag .mapel-label{display:inline-block;font-size:0!important;line-height:1}
+html.perangkat-android #pilih-mapel .mapel-label::after{content:attr(data-short);display:inline-block;font-size:.84rem;line-height:1;color:inherit}
+html.perangkat-android .pv-tag .mapel-label::after{content:attr(data-short);display:inline-block;font-size:.72rem;line-height:1;color:inherit}
 #pilih-mapel .chip input:checked+span .mapel-label,
 #pilih-mapel .chip input:checked+span .mapel-label::after{color:#fff!important}
