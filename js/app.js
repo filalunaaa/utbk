@@ -1262,7 +1262,8 @@ function buatTopik() {
     if (topik.length) grup.push({ kunci: k + '|' + r.id, nama: r.nama, mapel: k, topik });
   }));
   const lain = Object.keys(jTopik).filter((n) => !dikenal.has(n)).sort((x, y) => x.localeCompare(y));
-  if (lain.length) grup.push({ kunci: '_lain', nama: 'Belum dipetakan ke taksonomi', mapel: '', topik: lain.map((n) => ({ nama: n, sub: [] })) });
+  // Topik di luar taksonomi hanya ditampilkan kepada admin untuk audit/pemetaan, bukan sebagai filter latihan pengguna.
+  if (modeAdmin && lain.length) grup.push({ kunci: '_lain', nama: 'Belum dipetakan ke taksonomi', mapel: '', topik: lain.map((n) => ({ nama: n, sub: [] })) });
   const blok = (tp) => {
     const n = jTopik[tp.nama] || 0, subs = tp.sub || [];
     return `<div class="tp-blok${n ? '' : ' nol'}">
