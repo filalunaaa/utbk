@@ -2457,7 +2457,7 @@ function renderStatistik() {
     `<div id="kemampuan-sub" style="margin-bottom:14px">${kemampuanSubHTML()}</div>` +
     `<div id="riwayat-sesi">${riwayatSesiHTML()}</div>` +
     `<div id="grafik-stat">${grafikStatHTML()}</div>` +
-    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()};
+    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}`;
   tampil('statistik');
   rumus($('isi-statistik'));
 }
@@ -3973,6 +3973,19 @@ $('btn-riwayat-sesi').addEventListener('click', () => {
   if (k) k.open = true;
   if (el) el.scrollIntoView({ block: 'start' });
 });
+let konfirmReset = null;
+$('btn-reset').addEventListener('click', () => {
+  const b = $('btn-reset');
+  if (konfirmReset) {
+    clearTimeout(konfirmReset); konfirmReset = null;
+    b.textContent = 'Reset statistik';
+    Penyimpanan.reset(); PilihanStat.reset(); Riwayat.reset(); RiwayatSesi.reset(); renderStatistik();
+    return;
+  }
+  b.textContent = 'Yakin? Klik lagi untuk menghapus';
+  konfirmReset = setTimeout(() => { konfirmReset = null; b.textContent = 'Reset statistik'; }, 4000);
+});
+
 // Bank soal
 $('btn-simpan-soal').addEventListener('click', simpanSoal);
 // ---------- Pratinjau soal buatan sendiri (tampilan seperti saat latihan) ----------
