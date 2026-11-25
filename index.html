@@ -41,15 +41,15 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   display:grid !important;
   grid-template-columns:repeat(3,minmax(0,1fr));
   align-items:stretch;
-  width:min(100%,600px) !important;
+  width:min(100%,420px) !important;
   max-width:100%;
-  gap:4px;
+  gap:2px;
   padding:4px;
   margin:0;
   box-sizing:border-box;
-  background:var(--primary-soft);
+  background:#fff !important;
   border:1px solid var(--primary-soft);
-  border-radius:999px;
+  border-radius:12px;
 }
 #pilih-mapel .chip{
   position:relative;
@@ -81,8 +81,8 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
   margin:0;
   box-sizing:border-box;
   border:1px solid transparent;
-  border-radius:999px;
-  background:transparent;
+  border-radius:8px;
+  background:#fff !important;
   color:var(--accent) !important;
   font-size:.82rem;
   font-weight:600;
@@ -95,6 +95,7 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
 #pilih-mapel .chip input:checked + span{
   background:var(--primary) !important;
   border-color:var(--primary) !important;
+  border-radius:8px;
   color:#fff !important;
 }
 #pilih-mapel .chip input:focus-visible + span{
