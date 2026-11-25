@@ -177,7 +177,7 @@
       +'<p class="mt-alasan"><b>'+STATUS[u.status]+'.</b> '+esc(alasan(u))+'</p>'
       +distribusi(n)
       +(u.soal?'<button type="button" class="btn btn-primary" id="mt-latih">Mulai Latihan</button>':'<button type="button" class="btn btn-primary" disabled>Mulai Latihan</button><p class="muted" style="margin:8px 0 0">'+(n.type==='sub'?'Belum ada soal yang ditandai untuk subtopik ini.':'Belum ada soal yang terhubung ke materi ini.')+'</p>')
-      +'<p class="mt-info-bawah">Statistik dihitung dari riwayat terbaru (maks. 600 percobaan). Struktur materi disusun Nalarin, bukan kisi-kisi resmi SNPMB.</p></div>';
+      +'<p class="mt-info-bawah">Statistik dihitung dari riwayat terbaru (maks. 600 percobaan). Struktur materi disusun Nalarine, bukan kisi-kisi resmi SNPMB.</p></div>';
     h+=statCard(n);
     var kids=anakDari(n);
     if(kids.length){h+='<div class="card"><b>'+(n.type==='subtes'?'Progres per rumpun':n.type==='rumpun'?'Progres per topik':'Progres per subtopik')+'</b><ul class="mt-daftar">'+kids.map(function(k){var kk=ukur(k);
