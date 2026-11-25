@@ -1959,13 +1959,11 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 @media(max-width:600px){.sx-list-horizontal>.sx{flex-basis:92%;min-width:92%}.sx-list-horizontal>.sx[open]{max-height:68vh}}
 
 /* Android: pisahkan pilihan mata pelajaran agar label panjang tidak saling bertumpuk. */
-@media(max-width:600px){.perangkat-android #pilih-mapel{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}.perangkat-android #pilih-mapel>.chip{display:flex;width:100%;min-width:0;box-sizing:border-box;align-items:center;white-space:normal;line-height:1.35;padding:11px 13px}.perangkat-android #pilih-mapel>.chip span{min-width:0;overflow-wrap:anywhere}}
+@media(max-width:600px){.perangkat-android #pilih-mapel{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}.perangkat-android #pilih-mapel>.chip{display:flex;width:100%;min-width:0;box-sizing:border-box;align-items:center;justify-content:center;text-align:center;white-space:normal;line-height:1.35;padding:11px 13px}.perangkat-android #pilih-mapel>.chip>span{min-width:0;overflow-wrap:anywhere;text-align:center}}
 
 /* Label mapel: nama lengkap di desktop, singkatan di Android. */
 #pilih-mapel .mapel-label{display:inline;color:inherit}
-html.perangkat-android #pilih-mapel .mapel-label,
-html.perangkat-android .pv-tag .mapel-label{display:inline-block;font-size:0!important;line-height:1}
+html.perangkat-android #pilih-mapel .mapel-label{display:inline-block;font-size:0!important;line-height:1}
 html.perangkat-android #pilih-mapel .mapel-label::after{content:attr(data-short);display:inline-block;font-size:.84rem;line-height:1;color:inherit}
-html.perangkat-android .pv-tag .mapel-label::after{content:attr(data-short);display:inline-block;font-size:.72rem;line-height:1;color:inherit}
 #pilih-mapel .chip input:checked+span .mapel-label,
 #pilih-mapel .chip input:checked+span .mapel-label::after{color:#fff!important}
