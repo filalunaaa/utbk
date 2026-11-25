@@ -806,7 +806,9 @@ let DETIK_PER_SOAL = PengaturanApp.ambil().waktuPerSoal; // jatah waktu Try Out 
 // Jumlah soal yang dipilih di halaman atur latihan ('semua' = semua soal yang cocok)
 function jumlahDipilih(n) {
   const pilihJumlah = $('pilih-jumlah');
-  const j = Number(pilihJumlah ? pilihJumlah.value : 5) || 5;
+  const nilaiJumlah = pilihJumlah ? pilihJumlah.value : '5';
+  if (nilaiJumlah === 'semua') return n;
+  const j = Number(nilaiJumlah) || 5;
   return Math.min(n, j);
 }
 const HURUF = ['A', 'B', 'C', 'D', 'E'];
@@ -4654,18 +4656,11 @@ function terapkanDefaultSetup() {
   const mp = p.mapelDefault || 'semua';
   document.querySelectorAll('input[name="mode"]').forEach((i) => (i.checked = i.value === mode));
   const pilihJumlah = $('pilih-jumlah');
-  pilihJumlah.value = ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50'].includes(jml) ? jml : '5';
+  pilihJumlah.value = ['5', '10', '15', '20', '25', '30', '35', '40', '45', '50', 'semua'].includes(jml) ? jml : '5';
   document.querySelectorAll('input[name="mapel"]').forEach((i) => (i.checked = i.value === mp));
 }
 $('pengaturan').addEventListener('change', (e) => {
   const t = e.target;
-  if (t.name === 'def-mode' || t.name === 'def-jumlah') {
-    const p = PengaturanApp.ambil();
-    if (t.name === 'def-mode') p.modeDefault = t.value;
-    else p.jumlahDefault = t.value;
-    PengaturanApp.simpan(p);
-    return;
-  }
   if (t.id === 'pubatur-publik' || t.id === 'pubatur-statistik') {
     const prof = ProfilApp.ambil();
     if (!prof) {
