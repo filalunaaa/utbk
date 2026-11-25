@@ -2287,36 +2287,6 @@ function renderDetailSesi() {
   rumus($('riwayat-detail'));
 }
 
-// ---------- Analisis pilihan jawaban: hanya soal dengan pengecoh yang menjebak ----------
-const BATAS_JEBAKAN = 5;
-let batasJebakan = BATAS_JEBAKAN;
-function analisisHTML(buka) {
-  const data = PilihanStat.ambil();
-  const peta = new Map([...SOAL, ...BankSoal.ambil()].map((s) => [String(s.id), s]));
-  const daftar = Object.entries(data)
-    .filter(([k, v]) => v.total > 0 && peta.has(k) && !adaIsian(peta.get(k)))
-    .map(([k, v]) => {
-      const s = peta.get(k);
-      const salah = [0, 1, 2, 3, 4].filter((i) => !kunciOpsi(s, i) && i < s.opsi.length);
-      const kuat = salah.reduce((a, b) => (v.pilih[b] > v.pilih[a] ? b : a), salah[0]);
-      return { s, v, kuat, pctKuat: kuat === undefined ? 0 : Math.round((v.pilih[kuat] / v.total) * 100) };
-    });
-  if (!daftar.length) {
-    return '<p class="label">Analisis pilihan jawaban</p><p class="muted">Belum ada data. Analisis muncul setelah ada soal yang dijawab.</p>';
-  }
-  const jebakan = daftar.filter((d) => d.pctKuat >= 30).sort((a, b) => b.pctKuat - a.pctKuat || b.v.total - a.v.total);
-  const baris = jebakan.slice(0, batasJebakan).map((d) => `<div class="jb-baris"><span class="jb-pil">${HURUF[d.kuat]}</span>
-      <div><div class="jb-soal">${esc(previewTeks(d.s.soal))}</div><small>${d.pctKuat}% memilih ${HURUF[d.kuat]} &middot; kunci ${esc(kunciHuruf(d.s))} &middot; ${d.v.total} jawaban</small></div></div>`).join('');
-  const lagi = jebakan.length > batasJebakan
-    ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-lagi-jebakan="1">Tampilkan lebih banyak (${jebakan.length - batasJebakan} lagi)</button></div>` : '';
-  return `<details class="kartu-soal" id="analisis-pilihan"${buka ? ' open' : ''}>
-    <summary><strong>Analisis pilihan jawaban</strong><span class="muted" style="margin-left:auto">${jebakan.length} jebakan &middot; ${daftar.length} soal</span></summary>
-    <div class="isi-kartu">
-      <p class="muted" style="margin:8px 0 4px">Soal yang satu opsi salahnya dipilih banyak orang (&ge; 30%). Yang paling menjebak di atas.</p>
-      ${baris || '<p class="muted">Belum ada pengecoh yang menonjol.</p>'}${lagi}
-    </div></details>`;
-}
-
 // ---------- Statistik ----------
 // ---------- Grafik statistik (dari riwayat pengerjaan asli) ----------
 let periodeStat = '30';
@@ -2487,7 +2457,7 @@ function renderStatistik() {
     `<div id="kemampuan-sub" style="margin-bottom:14px">${kemampuanSubHTML()}</div>` +
     `<div id="riwayat-sesi">${riwayatSesiHTML()}</div>` +
     `<div id="grafik-stat">${grafikStatHTML()}</div>` +
-    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()}` + `<div id="analisis-wrap" style="margin-top:14px">${analisisHTML()}</div>`;
+    `<p class="label">Per mata pelajaran</p><p class="muted" style="margin-bottom:10px">Ketuk mata pelajaran untuk melihat topiknya, lalu ketuk topik untuk melihat riwayat soal beserta pembahasannya.</p>${pivotMapel()};
   tampil('statistik');
   rumus($('isi-statistik'));
 }
@@ -2505,11 +2475,6 @@ $('isi-statistik').addEventListener('click', (e) => {
   if (fm) { filterSesiMapel = fm.dataset.fm; batasSesi = BATAS_SESI; $('riwayat-sesi').innerHTML = riwayatSesiHTML(); return; }
   if (e.target.closest('#rs-urut')) { urutSesi = urutSesi === 'baru' ? 'lama' : 'baru'; $('riwayat-sesi').innerHTML = riwayatSesiHTML(); return; }
   if (e.target.closest('button[data-lagi-sesi]')) { batasSesi += BATAS_SESI; $('rs-daftar').innerHTML = daftarSesiHTML(); return; }
-  if (e.target.closest('button[data-lagi-jebakan]')) {
-    batasJebakan += BATAS_JEBAKAN;
-    $('analisis-wrap').innerHTML = analisisHTML(true);
-    rumus($('analisis-wrap'));
-  }
 });
 $('riwayat-detail').addEventListener('click', (e) => {
   const lapor = e.target.closest('[data-lapor-soal]');
@@ -4008,19 +3973,6 @@ $('btn-riwayat-sesi').addEventListener('click', () => {
   if (k) k.open = true;
   if (el) el.scrollIntoView({ block: 'start' });
 });
-let konfirmReset = null;
-$('btn-reset').addEventListener('click', () => {
-  const b = $('btn-reset');
-  if (konfirmReset) {
-    clearTimeout(konfirmReset); konfirmReset = null;
-    b.textContent = 'Reset statistik';
-    Penyimpanan.reset(); PilihanStat.reset(); Riwayat.reset(); RiwayatSesi.reset(); renderStatistik();
-    return;
-  }
-  b.textContent = 'Yakin? Klik lagi untuk menghapus';
-  konfirmReset = setTimeout(() => { konfirmReset = null; b.textContent = 'Reset statistik'; }, 4000);
-});
-
 // Bank soal
 $('btn-simpan-soal').addEventListener('click', simpanSoal);
 // ---------- Pratinjau soal buatan sendiri (tampilan seperti saat latihan) ----------
