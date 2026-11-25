@@ -1921,3 +1921,6 @@ body.mode-tamu .bottomnav{display:none!important}
 
 /* Konsistensi ukuran judul halaman utama */
 #statistik h2,#materi .mt-head h2{font-size:1.5rem}
+
+/* Ukuran judul halaman rekomendasi */
+#rekomendasi>.card h2{font-size:1.5rem}
