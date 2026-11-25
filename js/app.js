@@ -979,7 +979,7 @@ function rumus(el) {
       }, { once: true });
     }
   }
-  if (window.NalarinGraph) window.NalarinGraph.renderAll(el);
+  if (window.NalarineGraph) window.NalarineGraph.renderAll(el);
 }
 function acak(arr) {
   const a = [...arr];
@@ -1044,7 +1044,7 @@ function konten(html, gambarLama, alt, grafik) {
   return `<div class="konten">${sanitize(html)}${gambarLama && gambarLama.startsWith('data:image/') ? `<img class="gambar-soal" src="${gambarLama}" alt="${esc(alt)}">` : ''}${grafikHTML(grafik)}</div>`;
 }
 function grafikHTML(g) {
-  return window.NalarinGraph && g ? window.NalarinGraph.graphHTML(g) : '';
+  return window.NalarineGraph && g ? window.NalarineGraph.graphHTML(g) : '';
 }
 // Isi satu pilihan jawaban (teks atau gambar)
 function isiOpsi(html) {
@@ -3181,8 +3181,8 @@ function validasiSoal(daftar) {
     if (!String(s.topik || '').trim()) err.push('Topik kosong');
     if (kosong(s.soal)) err.push('Teks soal kosong');
     if (kosong(s.pembahasan)) err.push('Pembahasan kosong');
-    if (s.grafik && window.NalarinGraph) {
-      const errorGrafik = window.NalarinGraph.validate(s.grafik);
+    if (s.grafik && window.NalarineGraph) {
+      const errorGrafik = window.NalarineGraph.validate(s.grafik);
       if (errorGrafik) err.push('Konfigurasi grafik tidak valid: ' + errorGrafik);
     }
     const tipe = tipeSoal(s);
@@ -3342,8 +3342,8 @@ function bacaForm() {
   const meta = bacaMeta();
   if (meta.error) return { error: meta.error };
   if (kosongEditor(getArea('soal'))) return { error: 'Teks soal belum diisi.' };
-  if (window.NalarinGraph) {
-    const errorGrafik = window.NalarinGraph.validateEditor();
+  if (window.NalarineGraph) {
+    const errorGrafik = window.NalarineGraph.validateEditor();
     if (errorGrafik) return { error: 'Grafik: ' + errorGrafik };
   }
   if (adaRumusTanpaTanda(getArea('soal').textContent)) return { error: 'Teks soal punya rumus tanpa tanda $. Blok rumusnya lalu klik ikon fx.' };
@@ -3378,8 +3378,8 @@ function bacaForm() {
     opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => sanitize(getArea('opsi' + k).innerHTML)),
     jawaban,
     pembahasan: sanitize(getArea('pembahasan').innerHTML),
-    ...(window.NalarinGraph && window.NalarinGraph.getEditorValue()
-      ? { grafik: window.NalarinGraph.getEditorValue() } : {})
+    ...(window.NalarineGraph && window.NalarineGraph.getEditorValue()
+      ? { grafik: window.NalarineGraph.getEditorValue() } : {})
   };
 }
 function resetForm() {
@@ -3387,7 +3387,7 @@ function resetForm() {
   renderCascade({});
   resetMeta();
   semuaArea().forEach((a) => (a.innerHTML = ''));
-  if (window.NalarinGraph) window.NalarinGraph.setEditorValue(null);
+  if (window.NalarineGraph) window.NalarineGraph.setEditorValue(null);
   pilihGambar(null);
   document.querySelector('input[name="f-mapel"][value="PK"]').checked = true;
   document.querySelector('input[name="f-level"][value="sedang"]').checked = true;
@@ -3423,7 +3423,7 @@ function isiForm(s) {
   getArea('soal').innerHTML = sanitize(s.soal) + gambarLama(s.gambarSoal);
   getArea('pembahasan').innerHTML = sanitize(s.pembahasan) + gambarLama(s.gambarPembahasan);
   [0, 1, 2, 3, 4].forEach((k) => (getArea('opsi' + k).innerHTML = s.opsi[k] ? sanitize(s.opsi[k]) : ''));
-  if (window.NalarinGraph) window.NalarinGraph.setEditorValue(s.grafik || null);
+  if (window.NalarineGraph) window.NalarineGraph.setEditorValue(s.grafik || null);
   pilihGambar(null);
 }
 function simpanSoal() {
@@ -3813,7 +3813,7 @@ ${soalHTML}
 ${kunciHTML}
 <script>
 window.addEventListener('load', function () {
-  if (window.NalarinGraph) window.NalarinGraph.renderAll(document);
+  if (window.NalarineGraph) window.NalarineGraph.renderAll(document);
   var p = (window.MathJax && MathJax.startup && MathJax.startup.promise) ? MathJax.startup.promise : Promise.resolve();
   p.then(function () { setTimeout(function () { window.print(); }, 700); }, function () { window.print(); });
 });
@@ -4020,7 +4020,7 @@ function dataPratinjau() {
   else jawaban = Number(nilai('f-jawaban'));
   return { tipe, jawaban, soal: baca('soal'), pembahasan: baca('pembahasan'),
     opsi: tipe === 'isian' ? [] : [0, 1, 2, 3, 4].map((k) => baca('opsi' + k)),
-    grafik: window.NalarinGraph ? window.NalarinGraph.getEditorValue() : null,
+    grafik: window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null,
     mapel: nilai('f-mapel'), topik: (topikTaxById($('f-topiktax').value) || { topik: { nama: '' } }).topik.nama, level: nilai('f-level') };
 }
 let kunciEditor = false;
@@ -4209,7 +4209,7 @@ else tampil('menu');
 
 buatEditor('ed-soal', 'Tulis teks soal di sini...', false);
 buatEditor('ed-pembahasan', 'Tulis pembahasan di sini...', false);
-if (window.NalarinGraph) window.NalarinGraph.initEditor($('ng-graph-editor'));
+if (window.NalarineGraph) window.NalarineGraph.initEditor($('ng-graph-editor'));
 ['A', 'B', 'C', 'D', 'E'].forEach((h, k) => buatEditor('ed-opsi' + k, `Tulis pilihan ${h} (teks atau gambar)...`, true));
 // ---------- Beranda: hitung mundur, ringkasan, dan topik yang perlu diperkuat ----------
 var JADWAL_UTBK_BAWAAN=[{tahun:2026,mulai:'2026-04-21',selesai:'2026-04-30',status:'resmi'},{tahun:2027,mulai:'2027-04-21',selesai:'2027-04-30',status:'perkiraan'}];
@@ -5055,13 +5055,13 @@ segarkanSoalBawaan();
   var root=document.documentElement;
   function lain(fn){Array.prototype.forEach.call(document.body.children,function(el){if(el!==w&&el.tagName!=='SCRIPT')fn(el)})}
   if(root.classList.contains('welcome-on')){lain(function(el){el.inert=true})}
-  function tutup(){try{localStorage.setItem('nalarin_welcome_seen','1')}catch(e){}root.classList.remove('welcome-on');lain(function(el){el.inert=false});window.scrollTo(0,0)}
+  function tutup(){try{localStorage.setItem('Nalarine_welcome_seen','1')}catch(e){}root.classList.remove('welcome-on');lain(function(el){el.inert=false});window.scrollTo(0,0)}
   function keAkun(bukaEmail){
     tutup();renderProfil(!ProfilApp.ambil());tampil('profil');
     setTimeout(function(){var a=document.querySelector('#kartu-profil .akun-box');if(!a)return;var d=a.querySelector('.opsi-email');if(d&&bukaEmail)d.open=true;a.scrollIntoView({behavior:'smooth',block:'center'})},60);
   }
   // Dipanggil setelah keluar akun: kembali ke halaman Welcome
-  window.tampilWelcome=function(){try{localStorage.removeItem('nalarin_welcome_seen')}catch(e){}root.classList.add('welcome-on');lain(function(el){el.inert=true});w.scrollTop=0};
+  window.tampilWelcome=function(){try{localStorage.removeItem('Nalarine_welcome_seen')}catch(e){}root.classList.add('welcome-on');lain(function(el){el.inert=true});w.scrollTop=0};
   $('wl-mulai').addEventListener('click',function(){   tutup();   window.mulaiOnboardingPublik(); });
   $('wl-masuk').addEventListener('click',function(){try{sessionStorage.setItem('pytago_google_login_pending','1')}catch(e){}aksiAkun('google')});
   $('wl-lokal').addEventListener('click',function(){tutup();terapkanAksesTamu();tampil('setup')});
@@ -5166,7 +5166,7 @@ segarkanSoalBawaan();
     switch (tahap) {
       case 0: return { teks: bubble('Hai! Aku NARO. Sebelum mulai belajar, aku ingin mengenalmu lebih dulu. Yuk, kita berkenalan!', 'Siapa nama lengkapmu?'), tombol: 'Lanjut',
         form: teksIn('Nama lengkap', { wajib: true }, 'Masukkan nama lengkapmu', p.nama, 50, 'autocomplete="name" ') };
-      case 1: return { teks: bubble('Selanjutnya, kita buat identitas unik untukmu di Nalarin!'), tombol: 'Lanjut',
+      case 1: return { teks: bubble('Selanjutnya, kita buat identitas unik untukmu di Nalarine!'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Username', false, true)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: khabib_nurmagomedov29-0" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
       case 2: return { teks: bubble('Yuk, pilih foto profil yang paling menggambarkan dirimu!'), tombol: 'Lanjut', form: avatarHTML(p) };
       case 3: return { teks: bubble('Sekarang ceritakan sedikit tentang dirimu. Apa yang sedang kamu perjuangkan?'), tombol: 'Lanjut',
@@ -5193,7 +5193,7 @@ segarkanSoalBawaan();
         <div class="ob-f" id="ob-wadah-user" ${p.publik && !p.username ? '' : 'hidden'}><label for="ob-username2">Username untuk link publik</label><input class="ob-input" id="ob-username2" maxlength="20" autocapitalize="none" autocomplete="off" placeholder="huruf kecil, angka, atau _ (3-20 karakter)" value="${esc(p.username)}"></div>
         <label class="ob-switch"><input type="checkbox" id="ob-statistik" ${p.tampilkanStatistik ? 'checked' : ''}><span><b>Tampilkan statistik</b><small>Akurasi dan topik latihanmu ikut terlihat, hanya jika profil publik aktif.</small></span></label>
         <p class="ob-catatan">Kedua pengaturan ini bisa kamu ubah kapan saja di halaman Profil.</p>` };
-      default: return { teks: bubble('Yeay! Kita sudah kenalan!', 'Profilmu sudah siap. Sekarang saatnya mengasah kemampuan bernalar bersama Nalarin!'), form: '', tombol: 'Mulai Belajar', selesai: true };
+      default: return { teks: bubble('Yeay! Kita sudah kenalan!', 'Profilmu sudah siap. Sekarang saatnya mengasah kemampuan bernalar bersama Nalarine!'), form: '', tombol: 'Mulai Belajar', selesai: true };
     }
   }
 
@@ -5206,7 +5206,7 @@ segarkanSoalBawaan();
     const nomor = Math.min(tahapTampil + 1, jumlahPertanyaan);
     const label = akhir ? 'Selesai' : `Pertanyaan ${nomor} dari ${jumlahPertanyaan}`;
     OB.innerHTML = `<div class="ob-wrap">
-      <header class="ob-atas"><span class="ob-logo">nalarin</span><span class="ob-langkah">${label}</span></header>
+      <header class="ob-atas"><span class="ob-logo">Nalarine</span><span class="ob-langkah">${label}</span></header>
       <div class="ob-bar" role="progressbar" aria-label="Progres onboarding" aria-valuemin="0" aria-valuemax="${jumlahPertanyaan}" aria-valuenow="${akhir ? jumlahPertanyaan : nomor}"><i style="width:${akhir ? 100 : Math.round((nomor / jumlahPertanyaan) * 100)}%"></i></div>
       <main class="ob-panggung"><div class="ob-slide${mundur ? ' mundur' : ''}" data-tahap="${tahap}">
         <div class="ob-naro"><div class="ob-spr"><div class="ob-gerak g-${L.gerak}${L.flip ? ' flip' : ''}" data-pose="${L.n}">${gambar(L.n, L.flip)}${aksenSvg(L.aksen)}</div></div></div>
