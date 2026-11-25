@@ -2,21 +2,23 @@
 // TAKSONOMI dipindahkan ke skrip sebelum skrip utama (dipakai saat inisialisasi)
 (function(){
   var mt={s:'PK',q:'',f:'semua',st:'',sel:null,buka:{},sheet:false},idx={},cache={},base=null,lastHasil=[];
+  function taksonomiMapel(k){return TAKSONOMI[k]||TAKSONOMI[k==='PK'?'Pengetahuan Kuantitatif':k==='PM'?'Penalaran Matematika':k];}
+  function kodeMapel(k){return k==='Pengetahuan Kuantitatif'?'PK':k==='Penalaran Matematika'?'PM':k;}
   var REL={inti:'Inti',pendukung:'Pendukung',pengayaan:'Pengayaan'};
   var STATUS={belum:'Belum Dipelajari',sedang:'Berkembang',perlu:'Perlu Penguatan',dikuasai:'Dikuasai',kosong:'Belum Ada Soal'};
   // Aturan status (berdasarkan riwayat pengerjaan nyata)
   var MIN_PERLU=3,AKU_PERLU=50,MIN_KUASAI=5,AKU_KUASAI=80,MIN_UNIK=3;
   Object.keys(TAKSONOMI).forEach(function(k){
-    idx['s:'+k]={type:'subtes',id:'s:'+k,nama:TAKSONOMI[k].nama,s:k,legacy:[]};
+    var kode=kodeMapel(k);idx['s:'+kode]={type:'subtes',id:'s:'+kode,nama:TAKSONOMI[k].nama,s:kode,legacy:[]};
     TAKSONOMI[k].rumpun.forEach(function(r){
       var lr=r.umum.slice(),semuaSub=[];
       r.topik.forEach(function(t){
         var ids=t.sub.map(function(sb){return sb.id});
-        t.sub.forEach(function(sb){semuaSub.push(sb.id);idx[sb.id]={type:'sub',id:sb.id,nama:sb.nama,s:k,r:r,t:t,legacy:t.legacy,rel:t.rel}});
-        idx[t.id]={type:'topik',id:t.id,nama:t.nama,s:k,r:r,t:t,legacy:t.legacy,rel:t.rel,subIds:ids};
+        t.sub.forEach(function(sb){semuaSub.push(sb.id);idx[sb.id]={type:'sub',id:sb.id,nama:sb.nama,s:kode,r:r,t:t,legacy:t.legacy,rel:t.rel}});
+        idx[t.id]={type:'topik',id:t.id,nama:t.nama,s:kode,r:r,t:t,legacy:t.legacy,rel:t.rel,subIds:ids};
         lr=lr.concat(t.legacy)});
-      idx[r.id+'.umum']={type:'umum',id:r.id+'.umum',nama:'Belum diklasifikasikan ke topik',s:k,r:r,legacy:r.umum};
-      idx[r.id]={type:'rumpun',id:r.id,nama:r.nama,s:k,r:r,legacy:lr,subIds:semuaSub}})});
+      idx[r.id+'.umum']={type:'umum',id:r.id+'.umum',nama:'Belum diklasifikasikan ke topik',s:kode,r:r,legacy:r.umum};
+      idx[r.id]={type:'rumpun',id:r.id,nama:r.nama,s:kode,r:r,legacy:lr,subIds:semuaSub}})});
   function semuaSoal(){return Array.from(new Set(SOAL.concat(BankSoal.ambil())))}
   function cocokSub(x,id){return x.subtopikId===id||(x.subtopikIds||[]).indexOf(id)>-1}
   function anggota(n,x){
@@ -49,7 +51,7 @@
   function subDari(n){var o=[];
     if(n.type==='topik')n.t.sub.forEach(function(sb){o.push(idx[sb.id])});
     else if(n.type==='rumpun')topikTampak(n.r).forEach(function(t){t.sub.forEach(function(sb){o.push(idx[sb.id])})});
-    else if(n.type==='subtes')TAKSONOMI[n.s].rumpun.forEach(function(r){topikTampak(r).forEach(function(t){t.sub.forEach(function(sb){o.push(idx[sb.id])})})});
+    else if(n.type==='subtes')taksonomiMapel(n.s).rumpun.forEach(function(r){topikTampak(r).forEach(function(t){t.sub.forEach(function(sb){o.push(idx[sb.id])})})});
     return o}
   function filterAktif(){return mt.f!=='semua'||!!mt.st}
   function lolos(n){var u=ukur(n);return (mt.f==='semua'||u.soal>0)&&(!mt.st||mt.st===u.status)}
@@ -77,7 +79,7 @@
           t.sub.forEach(function(sb){tambah(idx[sb.id],sn+' › '+r.nama+' › '+t.nama,t.desk,'sub')})})})});
     out.sort(function(a,b){return a.skor-b.skor||a.n.nama.localeCompare(b.n.nama)});
     return {terms:terms,hasil:out}}
-  function renderNav(){var el=$('mt-nav'),q=mt.q.trim(),T=TAKSONOMI[mt.s];
+  function renderNav(){var el=$('mt-nav'),q=mt.q.trim(),T=taksonomiMapel(mt.s);
     if(q){var c=cari(q),sh=c.hasil.slice(0,40);lastHasil=sh;
       el.innerHTML=sh.length?'<div class="mt-info-cari">'+c.hasil.length+' hasil'+(c.hasil.length>sh.length?' (menampilkan '+sh.length+' teratas)':'')+'. Tekan Enter untuk membuka yang pertama.</div>'+sh.map(function(x){var u=ukur(x.n);
         return '<button type="button" class="mt-hasil" data-pilih="'+x.n.id+'">'+titik(u)+'<span><b>'+sorot(x.n.nama,c.terms)+'</b><small>'+esc(x.path)+' · '+hitungTeks(u)+'</small></span><span class="mt-tipe">'+({rumpun:'Rumpun',topik:'Topik',sub:'Subtopik'}[x.tipe])+'</span></button>'}).join(''):'<p class="muted mt-kosong">Tidak ada materi yang cocok dengan &ldquo;'+esc(q)+'&rdquo;.</p>';return}
@@ -100,7 +102,7 @@
   function crumbHTML(n){var a=rantai(n);
     return a.map(function(x,i){return i===a.length-1?'<span aria-current="page">'+esc(x.nama)+'</span>':'<button type="button" data-pilih="'+x.id+'">'+esc(x.nama)+'</button>'}).join('<span aria-hidden="true">›</span>')}
   function deskripsi(n){
-    if(n.type==='subtes'){var rr=TAKSONOMI[n.s].rumpun.map(function(r){return topikTampak(r).length}).filter(Boolean).length;return 'Ringkasan seluruh materi '+n.nama+': '+rr+' rumpun, '+subDari(n).length+' subtopik.'}
+    if(n.type==='subtes'){var rr=taksonomiMapel(n.s).rumpun.map(function(r){return topikTampak(r).length}).filter(Boolean).length;return 'Ringkasan seluruh materi '+n.nama+': '+rr+' rumpun, '+subDari(n).length+' subtopik.'}
     if(n.type==='rumpun'){var tp=topikTampak(n.r).map(function(t){return t.nama});return tp.length?'Mencakup '+tp.length+' topik: '+tp.slice(0,4).join(', ')+(tp.length>4?' dan '+(tp.length-4)+' lainnya':'')+'.':'Belum ada topik yang tampil di rumpun ini.'}
     if(n.type==='topik')return n.t.desk;
     if(n.type==='sub')return 'Subtopik dari topik “'+n.t.nama+'”. '+n.t.desk;
@@ -112,7 +114,7 @@
     return '<div class="mt-bagian">Status '+tot+' subtopik</div><div class="mt-dist" role="img" aria-label="Distribusi status subtopik">'+['dikuasai','sedang','perlu','belum'].map(function(k){return c[k]?'<i class="st-'+k+'" style="width:'+(c[k]/tot*100)+'%"></i>':''}).join('')+'</div>'
       +'<div class="mt-legenda">'+['dikuasai','sedang','perlu','belum','kosong'].filter(function(k){return c[k]}).map(function(k){return '<span><span class="mt-dot st-'+k+'"></span>'+STATUS[k]+' '+c[k]+'</span>'}).join('')+'</div>'}
   function anakDari(n){
-    if(n.type==='subtes')return TAKSONOMI[n.s].rumpun.filter(function(r){return topikTampak(r).length||ukur(idx[r.id]).soal}).map(function(r){return idx[r.id]});
+    if(n.type==='subtes')return taksonomiMapel(n.s).rumpun.filter(function(r){return topikTampak(r).length||ukur(idx[r.id]).soal}).map(function(r){return idx[r.id]});
     if(n.type==='rumpun'){var k=topikTampak(n.r).map(function(t){return idx[t.id]});var um=idx[n.r.id+'.umum'];if(n.r.umum.length&&ukur(um).soal>0)k.push(um);return k}
     if(n.type==='topik')return n.t.sub.map(function(sb){return idx[sb.id]});
     return []}
@@ -165,7 +167,7 @@
     lukisStat(idx[mt.sel]||idx['s:'+mt.s])});
   var _rs=null;window.addEventListener('resize',function(){clearTimeout(_rs);_rs=setTimeout(function(){if(!$('materi').hidden)lukisStat(idx[mt.sel]||idx['s:'+mt.s])},150)});
   function renderDetail(){var el=$('mt-detail'),n=idx[mt.sel]||idx['s:'+mt.s],u=ukur(n);
-    var nsub=(n.type==='subtes'||n.type==='rumpun'||n.type==='topik')?subDari(n).length:null,ntop=n.type==='rumpun'?topikTampak(n.r).length:n.type==='subtes'?TAKSONOMI[n.s].rumpun.reduce(function(a,r){return a+topikTampak(r).length},0):null;
+    var nsub=(n.type==='subtes'||n.type==='rumpun'||n.type==='topik')?subDari(n).length:null,ntop=n.type==='rumpun'?topikTampak(n.r).length:n.type==='subtes'?taksonomiMapel(n.s).rumpun.reduce(function(a,r){return a+topikTampak(r).length},0):null;
     var h='<button type="button" class="mt-balik" id="mt-balik">&lsaquo; Kembali ke daftar materi</button><div class="card"><div class="mt-crumb">'+crumbHTML(n)+'</div>'
       +'<h3 class="mt-judul">'+esc(n.nama)+(n.rel?'<span class="mt-rel">'+REL[n.rel]+'</span>':'')+'<span class="mt-badge st-'+u.status+'">'+STATUS[u.status]+'</span></h3>'
       +'<p class="mt-desk">'+esc(deskripsi(n))+'</p>'
