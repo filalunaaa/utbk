@@ -2416,7 +2416,7 @@ function renderStatistik() {
     ? Object.entries(obj).map(([n, x]) => baris2(lab(n), x)).join('')
     : '<p class="muted">Belum ada data. Kerjakan soal dulu ya.</p>';
   // Topik yang sudah dikerjakan bisa dibuka untuk melihat riwayat dan pembahasannya
-  batasRiwayat = {}; batasSesi = BATAS_SESI; batasJebakan = BATAS_JEBAKAN;
+  batasRiwayat = {}; batasSesi = BATAS_SESI;
   migrasiSesiLama();
   // Susun topik di bawah mata pelajarannya (topik ikut mapel yang paling banyak memuatnya di bank soal)
   const pivotMapel = () => {
