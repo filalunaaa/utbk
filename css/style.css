@@ -1946,3 +1946,5 @@ body.mode-tamu .bottomnav{display:none!important}
 
 /* Latar ilustrasi matematika hanya untuk tema terang. */
 :root[data-theme="dark"] body{background-image:url("../assets/nalarin-math-bg-dark.webp");background-position:0 0;background-size:480px 320px;background-repeat:repeat;background-attachment:fixed}
+/* Tipografi global Pytago: samakan font pada seluruh elemen, termasuk kontrol form dan konten soal. */
+body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important}
