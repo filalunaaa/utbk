@@ -2310,7 +2310,7 @@ function renderDetailSesi() {
       <h3 style="margin-top:0">Perubahan statistik</h3>
       <p class="muted" style="margin:0">${a.d === null ? 'Ini sesi pertama, belum ada pembanding.' : `Akurasi ${deltaHTML(a.d)} poin dibanding sesi sebelumnya.`}</p>
       ${perubahan}
-    </div>
+    </div>`;
   rumus($('riwayat-detail'));
 }
 
