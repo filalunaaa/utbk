@@ -1917,7 +1917,7 @@ body.mode-tamu .bottomnav{display:none!important}
 .ikon-judul-koleksi{width:22px;height:22px;display:inline-block;vertical-align:-3px;margin-right:5px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* Samakan ukuran judul Koleksi Soal dengan heading halaman lain */
-#koleksi .sec-head h1{font-size:1.25rem;margin:0}
+#koleksi .sec-head h1{font-size:1.5rem;margin:0}
 
 /* Konsistensi ukuran judul halaman utama */
-#statistik h2,#materi .mt-head h2{font-size:1.25rem}
+#statistik h2,#materi .mt-head h2{font-size:1.5rem}
