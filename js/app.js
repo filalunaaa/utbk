@@ -3973,19 +3973,6 @@ $('btn-riwayat-sesi').addEventListener('click', () => {
   if (k) k.open = true;
   if (el) el.scrollIntoView({ block: 'start' });
 });
-let konfirmReset = null;
-$('btn-reset').addEventListener('click', () => {
-  const b = $('btn-reset');
-  if (konfirmReset) {
-    clearTimeout(konfirmReset); konfirmReset = null;
-    b.textContent = 'Reset statistik';
-    Penyimpanan.reset(); PilihanStat.reset(); Riwayat.reset(); RiwayatSesi.reset(); renderStatistik();
-    return;
-  }
-  b.textContent = 'Yakin? Klik lagi untuk menghapus';
-  konfirmReset = setTimeout(() => { konfirmReset = null; b.textContent = 'Reset statistik'; }, 4000);
-});
-
 // Bank soal
 $('btn-simpan-soal').addEventListener('click', simpanSoal);
 // ---------- Pratinjau soal buatan sendiri (tampilan seperti saat latihan) ----------
