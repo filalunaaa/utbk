@@ -2292,6 +2292,7 @@ function renderDetailSesi() {
         ${aksiSoalReviewHTML(s, sumberSoalObjek(s), i + 1)}
       </div></details>`;
   }).join('');
+  const daftarSoalHorizontal = `<div class="sx-list-horizontal">${kartuSoal || '<p class="muted">Tidak ada soal di kategori ini.</p>'}</div>`;
   const lagi = tampilDaftar.length > rdState.batas
     ? `<div class="aksi-kecil"><button class="btn btn-secondary btn-kecil" data-rd="lagi">Tampilkan lebih banyak (${tampilDaftar.length - rdState.batas} lagi)</button></div>` : '';
   const dur = !rdState.m && e.mode === 'tryout' && e.d ? ' &middot; ' + format(e.d) : '';
@@ -2301,15 +2302,15 @@ function renderDetailSesi() {
         <div><span class="sx-mode">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span><h2>${tglPenuh}</h2><p class="muted" style="margin:2px 0 0">${st.n} soal${dur}</p></div></div>
       <div class="sx-tags" style="margin-top:12px">${rdState.m ? `<span class="sx-tag">${esc(namaMapel(rdState.m))}</span>` : tagMapel(a, 6)}</div>
       <div class="sx-lgd"><span><i class="benar"></i><b>${angkaSkor(st.b)}</b> poin</span><span><i class="salah"></i><b>${st.s}</b> salah</span>${st.k ? `<span><i class="kosong"></i><b>${st.k}</b> kosong</span>` : ''}</div>
-      <p class="gm-judul" style="margin-top:14px">Peta soal (ketuk nomor untuk melompat)</p><div class="gm-petak">${petak}</div>
+      <p class="gm-judul" style="margin-top:14px">Peta soal (geser ke samping atau ketuk nomor)</p><div class="gm-petak">${petak}</div>
     </div>
-    <div class="card">
+    <div class="pilihan" style="margin-bottom:12px">${chips}</div>
+    ${daftarSoalHorizontal}${lagi}
+    <div class="card" style="margin-top:20px">
       <h3 style="margin-top:0">Perubahan statistik</h3>
       <p class="muted" style="margin:0">${a.d === null ? 'Ini sesi pertama, belum ada pembanding.' : `Akurasi ${deltaHTML(a.d)} poin dibanding sesi sebelumnya.`}</p>
       ${perubahan}
     </div>
-    <div class="pilihan" style="margin-bottom:12px">${chips}</div>
-    ${kartuSoal || '<p class="muted">Tidak ada soal di kategori ini.</p>'}${lagi}`;
   rumus($('riwayat-detail'));
 }
 
