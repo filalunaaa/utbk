@@ -1134,6 +1134,8 @@ async function mulaiTryoutPaket(id, nama, durasi) {
       jawab: soal.map(() => null),
       kunci: soal.map(() => false),
       sisa: menit * 60,
+      sisaAwal: menit * 60,
+      durasiMaks: menit * 60,
       paketTryoutId: id,
       paketTryoutNama: nama
     };
@@ -2203,9 +2205,10 @@ function selesai() {
   sesi.aktif = false;
   hapusSesiAktif();
   const { mode, soal, jawab, kunci } = sesi;
-  const durasi = Math.min(Math.round((Date.now() - sesi.mulai) / 1000), soal.length * DETIK_PER_SOAL);
+  const paketTryoutPreview = !!sesi.paketTryoutId;
+  const durasi = Math.min(Math.round((Date.now() - sesi.mulai) / 1000), paketTryoutPreview ? Number(sesi.durasiMaks) || sesi.sisaAwal || soal.length * DETIK_PER_SOAL : soal.length * DETIK_PER_SOAL);
   if (mode === 'latihan') jawab.forEach((j, k) => { if (!kunci[k]) jawab[k] = null; });
-  if (mode === 'tryout') soal.forEach((s, k) => {
+  if (mode === 'tryout' && !paketTryoutPreview) soal.forEach((s, k) => {
     const skor = skorJawaban(s, jawab[k]);
     Penyimpanan.catat(s, skor);
     Riwayat.catat(s, jawab[k], skor);
@@ -2213,7 +2216,7 @@ function selesai() {
   });
   const poin = soal.reduce((total, s, k) => total + skorJawaban(s, jawab[k]), 0);
   const benar = soal.filter((s, k) => jawabBenar(s, jawab[k])).length;
-  catatSesi(mode, soal, jawab, durasi, poin);
+  if (!paketTryoutPreview) catatSesi(mode, soal, jawab, durasi, poin);
   $('skor').textContent = `${angkaSkor(poin)} / ${soal.length}`;
   $('persen').textContent = `Nilai ${Math.round((poin / soal.length) * 100)}%`;
   $('waktu').textContent = mode === 'tryout' ? `Waktu pengerjaan: ${format(durasi)}` : '';
