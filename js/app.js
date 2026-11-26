@@ -1437,13 +1437,30 @@ function renderKoleksiSoal(){
  rumus(el);
 }
 $('isi-koleksi-soal').addEventListener('change',e=>{const f=e.target.closest('[data-koleksi-filter]');if(f){FILTER_KOLEKSI[f.dataset.koleksiFilter]=f.value;if(f.dataset.koleksiFilter==='mapel'){FILTER_KOLEKSI.topik='';FILTER_KOLEKSI.subtopik='';}if(f.dataset.koleksiFilter==='topik')FILTER_KOLEKSI.subtopik='';renderKoleksiSoal();return;}const b=e.target.closest('[data-koleksi-status]');if(!b)return;const d=KoleksiSoal.ambil(),x=d.find(v=>String(v.id)===b.dataset.koleksiStatus);if(x){x.status=b.value;KoleksiSoal.simpan(d);renderKoleksiSoal();}});
-$('isi-koleksi-soal').addEventListener('click',e=>{if(e.target.closest('[data-koleksi-filter-reset]')){FILTER_KOLEKSI.mapel='';FILTER_KOLEKSI.topik='';FILTER_KOLEKSI.subtopik='';renderKoleksiSoal();return;}const b=e.target.closest('[data-koleksi-hapus]');if(!b)return;
-                                                   const yakin = confirm('Yakin nih mau hapus koleksi soal nya?');if(!yakin)return;
-                                                   KoleksiSoal.simpan(
-                                                     KoleksiSoal.ambil().filter(x=>String(x.id)!==b.dataset.koleksiHapus)
-                                                     );
-                                                  renderKoleksiSoal():
-                                                   tampilkanToast('Soal dihapus dari koleksi.');
+$('isi-koleksi-soal').addEventListener('click', e => {
+  if (e.target.closest('[data-koleksi-filter-reset]')) {
+    FILTER_KOLEKSI.mapel = '';
+    FILTER_KOLEKSI.topik = '';
+    FILTER_KOLEKSI.subtopik = '';
+    renderKoleksiSoal();
+    return;
+  }
+
+  const b = e.target.closest('[data-koleksi-hapus]');
+  if (!b) return;
+
+  const yakin = confirm('Yakin nih mau hapus koleksi soal nya?');
+  if (!yakin) return;
+
+  KoleksiSoal.simpan(
+    KoleksiSoal.ambil().filter(
+      x => String(x.id) !== b.dataset.koleksiHapus
+    )
+  );
+
+  renderKoleksiSoal();
+  tampilkanToast('Soal dihapus dari koleksi.');
+});
                                                    
 function renderSoal() {
   const { soal, jawab, kunci, i, mode } = sesi;
