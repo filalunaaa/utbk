@@ -5436,7 +5436,7 @@ segarkanSoalBawaan();
       case 0: return { teks: bubble('Hai! Aku NARO. Sebelum mulai belajar, aku ingin mengenalmu lebih dulu. Yuk, kita berkenalan!', 'Siapa nama lengkapmu?'), tombol: 'Lanjut',
         form: teksIn('Nama lengkap', { wajib: true }, 'Masukkan nama lengkapmu', p.nama, 50, 'autocomplete="name" ') };
       case 1: return { teks: bubble('Selanjutnya, kita buat identitas unik untukmu di Nalarine!'), tombol: 'Lanjut',
-        form: `<div class="ob-f">${lab('ob-in', 'Username', false, true)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: khabib_nurmagomedov29-0" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
+        form: `<div class="ob-f">${lab('ob-in', 'Username', false, true)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: khabib_nurmagomedov" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
       case 2: return { teks: bubble('Yuk, pilih foto profil yang paling menggambarkan dirimu!'), tombol: 'Lanjut', form: avatarHTML(p) };
       case 3: return { teks: bubble('Sekarang ceritakan sedikit tentang dirimu. Apa yang sedang kamu perjuangkan?'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Deskripsi singkat', false, true)}<textarea class="ob-input" id="ob-in" maxlength="300" rows="4" placeholder="Contoh: Sedang mempersiapkan UTBK 2027 dengan fokus pada PKPM.">${esc(p.deskripsi)}</textarea><span class="ob-hit" id="ob-hit">${(p.deskripsi || '').length}/300</span></div>` };
