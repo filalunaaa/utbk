@@ -2067,3 +2067,16 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
   .tryout-intro-mark{flex-basis:44px;width:44px;height:44px;border-radius:12px}
   .tryout-intro-mark svg{width:24px;height:24px}
 }
+
+/* Tryout ditempatkan di dalam halaman Latihan khusus layar non-desktop */
+.mobile-tryout-entry{display:none}
+@media(max-width:899px){
+  .mobile-tryout-entry{display:flex;align-items:center;gap:12px;margin:0 0 18px;padding:13px 15px;border:1px solid var(--border);border-radius:14px;background:var(--card);color:var(--text);text-decoration:none;box-shadow:var(--shadow)}
+  .mobile-tryout-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:11px;background:var(--primary-soft);color:var(--primary)}
+  .mobile-tryout-icon svg,.mobile-tryout-arrow{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .mobile-tryout-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+  .mobile-tryout-copy strong{font-size:.95rem;font-weight:750}
+  .mobile-tryout-copy small{font-size:.78rem;color:var(--muted);line-height:1.35}
+  .mobile-tryout-arrow{flex:0 0 18px;width:18px;height:18px;color:var(--muted)}
+  .mobile-tryout-entry:active{border-color:var(--primary);background:var(--primary-soft)}
+}
