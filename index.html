@@ -210,11 +210,8 @@ window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath:
       <div class="tryout-intro-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></div>
       <div class="tryout-intro-copy"><span class="tryout-eyebrow">SIMULASI UJIAN</span><h3>Persiapkan dirimu menghadapi ujian.</h3><p class="muted">Tryout akan menggunakan paket soal yang telah disusun dengan komposisi dan ketentuan pengerjaan tersendiri. Hasilnya akan membantu kamu mengevaluasi kesiapan belajar.</p></div>
     </div>
-    <div class="card tryout-empty" role="status">
-      <div class="tryout-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></div>
-      <h3>Paket tryout belum tersedia</h3>
-      <p class="muted">Daftar paket akan muncul di halaman ini setelah disiapkan.</p>
-      <button type="button" class="btn btn-secondary btn-kecil" id="btn-kembali-tryout">Kembali ke Latihan</button>
+    <div id="daftar-paket-tryout" class="tryout-daftar" aria-live="polite">
+      <div class="card tryout-empty"><span class="muted">Paket tryout akan dimuat di sini.</span></div>
     </div>
   </section>
 
