@@ -633,6 +633,8 @@ async function rest(path, opts = {}) {
   const headers = { apikey: SB_KEY, 'Content-Type': 'application/json' };
   if (token) headers.Authorization = 'Bearer ' + token;
   if (opts.prefer) headers.Prefer = opts.prefer;
+  if (opts.range) headers.Range = opts.range;
+  if (opts.rangeUnit) headers['Range-Unit'] = opts.rangeUnit;
   const r = await fetch(SB_URL + '/rest/v1/' + path, {
     method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined
   });
@@ -644,6 +646,15 @@ async function rest(path, opts = {}) {
   }
   return t ? JSON.parse(t) : null;
 }
+async function restSemua(path, ukuran = 1000) {
+  const hasil = [];
+  for (let mulai = 0; ; mulai += ukuran) {
+    const halaman = await rest(path, { range: `${mulai}-${mulai + ukuran - 1}`, rangeUnit: 'items' });
+    if (Array.isArray(halaman)) hasil.push(...halaman);
+    if (!Array.isArray(halaman) || halaman.length < ukuran) break;
+  }
+  return hasil;
+}
 // Ambil profil dari akun dan simpan di perangkat ini. Mengembalikan false kalau belum ada di akun.
 async function pullProfil() {
   const uid = AkunApp.sesi().user_id;
@@ -652,7 +663,8 @@ async function pullProfil() {
   const r = rows[0];
   ProfilApp.simpan({
     nama: r.nama || '', tanggalLahir: r.tanggal_lahir || '', statusPendidikan: r.status_pendidikan || '',
-    sekolah: r.sekolah || '', jurusan: r.jurusan || '', target: r.target || '', kota: r.kota || '',
+    sekolah: r.sekolah || '', jurusan: r.jurusan || '', perguruanTinggiNpsn: r.perguruan_tinggi_npsn || '',
+    programStudiId: r.program_studi_id == null ? '' : String(r.program_studi_id), target: r.target || '', kota: r.kota || '',
     tanggalUjian: r.tanggal_ujian || '', username: r.username || '', deskripsi: r.deskripsi || '',
     publik: !!r.publik, tampilkanStatistik: !!r.tampilkan_statistik
   });
@@ -670,7 +682,10 @@ async function pushProfil() {
     body: {
       id: s.user_id, username: p.username || null, nama: p.nama,
       tanggal_lahir: p.tanggalLahir || null, status_pendidikan: p.statusPendidikan || null,
-      sekolah: p.sekolah || null, jurusan: p.jurusan || null, target: p.target || null,
+      sekolah: p.sekolah || null, jurusan: p.jurusan || null,
+      perguruan_tinggi_npsn: p.perguruanTinggiNpsn || null,
+      program_studi_id: p.programStudiId ? Number(p.programStudiId) : null,
+      target: p.target || null,
       kota: p.kota || null, tanggal_ujian: p.tanggalUjian || null, deskripsi: p.deskripsi || null,
       publik: !!p.publik, tampilkan_statistik: !!p.tampilkanStatistik,
       ...(AVATAR_DI_AKUN ? { avatar: localStorage.getItem('utbk_avatar') } : {}),
@@ -4831,6 +4846,69 @@ $('kartu-profil').addEventListener('change', async (e) => {
     pesan.textContent = '';
   } catch (er) { pesan.textContent = er.message; }
 });
+let DATA_PERGURUAN_TINGGI = null;
+let DATA_PROGRAM_STUDI = new Map();
+let PETA_KAMPUS = new Map();
+let PETA_PRODI = new Map();
+function teksKampus(k) { return `${k.nama_pt} — ${k.provinsi_pt || 'Provinsi tidak diketahui'} [${k.npsn}]`; }
+function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang tidak diketahui'} [ID:${p.id}]`; }
+async function muatKampusProfil() {
+  if (DATA_PERGURUAN_TINGGI) return DATA_PERGURUAN_TINGGI;
+  DATA_PERGURUAN_TINGGI = await restSemua('perguruan_tinggi?select=npsn,nama_pt,provinsi_pt&order=nama_pt.asc');
+  PETA_KAMPUS = new Map(DATA_PERGURUAN_TINGGI.map((k) => [teksKampus(k), k]));
+  return DATA_PERGURUAN_TINGGI;
+}
+async function muatProdiProfil(npsn) {
+  if (DATA_PROGRAM_STUDI.has(npsn)) return DATA_PROGRAM_STUDI.get(npsn);
+  const data = await restSemua(`program_studi?select=id,npsn,nm_prodi,nm_jenj_didik&npsn=eq.${encodeURIComponent(npsn)}&order=nm_prodi.asc`);
+  DATA_PROGRAM_STUDI.set(npsn, data);
+  return data;
+}
+async function siapkanDropdownAkademik(p) {
+  const kampusInput = $('pf-kampus'), kampusList = $('pf-kampus-list');
+  if (!kampusInput || !kampusList || !$('pf-prodi') || !$('pf-prodi-list')) return;
+  kampusInput.disabled = true; kampusInput.placeholder = 'Memuat daftar perguruan tinggi...';
+  try {
+    const kampus = await muatKampusProfil();
+    kampusList.innerHTML = kampus.map((k) => `<option value="${esc(teksKampus(k))}"></option>`).join('');
+    kampusInput.disabled = false; kampusInput.placeholder = 'Ketik nama kampus atau provinsi...';
+    if (p && p.perguruanTinggiNpsn) {
+      const k = kampus.find((x) => x.npsn === p.perguruanTinggiNpsn);
+      if (k) { kampusInput.value = teksKampus(k); $('pf-kampus-npsn').value = k.npsn; await isiPilihanProdi(k.npsn, p.programStudiId); }
+    }
+  } catch (e) {
+    kampusInput.disabled = false; kampusInput.placeholder = 'Daftar kampus gagal dimuat. Coba buka ulang profil.';
+    pesanProfil('Daftar perguruan tinggi belum bisa dimuat. Periksa koneksi lalu coba lagi.');
+    console.error('Gagal memuat perguruan tinggi:', e);
+  }
+}
+async function isiPilihanProdi(npsn, idTerpilih = '') {
+  const input = $('pf-prodi'), list = $('pf-prodi-list'), id = $('pf-prodi-id');
+  if (!input || !list || !id) return;
+  input.value = ''; id.value = ''; list.innerHTML = ''; input.disabled = true; input.placeholder = 'Memuat program studi...';
+  try {
+    const data = await muatProdiProfil(npsn);
+    PETA_PRODI = new Map(data.map((p) => [teksProdi(p), p]));
+    list.innerHTML = data.map((p) => `<option value="${esc(teksProdi(p))}"></option>`).join('');
+    input.disabled = false; input.placeholder = data.length ? 'Ketik nama program studi...' : 'Belum ada program studi untuk kampus ini';
+    if (idTerpilih) { const p = data.find((x) => String(x.id) === String(idTerpilih)); if (p) { input.value = teksProdi(p); id.value = String(p.id); } }
+  } catch (e) {
+    input.disabled = false; input.placeholder = 'Gagal memuat program studi. Coba pilih kampus lagi.';
+    pesanProfil('Program studi gagal dimuat. Silakan coba pilih kampus kembali.');
+    console.error('Gagal memuat program studi:', e);
+  }
+}
+$('kartu-profil').addEventListener('change', async (e) => {
+  if (e.target.id === 'pf-kampus') {
+    const kampus = PETA_KAMPUS.get(e.target.value.trim());
+    $('pf-kampus-npsn').value = kampus ? kampus.npsn : '';
+    $('pf-prodi').value = ''; $('pf-prodi-id').value = ''; $('pf-prodi-list').innerHTML = '';
+    $('pf-prodi').disabled = true; $('pf-prodi').placeholder = kampus ? 'Memuat program studi...' : 'Pilih kampus terlebih dahulu';
+    if (kampus) await isiPilihanProdi(kampus.npsn);
+  } else if (e.target.id === 'pf-prodi') {
+    const prodi = PETA_PRODI.get(e.target.value.trim()); $('pf-prodi-id').value = prodi ? String(prodi.id) : '';
+  }
+});
 function renderProfil(mengedit = false) {
   const p = ProfilApp.ambil();
   const sesi = AkunApp.sesi();
@@ -4872,8 +4950,10 @@ function renderProfil(mengedit = false) {
         </div></div>
       <div class="card"><p class="panel-judul">Informasi akademik</p>
         ${fld('Status pendidikan sekarang *', `<select class="input" id="pf-status">${opt(PROFIL_STATUS, 'statusPendidikan')}</select>`)}
-        ${fld('Sekolah / kampus', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
-        ${fld('Jurusan', `<select class="input" id="pf-jurusan">${opt(PROFIL_JURUSAN, 'jurusan')}</select>`)}
+        ${fld('Sekolah (SMA/SMK, jika ada)', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
+        ${fld('Jurusan sekolah (opsional)', `<select class="input" id="pf-jurusan">${opt(PROFIL_JURUSAN, 'jurusan')}</select>`)}
+        <div class="full"><p class="label">Perguruan tinggi (untuk mahasiswa)</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama kampus atau provinsi..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih kampus dari daftar agar program studi dapat difilter dengan benar.</p></div>
+        <div class="full"><p class="label">Program studi</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih kampus terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>
         ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="80" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}
       </div>
       <div class="card"><p class="panel-judul">Informasi pribadi dan privasi</p>
@@ -4892,6 +4972,7 @@ function renderProfil(mengedit = false) {
       <button class="btn btn-secondary" data-profil="kembali">Kembali</button>
     </div>
     <p class="pesan" id="pesan-profil"></p>`;
+  siapkanDropdownAkademik(p);
 }
 function pesanProfil(teks) {
   const p = $('pesan-profil');
@@ -4925,9 +5006,16 @@ async function simpanFormProfil() {
       return pesanProfil('Tidak bisa mengecek username. Coba lagi sebentar.');
     }
   }
+  const kampusNpsn = $('pf-kampus-npsn').value, kampusTeks = $('pf-kampus').value.trim();
+  const prodiId = $('pf-prodi-id').value, prodiTeks = $('pf-prodi').value.trim();
+  if (kampusTeks && !kampusNpsn) return pesanProfil('Pilih perguruan tinggi dari daftar yang tersedia, bukan hanya mengetik namanya.');
+  if (prodiTeks && !prodiId) return pesanProfil('Pilih program studi dari daftar setelah menentukan perguruan tinggi.');
+  if (prodiId && !kampusNpsn) return pesanProfil('Pilih perguruan tinggi terlebih dahulu.');
   ProfilApp.simpan({
     nama, tanggalLahir: tgl, statusPendidikan: status,
-    sekolah: $('pf-sekolah').value.trim(), jurusan: $('pf-jurusan').value,
+    sekolah: kampusTeks ? kampusTeks.split(' — ')[0] : $('pf-sekolah').value.trim(),
+    jurusan: prodiTeks ? prodiTeks.split(' — ')[0] : $('pf-jurusan').value,
+    perguruanTinggiNpsn: kampusNpsn, programStudiId: prodiId,
     target: $('pf-target').value.trim(), kota: $('pf-kota').value.trim(),
     tanggalUjian: '', username,
     deskripsi: $('pf-deskripsi').value.trim(), publik,
