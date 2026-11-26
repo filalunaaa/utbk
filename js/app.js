@@ -1067,7 +1067,7 @@ function isiOpsi(html) {
 }
 function tampil(id) {
   terapkanAksesTamu();
-  if (!AkunApp.sesi() && !['setup', 'kuis', 'hasil', 'review'].includes(id)) id = 'setup';
+  if (!AkunApp.sesi() && !['setup', 'tryout', 'kuis', 'hasil', 'review'].includes(id)) id = 'setup';
   const aktif = ({
     materi: 'materi',
     statistik: 'statistik',
@@ -1077,6 +1077,7 @@ function tampil(id) {
     'laporan-admin': 'laporan-admin',
     pengaturan: 'pengaturan',
     setup: 'setup',
+    tryout: 'tryout',
     kuis: 'setup',
     hasil: 'setup',
     review: 'setup',
@@ -1364,7 +1365,7 @@ function ringkasSesi() {
   const lv = ({ semua: 'Semua tingkat', mudah: 'Mudah', sedang: 'Sedang', sulit: 'Sulit' })[nilai('level')] || 'Semua tingkat';
   const b = (a, v) => `<div class="ringkas-baris"><span>${a}</span><b>${v}</b></div>`;
   $('ringkas-sesi').innerHTML = b('Sumber', esc(teks('sumber'))) + b('Mata pelajaran', esc(teks('mapel'))) +
-    b('Mode', mode === 'tryout' ? `Try Out · ${waktu} dtk/soal` : 'Latihan') + b('Jumlah soal', n ? jml : 0) +
+    b('Mode', mode === 'tryout' ? `Ngebut · ${waktu} dtk/soal` : 'Santai') + b('Jumlah soal', n ? jml : 0) +
     b('Topik', ringkasTopik()) + b('Kesulitan', esc(lv)) +
     (mode === 'tryout' && n ? b('Estimasi durasi', `± ${Math.ceil((jml * waktu) / 60)} menit`) : '');
   sinkronFolderUI();
@@ -2081,7 +2082,7 @@ function hasilRinci(soal, jawab, poin, mode) {
   const p = Math.round((poin / n) * 100);
   const C = 2 * Math.PI * 52;
   $('hasil-ring').innerHTML = `<svg viewBox="0 0 128 128" aria-hidden="true"><circle class="dasar" cx="64" cy="64" r="52"/><circle class="isi ${p >= 75 ? 't' : p >= 50 ? 's' : 'r'}" cx="64" cy="64" r="52" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - p / 100)).toFixed(1)}"/></svg><b>${p}%</b>`;
-  $('hasil-ket').textContent = `${mode === 'tryout' ? 'Try Out' : 'Latihan'} · ${n} soal`;
+  $('hasil-ket').textContent = `${mode === 'tryout' ? 'Ngebut' : 'Santai'} · ${n} soal`;
   const w = (v) => `${(v / n) * 100}%`;
   const mp = {};
   soal.forEach((s, k) => { const m = s.mataPelajaran; mp[m] = mp[m] || { n: 0, b: 0 }; mp[m].n++; mp[m].b = tambahSkor(mp[m].b, skorJawaban(s, jawab[k])); });
@@ -2398,7 +2399,7 @@ function daftarSesiHTML() {
     return `${kepala}<button type="button" class="sx-kartu ${kelasSkor(st.p)}" data-sesi="${esc(e.id)}">
       ${ringSesi(st.p, 54)}
       <span class="sx-tengah">
-        <span class="sx-atas"><b>${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</b><span>${jamSesi(e.t)}</span></span>
+        <span class="sx-atas"><b>${e.mode === 'tryout' ? 'Ngebut' : 'Santai'}</b><span>${jamSesi(e.t)}</span></span>
         <span class="sx-meta">${st.n} soal &middot; ${angkaSkor(st.b)} poin${st.k ? ' &middot; ' + st.k + ' kosong' : ''}${dur}</span>
         <span class="sx-tags">${filterSesiMapel ? `<span class="sx-tag">${esc(namaMapel(filterSesiMapel))}</span>` : tagMapel(a, 2)}</span>
         <span class="sx-strip" aria-hidden="true">${strip}</span>
@@ -2479,7 +2480,7 @@ function renderDetailSesi() {
   $('rd-isi').innerHTML = `${kembali}
     <div class="card sx-hero ${kelasSkor(st.p)}" style="margin-top:12px">
       <div class="sx-hero-atas">${ringSesi(st.p, 84)}
-        <div><span class="sx-mode">${e.mode === 'tryout' ? 'Try Out' : 'Latihan'}</span><h2>${tglPenuh}</h2><p class="muted" style="margin:2px 0 0">${st.n} soal${dur}</p></div></div>
+        <div><span class="sx-mode">${e.mode === 'tryout' ? 'Ngebut' : 'Santai'}</span><h2>${tglPenuh}</h2><p class="muted" style="margin:2px 0 0">${st.n} soal${dur}</p></div></div>
       <div class="sx-tags" style="margin-top:12px">${rdState.m ? `<span class="sx-tag">${esc(namaMapel(rdState.m))}</span>` : tagMapel(a, 6)}</div>
       <div class="sx-lgd"><span><i class="benar"></i><b>${angkaSkor(st.b)}</b> poin</span><span><i class="salah"></i><b>${st.s}</b> salah</span>${st.k ? `<span><i class="kosong"></i><b>${st.k}</b> kosong</span>` : ''}</div>
       <div class="gm-petak">${petak}</div>
@@ -4101,7 +4102,7 @@ function renderUjianUI() {
   const { soal, jawab, kunci, i, mode } = sesi, n = soal.length;
   document.body.dataset.mode = mode;
   $('timer').classList.toggle('sembunyi', PengaturanApp.ambil().tampilTimer === false);
-  $('ex-mode').textContent = mode === 'tryout' ? 'TRY OUT' : 'LATIHAN';
+  $('ex-mode').textContent = mode === 'tryout' ? 'MODE NGEBUT' : 'MODE SANTAI';
   $('ex-prog').textContent = `SOAL ${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
   $('ex-pct').textContent = Math.round(((i + 1) / n) * 100) + '%';
   $('ex-pos').textContent = `${i + 1} / ${n}`;
@@ -4558,8 +4559,9 @@ $('gr-periode').addEventListener('click', (e) => { const b = e.target.closest('b
 $('gr-metrik').addEventListener('click', (e) => { const b = e.target.closest('button[data-m]'); if (!b) return; grafikState.m = b.dataset.m; document.querySelectorAll('#gr-metrik button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); gambarGrafik(); });
 $('mulai-belajar').addEventListener('click', (e) => {
   const b = e.target.closest('[data-qa]'); if (!b) return;
-  if (b.dataset.qa === 'bank') document.querySelector('.side-nav [data-hal="bank"]').click();
-  else mulaiMode(b.dataset.qa);
+  if (b.dataset.qa === 'bank') tampil('bank');
+  else if (b.dataset.qa === 'tryout') tampil('tryout');
+  else mulaiMode('latihan');
 });
 $('dash-avatar').addEventListener('click', () => { renderProfil(!ProfilApp.ambil()); tampil('profil'); });
 var _rsz = null;
@@ -5286,7 +5288,7 @@ function renderSalam() {
   $('side-nama').textContent = p ? p.nama : 'Profil';
   renderBeranda();
 }
-// Pilihan waktu per soal hanya relevan untuk mode Try Out
+// Batas waktu per soal hanya digunakan pada Mode Ngebut
 function syncBlokWaktu() {
   const blok = $('blok-waktu');
   if (blok) blok.hidden = nilai('mode') !== 'tryout';
