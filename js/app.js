@@ -4955,7 +4955,7 @@ function htmlBidangAkademik(p, status) {
   const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
   if (status === 'mahasiswa' || status === 'alumni') {
     return `
-      <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih perguruan tinggi dari daftar agar program studi dapat disesuaikan.</p></div>
+      <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"></div>
       <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>
       <div><p class="label">Angkatan</p><input class="input" type="number" id="pf-angkatan" min="1950" max="${new Date().getFullYear()}" inputmode="numeric" placeholder="Contoh: 2024" value="${v('angkatan')}"></div>`;
   }
