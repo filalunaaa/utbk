@@ -4563,6 +4563,7 @@ $('mulai-belajar').addEventListener('click', (e) => {
   else if (b.dataset.qa === 'tryout') tampil('tryout');
   else mulaiMode('latihan');
 });
+$('btn-kembali-tryout').addEventListener('click', () => tampil('setup'));
 $('dash-avatar').addEventListener('click', () => { renderProfil(!ProfilApp.ambil()); tampil('profil'); });
 var _rsz = null;
 window.addEventListener('resize', () => { clearTimeout(_rsz); _rsz = setTimeout(() => { if (!$('menu').hidden) gambarGrafik(); }, 150); });
