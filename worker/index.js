@@ -104,11 +104,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Social preview: the legacy .png asset contains JPEG bytes.
-    if (url.pathname === "/og-image.jpg") {
-      const assetUrl = new URL(request.url);
-      assetUrl.pathname = "/og-image.png";
-      const assetResponse = await env.ASSETS.fetch(new Request(assetUrl, request));
+    // Social preview: og-image.png is JPEG data, so serve it with the correct MIME type.
+    if (url.pathname === "/og-image.png") {
+      const assetResponse = await env.ASSETS.fetch(request);
       if (!assetResponse.ok) return assetResponse;
       const headers = new Headers(assetResponse.headers);
       headers.set("Content-Type", "image/jpeg");
