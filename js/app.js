@@ -4850,8 +4850,8 @@ let DATA_PERGURUAN_TINGGI = null;
 let DATA_PROGRAM_STUDI = new Map();
 let PETA_KAMPUS = new Map();
 let PETA_PRODI = new Map();
-function teksKampus(k) { return `${k.nama_pt} — ${k.provinsi_pt || 'Provinsi tidak diketahui'} [${k.npsn}]`; }
-function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang tidak diketahui'} [ID:${p.id}]`; }
+function teksKampus(k) { return k.nama_pt; }
+function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang tidak diketahui'}`; }
 async function muatKampusProfil() {
   if (DATA_PERGURUAN_TINGGI) return DATA_PERGURUAN_TINGGI;
   DATA_PERGURUAN_TINGGI = await restSemua('perguruan_tinggi?select=npsn,nama_pt,provinsi_pt&order=nama_pt.asc');
