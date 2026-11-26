@@ -104,6 +104,23 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // Social preview: the legacy .png asset contains JPEG bytes.
+    if (url.pathname === "/og-image.jpg") {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = "/og-image.png";
+      const assetResponse = await env.ASSETS.fetch(new Request(assetUrl, request));
+      if (!assetResponse.ok) return assetResponse;
+      const headers = new Headers(assetResponse.headers);
+      headers.set("Content-Type", "image/jpeg");
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Cache-Control", "public, max-age=86400, s-maxage=604800");
+      return new Response(assetResponse.body, {
+        status: assetResponse.status,
+        statusText: assetResponse.statusText,
+        headers
+      });
+    }
+
     if (url.pathname === "/api/berita") {
       if (request.method === "OPTIONS") {
         return new Response(null, { status: 204, headers: API_HEADERS });
