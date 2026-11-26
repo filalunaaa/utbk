@@ -2022,7 +2022,16 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.koleksi-hapus-icon:hover {
-  color:#fff;
-  background: #dc2626;
-  border-color: #dc2626;
+.koleksi-hapus-icon:hover,
+.koleksi-hapus-icon:focus-visible {
+  color: #dc2626 !important;
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  transform: none;
+}
+
+.koleksi-hapus-icon:hover svg,
+.koleksi-hapus-icon:focus-visible svg {
+  stroke: #dc2626 !important;
+  stroke-width: 2.8;
+}
