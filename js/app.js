@@ -5030,6 +5030,12 @@ async function isiPilihanProdi(npsn, idTerpilih = '') {
     console.error('Gagal memuat program studi:', e);
   }
 }
+$('kartu-profil').addEventListener('input', (e) => {
+  if (e.target.id !== 'pf-prodi') return;
+  const prodi = PETA_PRODI.get(e.target.value.trim());
+  const id = $('pf-prodi-id');
+  if (id) id.value = prodi ? String(prodi.id) : '';
+});
 $('kartu-profil').addEventListener('change', async (e) => {
   if (e.target.id === 'pf-status') {
     const status = e.target.value;
@@ -5159,7 +5165,8 @@ async function simpanFormProfil() {
     const kampusTeks = kampusEl.value.trim();
     const prodiTeks = prodiEl.value.trim();
     kampusNpsn = kampusIdEl.value;
-    prodiId = prodiIdEl.value;
+    const prodiTerpilih = PETA_PRODI.get(prodiTeks);
+    prodiId = prodiTerpilih ? String(prodiTerpilih.id) : prodiIdEl.value;
     if (!kampusTeks || !kampusNpsn) return pesanProfil('Pilih perguruan tinggi dari daftar yang tersedia.');
     if (!prodiTeks || !prodiId) return pesanProfil('Pilih program studi dari daftar sesuai perguruan tinggi.');
     sekolah = kampusTeks;
