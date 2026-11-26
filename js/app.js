@@ -1085,7 +1085,7 @@ async function renderDaftarTryout() {
         ? '<span class="tryout-status terbit">Tersedia</span>'
         : (ADMIN ? '<span class="tryout-status draft">Draft · hanya admin</span>' : '');
       const kategori = esc(({ PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' })[String(p.kategori || '').toUpperCase()] || String(p.kategori || 'Campuran'));
-      return `<article class="card tryout-paket">
+      return `<article class="card tryout-paket" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="button" tabindex="0" aria-label="Buka paket ${esc(p.nama || "Tryout")}">
         <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
         <h3>${esc(p.nama || 'Paket Tryout')}</h3>
         <p class="muted tryout-paket-deskripsi">${esc(p.deskripsi || 'Paket latihan simulasi ujian.')}</p>
@@ -1095,10 +1095,76 @@ async function renderDaftarTryout() {
         </div>
       </article>`;
     }).join('');
+    aktifkanInteraksiKartuTryout();
   } catch (e) {
     console.error('Gagal memuat paket tryout:', e);
     wadah.innerHTML = '<div class="card tryout-empty"><h3>Paket belum dapat dimuat</h3><p class="muted">Terjadi kendala saat mengambil daftar paket. Coba muat ulang halaman.</p></div>';
   }
+}
+
+async function mulaiTryoutPaket(id, nama, durasi) {
+  if (!AkunApp.sesi()) return alert('Silakan masuk terlebih dahulu untuk mengikuti Tryout.');
+  if (!ADMIN) return alert('Sesi Tryout untuk peserta belum diaktifkan. Saat ini paket Draft hanya dapat diuji oleh admin.');
+  const menit = Math.max(1, Number(durasi) || 20);
+  if (!confirm('Mulai "' + nama + '"?\\n\\nDurasi: ' + menit + ' menit.\\nSoal akan dibuka dalam mode simulasi admin.')) return;
+  try {
+    const rows = await rest('tryout_soal?select=id,nomor_soal,kategori,tipe_soal,data&paket_id=eq.' + encodeURIComponent(id) + '&order=nomor_soal.asc');
+    if (!Array.isArray(rows) || !rows.length) throw new Error('Soal dalam paket belum tersedia.');
+    const soal = rows.map((r) => ({
+      ...(r.data || {}),
+      id: String(r.id),
+      mataPelajaran: (r.data && r.data.mataPelajaran) || r.kategori || 'PK',
+      tipe: (r.data && r.data.tipe) || r.tipe_soal || 'pg',
+      sumber: 'tryout-paket'
+    }));
+    if (sesi && sesi.aktif) {
+      if (!confirm('Sesi sebelumnya masih aktif. Akhiri sesi tersebut dan mulai Tryout ini?')) return;
+      clearInterval(sesi.timer);
+      sesi.aktif = false;
+    }
+    sesi = {
+      mode: 'tryout',
+      soal,
+      sumberSoal: soal.map(() => 'personal'),
+      aktif: true,
+      i: 0,
+      mulai: Date.now(),
+      timer: null,
+      statAwal: JSON.parse(JSON.stringify(Penyimpanan.ambil())),
+      jawab: soal.map(() => null),
+      kunci: soal.map(() => false),
+      sisa: menit * 60,
+      paketTryoutId: id,
+      paketTryoutNama: nama
+    };
+    simpanSesiAktif();
+    $('timer').hidden = false;
+    jalankanTimerSesi();
+    tampil('kuis');
+    $('ex-detail').open = window.innerWidth >= 900;
+    renderSoal();
+  } catch (err) {
+    console.error('Gagal memulai paket Tryout:', err);
+    alert('Paket Tryout belum dapat dimulai: ' + (err.message || 'Terjadi kesalahan.'));
+  }
+}
+function aktifkanInteraksiKartuTryout() {
+  const wadah = $('daftar-paket-tryout');
+  if (!wadah || wadah.dataset.interaksiTryout === '1') return;
+  wadah.dataset.interaksiTryout = '1';
+  const buka = (target) => {
+    const kartu = target.closest('.tryout-paket[data-paket-id]');
+    if (!kartu) return;
+    mulaiTryoutPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout', kartu.dataset.paketDurasi);
+  };
+  wadah.addEventListener('click', (e) => buka(e.target));
+  wadah.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const kartu = e.target.closest('.tryout-paket[data-paket-id]');
+    if (!kartu) return;
+    e.preventDefault();
+    buka(kartu);
+  });
 }
 
 function tampil(id) {
