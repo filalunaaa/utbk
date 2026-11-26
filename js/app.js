@@ -5039,6 +5039,19 @@ $('kartu-profil').addEventListener('change', async (e) => {
     const prodi = PETA_PRODI.get(e.target.value.trim()); $('pf-prodi-id').value = prodi ? String(prodi.id) : '';
   }
 });
+function htmlBidangAkademik(p, status) {
+  const v = (k) => (p && p[k] ? esc(p[k]) : '');
+  const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
+  if (status === 'mahasiswa') {
+    return `
+      <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih perguruan tinggi dari daftar agar program studi dapat disesuaikan.</p></div>
+      <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>`;
+  }
+  return `
+    ${fld('Sekolah (SMA/SMK)', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
+    ${fld('Jurusan sekolah (opsional)', `<select class="input" id="pf-jurusan">${(PROFIL_JURUSAN || []).map(([val, lab]) => `<option value="${val}" ${p && p.jurusan === val ? 'selected' : ''}>${lab}</option>`).join('')}</select>`)}
+    ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="120" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}`;
+}
 function renderProfil(mengedit = false) {
   const p = ProfilApp.ambil();
   const sesi = AkunApp.sesi();
@@ -5069,19 +5082,6 @@ function renderProfil(mengedit = false) {
   const hariIni = new Date().toISOString().slice(0, 10);
   const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
   const opt = (daftar, kunci) => daftar.map(([val, lab]) => `<option value="${val}" ${p && p[kunci] === val ? 'selected' : ''}>${lab}</option>`).join('');
-function htmlBidangAkademik(p, status) {
-  const v = (k) => (p && p[k] ? esc(p[k]) : '');
-  const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
-  if (status === 'mahasiswa') {
-    return `
-      <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih perguruan tinggi dari daftar agar program studi dapat disesuaikan.</p></div>
-      <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>`;
-  }
-  return `
-    ${fld('Sekolah (SMA/SMK)', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
-    ${fld('Jurusan sekolah (opsional)', `<select class="input" id="pf-jurusan">${(PROFIL_JURUSAN || []).map(([val, lab]) => `<option value="${val}" ${p && p.jurusan === val ? 'selected' : ''}>${lab}</option>`).join('')}</select>`)}
-    ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="120" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}`;
-}
   kartu.innerHTML = `<h2 style="margin:0 0 4px">${p ? 'Ubah profil' : 'Buat profil'}</h2>
     <p class="muted" style="margin:0 0 16px">Tanda * wajib diisi.</p>
     <div class="profil-grid">
