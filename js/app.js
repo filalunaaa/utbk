@@ -4950,6 +4950,19 @@ $('kartu-profil').addEventListener('click', (e) => {
   else if (b.dataset.avGaleri) $('pf-foto').click();
   else simpanAvatar(null);
 });
+function htmlBidangAkademik(p, status) {
+  const v = (k) => (p && p[k] ? esc(p[k]) : '');
+  const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
+  if (status === 'mahasiswa') {
+    return `
+      <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih perguruan tinggi dari daftar agar program studi dapat disesuaikan.</p></div>
+      <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>`;
+  }
+  return `
+    ${fld('Sekolah (SMA/SMK)', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
+    ${fld('Jurusan sekolah (opsional)', `<select class="input" id="pf-jurusan">${(PROFIL_JURUSAN || []).map(([val, lab]) => `<option value="${val}" ${p && p.jurusan === val ? 'selected' : ''}>${lab}</option>`).join('')}</select>`)}
+    ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="120" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}`;
+}
 $('kartu-profil').addEventListener('change', async (e) => {
   if (e.target.id !== 'pf-foto') return;
   const f = e.target.files[0], pesan = $('pesan-avatar');
@@ -5039,19 +5052,6 @@ $('kartu-profil').addEventListener('change', async (e) => {
     const prodi = PETA_PRODI.get(e.target.value.trim()); $('pf-prodi-id').value = prodi ? String(prodi.id) : '';
   }
 });
-function htmlBidangAkademik(p, status) {
-  const v = (k) => (p && p[k] ? esc(p[k]) : '');
-  const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
-  if (status === 'mahasiswa') {
-    return `
-      <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih perguruan tinggi dari daftar agar program studi dapat disesuaikan.</p></div>
-      <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>`;
-  }
-  return `
-    ${fld('Sekolah (SMA/SMK)', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
-    ${fld('Jurusan sekolah (opsional)', `<select class="input" id="pf-jurusan">${(PROFIL_JURUSAN || []).map(([val, lab]) => `<option value="${val}" ${p && p.jurusan === val ? 'selected' : ''}>${lab}</option>`).join('')}</select>`)}
-    ${fld('Target PTN dan prodi (opsional)', `<input class="input" id="pf-target" maxlength="120" placeholder="contoh: UI, Kedokteran" value="${v('target')}">`)}`;
-}
 function renderProfil(mengedit = false) {
   const p = ProfilApp.ambil();
   const sesi = AkunApp.sesi();
@@ -5149,18 +5149,27 @@ async function simpanFormProfil() {
   }
   let sekolah = '', jurusan = '', kampusNpsn = '', prodiId = '', target = '';
   if (status === 'mahasiswa') {
-    const kampusTeks = $('pf-kampus').value.trim();
-    const prodiTeks = $('pf-prodi').value.trim();
-    kampusNpsn = $('pf-kampus-npsn').value;
-    prodiId = $('pf-prodi-id').value;
+    const kampusEl = $('pf-kampus'), prodiEl = $('pf-prodi');
+    const kampusIdEl = $('pf-kampus-npsn'), prodiIdEl = $('pf-prodi-id');
+    if (!kampusEl || !prodiEl || !kampusIdEl || !prodiIdEl) {
+      return pesanProfil('Formulir akademik belum siap. Ubah status pendidikan, lalu coba lagi.');
+    }
+    const kampusTeks = kampusEl.value.trim();
+    const prodiTeks = prodiEl.value.trim();
+    kampusNpsn = kampusIdEl.value;
+    prodiId = prodiIdEl.value;
     if (!kampusTeks || !kampusNpsn) return pesanProfil('Pilih perguruan tinggi dari daftar yang tersedia.');
     if (!prodiTeks || !prodiId) return pesanProfil('Pilih program studi dari daftar sesuai perguruan tinggi.');
     sekolah = kampusTeks;
     jurusan = prodiTeks.split(' — ')[0];
   } else {
-    sekolah = $('pf-sekolah').value.trim();
-    jurusan = $('pf-jurusan').value;
-    target = $('pf-target').value.trim();
+    const sekolahEl = $('pf-sekolah'), jurusanEl = $('pf-jurusan'), targetEl = $('pf-target');
+    if (!sekolahEl || !jurusanEl || !targetEl) {
+      return pesanProfil('Formulir akademik belum siap. Ubah status pendidikan, lalu coba lagi.');
+    }
+    sekolah = sekolahEl.value.trim();
+    jurusan = jurusanEl.value;
+    target = targetEl.value.trim();
   }
   ProfilApp.simpan({
     nama, tanggalLahir: tgl, statusPendidikan: status,
