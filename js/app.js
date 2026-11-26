@@ -4032,7 +4032,7 @@ $('btn-keluar-ujian').addEventListener('click', () => {
   if (!sesi || !sesi.aktif) return tampil('menu');
   if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri === false) return selesai();
   if (sesi.mode === 'tryout') konfirmUjian('Keluar dari Try Out?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri & lihat hasil', fn: selesai }, { label: 'Keluar tanpa menyimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
-  else konfirmUjian('Keluar dari latihan?', 'Soal yang sudah kamu jawab tetap tercatat di statistik. Soal yang belum dijawab tidak dihitung.', [{ label: 'Lanjut latihan', kelas: 'btn-primary' }, { label: 'Keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
+  else konfirmUjian('Kok? Yaudah aku bantu kamu keluar deh', 'Soal yang udah kamu jawab tetap tercatat di statistik kok. Tapi kalo soal yang belum dijawab gabakal dihitung.', [{ label: 'Lanjut aja', kelas: 'btn-primary' }, { label: 'Pokoknya mau keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('modal-ex').hidden = true; });
 // Anti-salin: teks soal dan pilihan tidak bisa diblok, disalin, atau diseret saat mengerjakan/mereview
