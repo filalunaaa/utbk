@@ -2035,3 +2035,14 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
   stroke: #dc2626 !important;
   stroke-width: 2.8;
 }
+
+
+/* Pratinjau soal dari halaman laporan admin */
+.laporan-aksi-soal{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.laporan-preview-info{margin:10px 0 0;font-size:.82rem}
+.pratinjau-soal-konten{line-height:1.65}
+.pratinjau-soal-konten .teks-soal{font-size:1rem}
+.pratinjau-soal-konten .opsi-list{margin-top:10px}
+.pratinjau-soal-konten .rev-ket{margin:10px 0 0}
+.pratinjau-soal-konten .rev-pembahasan{margin-top:16px}
+@media(max-width:520px){.laporan-aksi-soal .btn{flex:1}}
