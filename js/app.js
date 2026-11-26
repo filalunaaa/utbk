@@ -5115,7 +5115,15 @@ function teksKampus(k) { return k.nama_pt; }
 function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang tidak diketahui'}`; }
 async function muatKampusProfil() {
   if (DATA_PERGURUAN_TINGGI) return DATA_PERGURUAN_TINGGI;
-  const kampusIndonesia = await restSemua('perguruan_tinggi?select=npsn,nama_pt,provinsi_pt,nm_bp&order=nama_pt.asc');
+  // Filter jenis perguruan tinggi di server agar perangkat tidak perlu mengunduh
+  // seluruh 4.000+ institusi sebelum menampilkan pilihan kampus.
+  const kampusIndonesia = await restSemua(
+    'perguruan_tinggi?select=npsn,nama_pt,provinsi_pt,nm_bp&nm_bp=in.%28Universitas%2CInstitut%29&order=nama_pt.asc',
+    500
+  );
+  if (!Array.isArray(kampusIndonesia)) {
+    throw new Error('Respons daftar perguruan tinggi tidak valid.');
+  }
   const namaKampusLuarNegeri = new Set([
     'Deakin University',
     'Georgetown University',
@@ -5123,12 +5131,14 @@ async function muatKampusProfil() {
     'Lancaster University',
     'Western Sydney University'
   ]);
-  DATA_PERGURUAN_TINGGI = kampusIndonesia.filter((k) =>
+  const data = kampusIndonesia.filter((k) =>
+    k && k.npsn && k.nama_pt &&
     ['Universitas', 'Institut'].includes(String(k.nm_bp || '').trim()) &&
-    !namaKampusLuarNegeri.has(String(k.nama_pt || '').trim())
+    !namaKampusLuarNegeri.has(String(k.nama_pt).trim())
   );
-  PETA_KAMPUS = new Map(DATA_PERGURUAN_TINGGI.map((k) => [teksKampus(k), k]));
-  return DATA_PERGURUAN_TINGGI;
+  PETA_KAMPUS = new Map(data.map((k) => [teksKampus(k), k]));
+  DATA_PERGURUAN_TINGGI = data;
+  return data;
 }
 async function muatProdiProfil(npsn) {
   if (DATA_PROGRAM_STUDI.has(npsn)) return DATA_PROGRAM_STUDI.get(npsn);
