@@ -5451,9 +5451,9 @@ segarkanSoalBawaan();
         : { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
             form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
-        form: teksIn('Target PTN', {}, 'Pilih atau masukkan PTN tujuanmu', draf.ptn, 80, 'list="ob-ptn" autocomplete="off" ') + datalist('ob-ptn', PTN_SARAN) };
+        form: `<div class="ob-f">${lab('ob-in', 'Target PTN', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(draf.ptn)}" list="ob-ptn" autocomplete="off"><datalist id="ob-ptn"></datalist><small class="ob-catatan">Pilih kampus dari daftar agar program studinya bisa disesuaikan.</small></div>` };
       case 8: return { teks: bubble('Kalau begitu, program studi apa yang ingin kamu perjuangkan?'), tombol: 'Lanjut',
-        form: (draf.ptn ? `<p class="ob-ctx">Target PTN: ${esc(draf.ptn)}</p>` : '') + teksIn('Program studi tujuan', {}, 'Pilih atau masukkan program studi tujuanmu', draf.prodi, 80, 'list="ob-prodi" autocomplete="off" ') + datalist('ob-prodi', PRODI_SARAN) };
+        form: (draf.ptn ? `<p class="ob-ctx">Target PTN: ${esc(draf.ptn)}</p>` : '') + `<div class="ob-f">${lab('ob-in', 'Program studi tujuan', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Pilih program studi dari daftar" value="${esc(draf.prodi)}" list="ob-prodi" autocomplete="off"><datalist id="ob-prodi"></datalist></div>` };
       case 9: return { teks: bubble('Sekarang, boleh tahu tanggal lahirmu?'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Tanggal lahir', false, true)}<input class="ob-input" type="date" id="ob-in" max="${hariIni()}" value="${esc(p.tanggalLahir)}"></div><p class="ob-catatan">Tanggal lahir tidak pernah ditampilkan ke orang lain.</p>` };
       case 10: return { teks: bubble('Kamu tinggal di kota mana?'), tombol: 'Lanjut',
@@ -5491,6 +5491,24 @@ segarkanSoalBawaan();
     OB.scrollTop = 0;
     const f = OB.querySelector('#ob-in,[name="ob-status"]:checked,[name="ob-status"],[name="ob-jur"]:checked,[name="ob-jur"],#ob-publik') || $('ob-lanjut');
     if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
+    if (tahap === 7) {
+      muatKampusProfil().then((kampus) => {
+        const list = $('ob-ptn');
+        if (list) list.innerHTML = kampus.map((k) => `<option value="${esc(teksKampus(k))}"></option>`).join('');
+      }).catch((e) => { console.error('Gagal memuat daftar PTN onboarding:', e); pesan('Daftar kampus belum bisa dimuat. Periksa koneksi lalu coba lagi.'); });
+    }
+    if (tahap === 8) {
+      (async () => {
+        try {
+          const kampus = await muatKampusProfil();
+          const k = kampus.find((x) => teksKampus(x) === draf.ptn);
+          if (!k) { pesan('Pilih kampus dari daftar pada langkah sebelumnya.'); return; }
+          const prodi = await muatProdiProfil(k.npsn);
+          const list = $('ob-prodi');
+          if (list) list.innerHTML = prodi.map((p) => `<option value="${esc(teksProdi(p))}"></option>`).join('');
+        } catch (e) { console.error('Gagal memuat daftar program studi onboarding:', e); pesan('Daftar program studi belum bisa dimuat. Coba kembali sebentar lagi.'); }
+      })();
+    }
   }
   function tampilMemuat() {
     memuat = true; buka();
@@ -5570,8 +5588,23 @@ segarkanSoalBawaan();
           await simpanProfil({ jurusan });
           return atur(ambilProfil().statusPendidikan === 'mahasiswa' ? 9 : 7);
         }
-        case 7: draf.ptn = val(); await simpanProfil({ target: gabungTarget() }); return atur(8);
-        case 8: draf.prodi = val(); await simpanProfil({ target: gabungTarget() }); return atur(9);
+        case 7: {
+          draf.ptn = val();
+          const kampus = await muatKampusProfil();
+          const terpilih = kampus.find((k) => teksKampus(k) === draf.ptn);
+          if (!terpilih) return pesan('Pilih universitas atau institut dari daftar yang tersedia.');
+          draf.ptnNpsn = terpilih.npsn; draf.prodi = '';
+          await simpanProfil({ target: gabungTarget() }); return atur(8);
+        }
+        case 8: {
+          draf.prodi = val();
+          const kampus = await muatKampusProfil();
+          const k = kampus.find((x) => teksKampus(x) === draf.ptn);
+          if (!k) return pesan('Pilih kampus tujuan terlebih dahulu.');
+          const prodi = await muatProdiProfil(k.npsn);
+          if (!prodi.some((p) => teksProdi(p) === draf.prodi)) return pesan('Pilih program studi dari daftar sesuai kampus tujuanmu.');
+          await simpanProfil({ target: gabungTarget() }); return atur(9);
+        }
         case 9: { const t = $('ob-in').value; if (t && t > hariIni()) return pesan('Tanggal lahir tidak boleh di masa depan.'); await simpanProfil({ tanggalLahir: t }); return atur(10); }
         case 10: await simpanProfil({ kota: val() }); return atur(11);
         case 11: {
@@ -5615,6 +5648,14 @@ segarkanSoalBawaan();
     OB.querySelectorAll('[data-ob-av]').forEach((b) => b.classList.toggle('aktif', !!a && a.tipe === 'preset' && a.id === b.dataset.obAv));
   }
   OB.addEventListener('change', async (e) => {
+    if (e.target.id === 'ob-ptn') {
+      const kampus = await muatKampusProfil().catch(() => []);
+      const k = kampus.find((x) => teksKampus(x) === e.target.value.trim());
+      draf.ptnNpsn = k ? k.npsn : '';
+      draf.prodi = '';
+      st.simpan({ ptn: e.target.value.trim(), prodi: '' });
+      return;
+    }
     if (e.target.id === 'ob-publik') { const w = $('ob-wadah-user'); if (w) w.hidden = !(e.target.checked && !ambilProfil().username); return; }
     if (e.target.id !== 'ob-foto') return;
     const f = e.target.files[0], pa = $('ob-pesan-av');
