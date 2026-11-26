@@ -4601,7 +4601,7 @@ $('mulai-belajar').addEventListener('click', (e) => {
   else if (b.dataset.qa === 'tryout') tampil('tryout');
   else mulaiMode('latihan');
 });
-$('btn-kembali-tryout').addEventListener('click', () => tampil('setup'));
+$('btn-kembali-tryout')?.addEventListener('click', () => tampil('setup'));
 $('dash-avatar').addEventListener('click', () => { renderProfil(!ProfilApp.ambil()); tampil('profil'); });
 var _rsz = null;
 window.addEventListener('resize', () => { clearTimeout(_rsz); _rsz = setTimeout(() => { if (!$('menu').hidden) gambarGrafik(); }, 150); });
@@ -4747,7 +4747,7 @@ function closeCountdown() {
 }
 
 // ---------- Rincian subtopik untuk satu topik (dipakai kartu rekomendasi dan beranda) ----------
-const LABEL_REK_SUB = { perlu: 'Perlu penguatan', sedang: 'Berkembang', data: 'Belum cukup data', dikuasai: 'Dikuasai', belum: 'Belum dikerjakan', kosong: 'Belum ada soal' };
+var LABEL_REK_SUB = { perlu: 'Perlu penguatan', sedang: 'Berkembang', data: 'Belum cukup data', dikuasai: 'Dikuasai', belum: 'Belum dikerjakan', kosong: 'Belum ada soal' };
 function rincianSubTopik(nama, mapel) {
   const M = window._mt && window._mt();
   if (!M) return null;
