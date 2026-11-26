@@ -5435,6 +5435,13 @@ segarkanSoalBawaan();
   };
   const statusKuliah = (v) => v === 'mahasiswa' || v === 'alumni';
   const profilLengkap = (p) => !!(p && String(p.nama || '').trim() && p.statusPendidikan);
+  // Profil yang seluruh field wajibnya sudah tersimpan adalah sumber kebenaran.
+  // Status progres onboarding bisa tertinggal jika sinkronisasi kunci "onboarding" gagal.
+  const profilOnboardingLengkap = (p) => !!(
+    profilLengkap(p) && String(p.username || '').trim() &&
+    String(p.sekolah || '').trim() && String(p.jurusan || '').trim() &&
+    (!statusKuliah(p.statusPendidikan) || (String(p.perguruanTinggiNpsn || '').trim() && String(p.programStudiId || '').trim()))
+  );
   let tahap = 0, sibuk = false, terbuka = false, memuat = false, jedaMuat = null, timerUser = null;
   const root = document.documentElement;
   const gambar = (k, flip) => `<img${flip ? ' class="flip"' : ''} src="data:image/webp;base64,${IMG[k]}" alt="" height="320">`;
@@ -5822,10 +5829,11 @@ segarkanSoalBawaan();
     memuat = false; clearTimeout(jedaMuat);
     if (!AkunApp.sesi()) return tutup();
     const s = st.ambil(), p = ProfilApp.ambil();
+    // Profil lengkap mengalahkan progres onboarding yang tertinggal/tidak sinkron.
+    // Ini mencegah pengguna lama diminta mengisi onboarding lagi setelah login.
     if (s && s.selesai) return tutup();
-    if (!s && profilLengkap(p)) {
-      // pengguna lama yang profilnya sudah lengkap: tidak perlu mengulang onboarding
-      st.simpan({ selesai: true, tahap: TOTAL });
+    if (profilOnboardingLengkap(p)) {
+      st.simpan({ selesai: true, tahap: TOTAL, ptn: '', prodi: '' });
       sinkron().catch(() => {});
       return tutup();
     }
