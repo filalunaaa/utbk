@@ -5020,9 +5020,13 @@ $('kartu-profil').addEventListener('change', async (e) => {
   if (e.target.id === 'pf-status') {
     const status = e.target.value;
     const p = ProfilApp.ambil() || {};
+    const gantiKategori = (status === 'mahasiswa') !== (p.statusPendidikan === 'mahasiswa');
+    const dataAkademik = gantiKategori
+      ? { ...p, sekolah: '', jurusan: '', target: '', perguruanTinggiNpsn: '', programStudiId: '' }
+      : p;
     const fields = $('pf-akademik-fields');
-    if (fields) fields.innerHTML = htmlBidangAkademik(p, status);
-    if (status === 'mahasiswa') siapkanDropdownAkademik(p);
+    if (fields) fields.innerHTML = htmlBidangAkademik(dataAkademik, status);
+    if (status === 'mahasiswa') siapkanDropdownAkademik(dataAkademik);
     return;
   }
   if (e.target.id === 'pf-kampus') {
