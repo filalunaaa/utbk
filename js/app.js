@@ -1084,7 +1084,7 @@ async function renderDaftarTryout() {
       const status = p.status === 'published'
         ? '<span class="tryout-status terbit">Tersedia</span>'
         : (ADMIN ? '<span class="tryout-status draft">Draft · hanya admin</span>' : '');
-      const kategori = esc(String(p.kategori || 'Campuran').toUpperCase());
+      const kategori = esc(({ PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' })[String(p.kategori || '').toUpperCase()] || String(p.kategori || 'Campuran'));
       return `<article class="card tryout-paket">
         <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
         <h3>${esc(p.nama || 'Paket Tryout')}</h3>
