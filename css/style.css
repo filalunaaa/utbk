@@ -2096,3 +2096,23 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 .tryout-paket-meta span{display:flex;flex-direction:column;gap:2px}
 .tryout-paket-meta strong{font-size:1.05rem;font-variant-numeric:tabular-nums}
 .tryout-paket-meta small{font-size:.75rem;color:var(--muted)}
+
+
+/* Pengelolaan soal dalam paket tryout — admin */
+.tryout-paket-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.tryout-paket-actions .btn{flex:1;min-height:42px}
+.psp-list{display:grid;gap:10px}
+.psp-item{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--bg)}
+.psp-item-info{min-width:0;flex:1}
+.psp-nomor{display:block;margin-bottom:4px;color:var(--accent);font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.psp-item-info strong{display:block;font-size:.88rem}
+.psp-item-info p{margin:5px 0 0;color:var(--muted);font-size:.84rem;line-height:1.5;overflow-wrap:anywhere}
+.psp-item-actions{display:flex;flex-wrap:wrap;gap:7px;flex-shrink:0}
+.psp-error{padding:16px;border:1px solid var(--border);border-radius:12px}
+.psp-error p{margin:0 0 10px}
+@media(max-width:560px){
+ .tryout-paket-actions{flex-direction:column}
+ .psp-item{display:block}
+ .psp-item-actions{margin-top:12px}
+ .psp-item-actions .btn{flex:1}
+}
