@@ -4904,7 +4904,7 @@ async function hapusAkunDanData() {
 // ---------- Profil ----------
 const PROFIL_STATUS = [
   ['', 'Pilih status'], ['smp', 'SMP'], ['sma10', 'SMA/SMK kelas 10'], ['sma11', 'SMA/SMK kelas 11'],
-  ['sma12', 'SMA/SMK kelas 12'], ['lulus', 'Lulusan SMA/SMK (persiapan UTBK)'], ['mahasiswa', 'Mahasiswa'], ['lainnya', 'Lainnya']
+  ['sma12', 'SMA/SMK kelas 12'], ['lulus', 'Lulusan SMA/SMK (persiapan UTBK)'], ['mahasiswa', 'Mahasiswa'], ['alumni', 'Alumni'], ['lainnya', 'Lainnya']
 ];
 const PROFIL_JURUSAN = [['', 'Belum dipilih'], ['IPA', 'IPA'], ['IPS', 'IPS'], ['Bahasa', 'Bahasa'], ['SMK', 'SMK'], ['Lainnya', 'Lainnya']];
 function labelStatus(v) { const o = PROFIL_STATUS.find((x) => x[0] === v); return o ? o[1] : '-'; }
@@ -4953,10 +4953,11 @@ $('kartu-profil').addEventListener('click', (e) => {
 function htmlBidangAkademik(p, status) {
   const v = (k) => (p && p[k] ? esc(p[k]) : '');
   const fld = (lab, html, full) => `<div${full ? ' class="full"' : ''}><p class="label">${lab}</p>${html}</div>`;
-  if (status === 'mahasiswa') {
+  if (status === 'mahasiswa' || status === 'alumni') {
     return `
       <div class="full"><p class="label">Perguruan tinggi *</p><input class="input" id="pf-kampus" list="pf-kampus-list" autocomplete="off" placeholder="Ketik nama universitas atau institut..."><datalist id="pf-kampus-list"></datalist><input type="hidden" id="pf-kampus-npsn"><p class="muted" style="margin:5px 0 0;font-size:.78rem">Pilih perguruan tinggi dari daftar agar program studi dapat disesuaikan.</p></div>
-      <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>`;
+      <div class="full"><p class="label">Program studi *</p><input class="input" id="pf-prodi" list="pf-prodi-list" autocomplete="off" placeholder="Pilih perguruan tinggi terlebih dahulu" disabled><datalist id="pf-prodi-list"></datalist><input type="hidden" id="pf-prodi-id"></div>
+      <div><p class="label">Angkatan</p><input class="input" type="number" id="pf-angkatan" min="1950" max="${new Date().getFullYear()}" inputmode="numeric" placeholder="Contoh: 2024" value="${v('angkatan')}"></div>`;
   }
   return `
     ${fld('Sekolah (SMA/SMK)', `<input class="input" id="pf-sekolah" maxlength="80" placeholder="contoh: SMA Negeri 1" value="${v('sekolah')}">`)}
@@ -5033,13 +5034,14 @@ $('kartu-profil').addEventListener('change', async (e) => {
   if (e.target.id === 'pf-status') {
     const status = e.target.value;
     const p = ProfilApp.ambil() || {};
-    const gantiKategori = (status === 'mahasiswa') !== (p.statusPendidikan === 'mahasiswa');
+    const kategoriKampus = (x) => x === 'mahasiswa' || x === 'alumni';
+    const gantiKategori = kategoriKampus(status) !== kategoriKampus(p.statusPendidikan);
     const dataAkademik = gantiKategori
       ? { ...p, sekolah: '', jurusan: '', target: '', perguruanTinggiNpsn: '', programStudiId: '' }
       : p;
     const fields = $('pf-akademik-fields');
     if (fields) fields.innerHTML = htmlBidangAkademik(dataAkademik, status);
-    if (status === 'mahasiswa') siapkanDropdownAkademik(dataAkademik);
+    if (status === 'mahasiswa' || status === 'alumni') siapkanDropdownAkademik(dataAkademik);
     return;
   }
   if (e.target.id === 'pf-kampus') {
@@ -5070,7 +5072,7 @@ function renderProfil(mengedit = false) {
         ${p.publik && linkPublik ? `<p class="muted" style="margin:12px 0 0">Link profil: <a href="${linkPublik}" target="_blank" rel="noopener" style="word-break:break-all">${esc(linkPublik)}</a></p>` : ''}
       </div>
       <div class="card"><p class="panel-judul">Informasi akademik</p>
-        <dl class="info-profil">${baris('Status', esc(labelStatus(p.statusPendidikan)))}${p.statusPendidikan === 'mahasiswa' ? baris('Perguruan tinggi', esc(p.sekolah || '-')) + baris('Program studi', esc(p.jurusan || '-')) : baris('Sekolah', esc(p.sekolah || '-')) + baris('Jurusan sekolah', esc(p.jurusan || '-')) + baris('Target PTN dan prodi', esc(p.target || '-'))}</dl></div>
+        <dl class="info-profil">${baris('Status', esc(labelStatus(p.statusPendidikan)))}${['mahasiswa', 'alumni'].includes(p.statusPendidikan) ? baris('Perguruan tinggi', esc(p.sekolah || '-')) + baris('Program studi', esc(p.jurusan || '-')) + baris('Angkatan', esc(p.angkatan || '-')) : baris('Sekolah', esc(p.sekolah || '-')) + baris('Jurusan sekolah', esc(p.jurusan || '-')) + baris('Target PTN dan prodi', esc(p.target || '-'))}</dl></div>
       <div class="card full"><p class="panel-judul">Informasi pribadi (hanya terlihat olehmu)</p>
         <dl class="info-profil">${baris('Tanggal lahir', tgl)}${baris('Kota domisili', esc(p.kota || '-'))}</dl></div>
       ${akun}
@@ -5113,7 +5115,7 @@ function renderProfil(mengedit = false) {
     <p class="pesan" id="pesan-profil"></p>`;
   const statusAkademik = (p && p.statusPendidikan) || 'murid';
   $('pf-akademik-fields').innerHTML = htmlBidangAkademik(p, statusAkademik);
-  if (statusAkademik === 'mahasiswa') siapkanDropdownAkademik(p);
+  if (statusAkademik === 'mahasiswa' || statusAkademik === 'alumni') siapkanDropdownAkademik(p);
 }
 function pesanProfil(teks) {
   const p = $('pesan-profil');
@@ -5147,11 +5149,11 @@ async function simpanFormProfil() {
       return pesanProfil('Tidak bisa mengecek username. Coba lagi sebentar.');
     }
   }
-  let sekolah = '', jurusan = '', kampusNpsn = '', prodiId = '', target = '';
-  if (status === 'mahasiswa') {
+  let sekolah = '', jurusan = '', kampusNpsn = '', prodiId = '', target = '', angkatan = '';
+  if (status === 'mahasiswa' || status === 'alumni') {
     const kampusEl = $('pf-kampus'), prodiEl = $('pf-prodi');
-    const kampusIdEl = $('pf-kampus-npsn'), prodiIdEl = $('pf-prodi-id');
-    if (!kampusEl || !prodiEl || !kampusIdEl || !prodiIdEl) {
+    const kampusIdEl = $('pf-kampus-npsn'), prodiIdEl = $('pf-prodi-id'), angkatanEl = $('pf-angkatan');
+    if (!kampusEl || !prodiEl || !kampusIdEl || !prodiIdEl || !angkatanEl) {
       return pesanProfil('Formulir akademik belum siap. Ubah status pendidikan, lalu coba lagi.');
     }
     const kampusTeks = kampusEl.value.trim();
@@ -5162,6 +5164,8 @@ async function simpanFormProfil() {
     if (!prodiTeks || !prodiId) return pesanProfil('Pilih program studi dari daftar sesuai perguruan tinggi.');
     sekolah = kampusTeks;
     jurusan = prodiTeks.split(' — ')[0];
+    angkatan = angkatanEl.value.trim();
+    if (angkatan && (!/^\\d{4}$/.test(angkatan) || Number(angkatan) < 1950 || Number(angkatan) > new Date().getFullYear())) return pesanProfil('Angkatan harus berupa tahun yang valid.');
   } else {
     const sekolahEl = $('pf-sekolah'), jurusanEl = $('pf-jurusan'), targetEl = $('pf-target');
     if (!sekolahEl || !jurusanEl || !targetEl) {
@@ -5174,7 +5178,7 @@ async function simpanFormProfil() {
   ProfilApp.simpan({
     nama, tanggalLahir: tgl, statusPendidikan: status,
     sekolah, jurusan, perguruanTinggiNpsn: kampusNpsn, programStudiId: prodiId,
-    target, kota: $('pf-kota').value.trim(),
+    target, angkatan, kota: $('pf-kota').value.trim(),
     tanggalUjian: '', username,
     deskripsi: $('pf-deskripsi').value.trim(), publik,
     tampilkanStatistik: $('pf-statistik').checked
