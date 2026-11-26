@@ -817,7 +817,7 @@ const ProfilApp = {
     catch (e) { return false; }
   }
 };
-let DETIK_PER_SOAL = PengaturanApp.ambil().waktuPerSoal; // jatah waktu Try Out per soal
+let DETIK_PER_SOAL = PengaturanApp.ambil().waktuPerSoal; // batas waktu Mode Ngebut per soal
 // Jumlah soal yang dipilih di halaman atur latihan ('semua' = semua soal yang cocok)
 function jumlahDipilih(n) {
   const pilihJumlah = $('pilih-jumlah');
@@ -4046,7 +4046,7 @@ $('opsi-list').addEventListener('input', (e) => {
 });
 $('opsi-list').addEventListener('change', (e) => {
   if (!sesi || sesi.mode !== 'tryout' || !e.target.matches('.isian-input')) return;
-  // Try Out hanya memperbarui jumlah soal terjawab; jangan evaluasi atau warnai status benar/salah.
+  // Mode Ngebut hanya memperbarui jumlah soal terjawab; jangan evaluasi atau warnai status benar/salah.
   $('ex-status').textContent = `${sesi.jawab.filter((j) => j !== null && j !== undefined).length}/${sesi.soal.length} terjawab`;
 });
 $('opsi-list').addEventListener('keydown', (e) => {
@@ -4076,7 +4076,7 @@ $('opsi-list').addEventListener('click', (e) => {
   if (sesi.mode === 'latihan') {
     $('btn-aksi').disabled = sesi.jawab[sesi.i] === null;
   } else {
-    // Di Try Out, navigasi tidak diberi warna berdasarkan benar/salah.
+    // Di Mode Ngebut, navigasi tidak diberi warna berdasarkan benar/salah.
     $('ex-status').textContent = `${sesi.jawab.filter((j) => j !== null && j !== undefined).length}/${sesi.soal.length} terjawab`;
   }
 });
@@ -4108,7 +4108,7 @@ function renderUjianUI() {
   $('ex-pos').textContent = `${i + 1} / ${n}`;
   const sudah = (k) => (mode === 'latihan' ? kunci[k] : jawab[k] !== null && jawab[k] !== undefined);
   const statusNavigasi = (k) => {
-    // Try Out hanya menandai progres; tidak pernah mengungkap benar atau salah.
+    // Mode Ngebut hanya menandai progres; tidak pernah mengungkap benar atau salah.
     if (mode === 'tryout') return sudah(k) ? 'status-terjawab' : '';
     // Kebenaran hanya ditampilkan setelah tombol "Jawab" dikonfirmasi di mode Latihan.
     if (!kunci[k]) return '';
@@ -4157,14 +4157,14 @@ function batalSesi() {
 function akhiriDenganKonfirmasi() {
   if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri !== false) {
     const k = sesi.jawab.filter((j) => j === null || j === undefined).length;
-    if (k) return konfirmUjian('Akhiri Try Out?', `Masih ada ${k} soal yang belum dijawab. Soal kosong tidak dihitung benar.`, [{ label: 'Kembali mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri sekarang', fn: selesai }]);
+    if (k) return konfirmUjian('Akhiri Mode Ngebut?', `Masih ada ${k} soal yang belum dijawab. Soal kosong tidak dihitung benar.`, [{ label: 'Kembali mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri sekarang', fn: selesai }]);
   }
   selesai();
 }
 $('btn-keluar-ujian').addEventListener('click', () => {
   if (!sesi || !sesi.aktif) return tampil('menu');
   if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri === false) return selesai();
-  if (sesi.mode === 'tryout') konfirmUjian('Keluar dari Try Out?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri & lihat hasil', fn: selesai }, { label: 'Keluar tanpa menyimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
+  if (sesi.mode === 'tryout') konfirmUjian('Keluar dari Mode Ngebut?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri & lihat hasil', fn: selesai }, { label: 'Keluar tanpa menyimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
   else konfirmUjian('Kok? Yaudah aku bantu buat keluar deh', 'Soal yang udah kamu jawab tetap tercatat di statistik kok. Tapi kalo soal yang belum dijawab gabakal dihitung.', [{ label: 'Lanjut aja', kelas: 'btn-primary' }, { label: 'Pokoknya mau keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('modal-ex').hidden = true; });
