@@ -125,6 +125,42 @@ export default {
       });
     }
 
+    // Ensure social crawlers receive current Open Graph metadata from the root document.
+    if (url.pathname === "/" && request.method === "GET") {
+      const page = await env.ASSETS.fetch(request);
+      if (!page.ok) return page;
+      let html = await page.text();
+      const imageUrl = "https://id.nalarine.workers.dev/og-image.png?v=4";
+      html = html.replace(
+        /https:\/\/id\\.nalarine\\.workers\\.dev\/og-image\\.(?:jpg|png)(?:\\?v=\\d+)?/g,
+        imageUrl
+      );
+      if (!/<meta\\s+property=["']og:image["']/i.test(html)) {
+        html = html.replace(
+          /<\\/head>/i,
+          '<meta property="og:image" content="' + imageUrl + '">' +
+          '<meta property="og:image:secure_url" content="' + imageUrl + '">' +
+          '<meta property="og:image:type" content="image/jpeg">' +
+          '<meta property="og:image:width" content="1376">' +
+          '<meta property="og:image:height" content="768">' +
+          '<meta name="twitter:card" content="summary_large_image">' +
+          '<meta name="twitter:image" content="' + imageUrl + '">' +
+          '</head>'
+        );
+      }
+      const headers = new Headers(page.headers);
+      headers.delete("Content-Length");
+      headers.delete("Content-Encoding");
+      headers.delete("ETag");
+      headers.set("Content-Type", "text/html; charset=utf-8");
+      headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      return new Response(html, {
+        status: page.status,
+        statusText: page.statusText,
+        headers
+      });
+    }
+
     if (url.pathname === "/api/berita") {
       if (request.method === "OPTIONS") {
         return new Response(null, { status: 204, headers: API_HEADERS });
