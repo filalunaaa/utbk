@@ -2000,7 +2000,7 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
   justify-content: center;
   flex-shrink: 0;
 }
-.kolesi-hapus-icon {
+.koleksi-hapus-icon {
   widht: 38px;
   height: 38px;
   padding: 0;
@@ -2022,7 +2022,7 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.kolekso-hapus-icon:hover {
+.koleksi-hapus-icon:hover {
   color:#fff;
   background: #dc2626;
   border-color: #dc2626;
