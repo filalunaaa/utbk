@@ -4972,7 +4972,7 @@ function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang 
 async function muatKampusProfil() {
   if (DATA_PERGURUAN_TINGGI) return DATA_PERGURUAN_TINGGI;
   DATA_PERGURUAN_TINGGI = (await restSemua('perguruan_tinggi?select=npsn,nama_pt,provinsi_pt,nm_bp&order=nama_pt.asc'))
-    .filter((k) => !['Akademi', 'Akademi Komunitas'].includes(String(k.nm_bp || '').trim()));
+    .filter((k) => ['Universitas', 'Institut'].includes(String(k.nm_bp || '').trim()));
   PETA_KAMPUS = new Map(DATA_PERGURUAN_TINGGI.map((k) => [teksKampus(k), k]));
   return DATA_PERGURUAN_TINGGI;
 }
