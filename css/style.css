@@ -2046,3 +2046,24 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
 .pratinjau-soal-konten .rev-ket{margin:10px 0 0}
 .pratinjau-soal-konten .rev-pembahasan{margin-top:16px}
 @media(max-width:520px){.laporan-aksi-soal .btn{flex:1}}
+
+
+/* Halaman Tryout terpisah dari konfigurasi Latihan. */
+.tryout-page-head{margin-bottom:16px}
+.tryout-intro{display:flex;align-items:center;gap:18px;padding:clamp(18px,3vw,28px);border-top:3px solid var(--primary)}
+.tryout-intro-mark{display:grid;place-items:center;flex:0 0 58px;width:58px;height:58px;border-radius:16px;background:var(--primary-soft);color:var(--accent)}
+.tryout-intro-mark svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tryout-intro-copy{min-width:0}
+.tryout-eyebrow{display:block;margin-bottom:6px;color:var(--accent);font-size:.68rem;font-weight:800;letter-spacing:.12em}
+.tryout-intro-copy h3{margin:0 0 7px;font-size:1.12rem;letter-spacing:-.02em}
+.tryout-intro-copy p{max-width:680px;margin:0;line-height:1.65}
+.tryout-empty{display:grid;justify-items:center;gap:7px;padding:clamp(28px,5vw,48px) 18px;text-align:center}
+.tryout-empty-icon{display:grid;place-items:center;width:48px;height:48px;margin-bottom:4px;border:1px solid var(--border);border-radius:14px;color:var(--muted);background:var(--bg)}
+.tryout-empty-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tryout-empty h3{margin:0;font-size:1rem}
+.tryout-empty p{max-width:420px;margin:0;line-height:1.6}
+@media(max-width:520px){
+  .tryout-intro{align-items:flex-start;gap:12px}
+  .tryout-intro-mark{flex-basis:44px;width:44px;height:44px;border-radius:12px}
+  .tryout-intro-mark svg{width:24px;height:24px}
+}
