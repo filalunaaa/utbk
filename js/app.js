@@ -1110,13 +1110,20 @@ async function mulaiTryoutPaket(id, nama, durasi) {
   try {
     const rows = await rest('tryout_soal?select=id,nomor_soal,kategori,tipe_soal,data&paket_id=eq.' + encodeURIComponent(id) + '&order=nomor_soal.asc');
     if (!Array.isArray(rows) || !rows.length) throw new Error('Soal dalam paket belum tersedia.');
-    const soal = rows.map((r) => ({
-      ...(r.data || {}),
-      id: String(r.id),
-      mataPelajaran: (r.data && r.data.mataPelajaran) || r.kategori || 'PK',
-      tipe: (r.data && r.data.tipe) || r.tipe_soal || 'pg',
-      sumber: 'tryout-paket'
-    }));
+    const soal = rows.map((r) => {
+      // Kolom data lama tersimpan sebagai JSON string di sebagian paket, bukan object JSON langsung.
+      const dataSoal = typeof r.data === 'string' ? JSON.parse(r.data) : (r.data || {});
+      const tipeMentah = String(dataSoal.tipe || r.tipe_soal || 'pg').toLowerCase();
+      const tipeNormal = ['isian', 'isian_bilangan_cacah'].includes(tipeMentah) ? 'isian' : (tipeMentah === 'pg_kompleks' ? 'kompleks' : tipeMentah);
+      return {
+        ...dataSoal,
+        id: String(r.id),
+        mataPelajaran: dataSoal.mataPelajaran || r.kategori || 'PK',
+        topik: dataSoal.topik || (r.kategori === 'PM' ? 'Tryout PM' : 'Tryout PK'),
+        tipe: tipeNormal,
+        sumber: 'tryout-paket'
+      };
+    });
     if (sesi && sesi.aktif) {
       if (!confirm('Sesi sebelumnya masih aktif. Akhiri sesi tersebut dan mulai Tryout ini?')) return;
       clearInterval(sesi.timer);
@@ -1598,7 +1605,7 @@ function renderSoal() {
   const { soal, jawab, kunci, i, mode } = sesi;
   const s = soal[i];
   $('bar').style.width = ((i + 1) / soal.length) * 100 + '%';
-  $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
+  $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik || (sesi.paketTryoutId ? 'Paket Tryout' : 'Tanpa topik')})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
   renderTombolEditSoal(s);
   const evaluasiAktif = mode === 'latihan' && kunci[i];
   $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
@@ -4208,7 +4215,7 @@ function renderUjianUI() {
   const { soal, jawab, kunci, i, mode } = sesi, n = soal.length;
   document.body.dataset.mode = mode;
   $('timer').classList.toggle('sembunyi', PengaturanApp.ambil().tampilTimer === false);
-  $('ex-mode').textContent = mode === 'tryout' ? 'MODE NGEBUT' : 'MODE SANTAI';
+  $('ex-mode').textContent = sesi.paketTryoutId ? 'TRYOUT' : mode === 'tryout' ? 'MODE NGEBUT' : 'MODE SANTAI';
   $('ex-prog').textContent = `SOAL ${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
   $('ex-pct').textContent = Math.round(((i + 1) / n) * 100) + '%';
   $('ex-pos').textContent = `${i + 1} / ${n}`;
