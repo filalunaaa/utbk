@@ -1471,7 +1471,8 @@ konfirmUjian(
       }
     }
   ]
-);                                     
+);    
+});
 function renderSoal() {
   const { soal, jawab, kunci, i, mode } = sesi;
   const s = soal[i];
