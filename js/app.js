@@ -1746,6 +1746,67 @@ function renderTombolEditSoal(s) {
     baris.appendChild(btn);
   }
 }
+function tutupPratinjauLaporanSoal() {
+  const el = $('pratinjau-laporan-soal');
+  if (!el) return;
+  el.hidden = true;
+  document.body.classList.remove('esl-terbuka');
+}
+
+function bukaPratinjauSoalDariLaporan(id) {
+  if (!ADMIN) return;
+  const s = SOAL.find((item) => String(item.id) === String(id));
+  if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(id))) {
+    alert('Soal bawaan tidak ditemukan. Muat ulang bank soal terlebih dahulu.');
+    return;
+  }
+
+  let el = $('pratinjau-laporan-soal');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pratinjau-laporan-soal';
+    el.className = 'editor-soal-live';
+    el.hidden = true;
+    el.innerHTML = `
+      <section class="editor-soal-live-panel" role="dialog" aria-modal="true" aria-labelledby="pls-judul">
+        <header class="esl-head">
+          <div><span class="esl-eyebrow">PRATINJAU SOAL</span><h2 id="pls-judul">Pratinjau soal</h2><p id="pls-meta" class="muted"></p></div>
+          <button type="button" class="btn btn-secondary btn-kecil" data-pls-tutup>Tutup</button>
+        </header>
+        <div id="pls-konten" class="pratinjau-soal-konten"></div>
+        <footer class="esl-actions">
+          <button type="button" class="btn btn-secondary" data-pls-tutup>Tutup</button>
+          <button type="button" class="btn btn-primary" id="pls-edit">Edit soal</button>
+        </footer>
+      </section>`;
+    document.body.appendChild(el);
+    el.addEventListener('click', (event) => {
+      if (event.target === el || event.target.closest('[data-pls-tutup]')) tutupPratinjauLaporanSoal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !el.hidden) tutupPratinjauLaporanSoal();
+    });
+    $('pls-edit').addEventListener('click', () => {
+      const soalId = el.dataset.soalId;
+      tutupPratinjauLaporanSoal();
+      bukaEditorSoalDariLaporan(soalId);
+    });
+  }
+
+  el.dataset.soalId = String(s.id);
+  $('pls-meta').textContent = `${s.id} · ${namaMapel(s.mataPelajaran)} · ${s.topik} · ${tipeSoal(s)}`;
+  const pilihan = adaIsian(s) ? opsiReviewHTML(s, undefined) : `<div class="opsi-list">${opsiReviewHTML(s, undefined)}</div>`;
+  $('pls-konten').innerHTML = `
+    <div class="rev-body">
+      <div><p class="rev-sub">Pertanyaan</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div></div>
+      <div><p class="rev-sub">Pilihan jawaban</p>${pilihan}<p class="rev-ket"><span>Kunci jawaban: <b>${esc(kunciHuruf(s))}</b></span></p></div>
+      <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+    </div>`;
+  el.hidden = false;
+  document.body.classList.add('esl-terbuka');
+  rumus(el);
+}
+
 function bukaEditorSoalDariLaporan(id) {
   if (!ADMIN) return;
 
@@ -3155,17 +3216,17 @@ ringkasan.innerHTML = `
     <small class="muted">Dikirim: ${esc(tanggal)}</small>
 
     ${x.question_source === 'bawaan' ? `
-      <div style="margin-top:12px">
-        <button type="button"
-          class="btn btn-secondary btn-kecil"
-          data-edit-laporan="${esc(x.question_id)}">
-          Edit Soal
-        </button>
+      <div class="laporan-aksi-soal">
+        <button type="button" class="btn btn-secondary btn-kecil" data-preview-laporan="${esc(x.question_id)}">Pratinjau soal</button>
+        <button type="button" class="btn btn-primary btn-kecil" data-edit-laporan="${esc(x.question_id)}">Edit soal</button>
       </div>
-    ` : ''}
+    ` : '<p class="muted laporan-preview-info">Pratinjau otomatis tersedia untuk soal bawaan.</p>'}
   </article>
 `;
     }).join('');
+wadah.querySelectorAll('[data-preview-laporan]').forEach((btn) => {
+  btn.addEventListener('click', () => bukaPratinjauSoalDariLaporan(btn.dataset.previewLaporan));
+});
 wadah.querySelectorAll('[data-edit-laporan]').forEach((btn) => {
   btn.addEventListener('click', () => {
     bukaEditorSoalDariLaporan(btn.dataset.editLaporan);
