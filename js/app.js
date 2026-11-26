@@ -1098,13 +1098,17 @@ async function renderDaftarTryout() {
         ? '<span class="tryout-status terbit">Tersedia</span>'
         : (ADMIN ? '<span class="tryout-status draft">Draft · hanya admin</span>' : '');
       const kategori = esc(({ PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' })[String(p.kategori || '').toUpperCase()] || String(p.kategori || 'Campuran'));
-      return `<article class="card tryout-paket" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="button" tabindex="0" aria-label="Buka paket ${esc(p.nama || "Tryout")}">
+      return `<article class="card tryout-paket" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
         <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
         <h3>${esc(p.nama || 'Paket Tryout')}</h3>
         <p class="muted tryout-paket-deskripsi">${esc(p.deskripsi || 'Paket latihan simulasi ujian.')}</p>
         <div class="tryout-paket-meta">
           <span><strong>${Number(p.jumlah_soal) || 0}</strong><small>Soal</small></span>
           <span><strong>${Number(p.durasi_menit) || 0}</strong><small>Menit</small></span>
+        </div>
+        <div class="tryout-paket-actions">
+          ${ADMIN ? `<button type="button" class="btn btn-secondary btn-kecil" data-aksi-paket="kelola">Edit &amp; pratinjau soal</button>` : ''}
+          <button type="button" class="btn btn-primary btn-kecil" data-aksi-paket="mulai">${ADMIN ? 'Uji paket' : 'Mulai tryout'}</button>
         </div>
       </article>`;
     }).join('');
@@ -1115,6 +1119,137 @@ async function renderDaftarTryout() {
   }
 }
 
+async function bukaPengelolaSoalPaket(paketId, nama) {
+  if (!ADMIN) return;
+  paketSoalAktif = { id: String(paketId), nama: String(nama || 'Paket Tryout') };
+  let el = $('pengelola-soal-paket');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pengelola-soal-paket';
+    el.className = 'editor-soal-live';
+    el.hidden = true;
+    el.innerHTML = `
+      <section class="editor-soal-live-panel pengelola-paket-panel" role="dialog" aria-modal="true" aria-labelledby="psp-judul">
+        <header class="esl-head"><div><span class="esl-eyebrow">PENGELOLA TRYOUT</span><h2 id="psp-judul">Soal dalam paket</h2><p id="psp-meta" class="muted"></p></div><button type="button" class="btn btn-secondary btn-kecil" data-psp-tutup>Tutup</button></header>
+        <div id="psp-list" class="psp-list" aria-live="polite"><p class="muted">Memuat soal...</p></div>
+        <footer class="esl-actions"><button type="button" class="btn btn-secondary" data-psp-tutup>Tutup</button></footer>
+      </section>`;
+    document.body.appendChild(el);
+    el.addEventListener('click', (e) => {
+      if (e.target === el || e.target.closest('[data-psp-tutup]')) tutupPengelolaSoalPaket();
+      const b = e.target.closest('[data-aksi-soal-paket]');
+      if (!b) return;
+      const row = daftarSoalPaketAktif.find(x => String(x.id) === b.dataset.id);
+      if (!row) return;
+      if (b.dataset.aksiSoalPaket === 'pratinjau') pratinjauSoalPaket(row);
+      if (b.dataset.aksiSoalPaket === 'edit') bukaEditorSoalPaket(row);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !el.hidden) tutupPengelolaSoalPaket();
+    });
+  }
+  $('psp-judul').textContent = paketSoalAktif.nama;
+  $('psp-meta').textContent = 'Mengambil daftar soal dari paket ini…';
+  $('psp-list').innerHTML = '<p class="muted">Memuat soal…</p>';
+  el.hidden = false;
+  document.body.classList.add('esl-terbuka');
+  try {
+    const rows = await rest('tryout_soal?select=id,paket_id,nomor_soal,kategori,tipe_soal,data&paket_id=eq.' + encodeURIComponent(paketSoalAktif.id) + '&order=nomor_soal.asc');
+    if (!Array.isArray(rows)) throw new Error('Respons daftar soal tidak valid.');
+    daftarSoalPaketAktif = rows;
+    renderDaftarSoalPaket();
+  } catch (err) {
+    console.error('Gagal mengambil soal paket:', err);
+    $('psp-meta').textContent = 'Daftar soal belum berhasil dimuat.';
+    $('psp-list').innerHTML = '<div class="psp-error"><p>Terjadi kendala saat mengambil soal paket.</p><button type="button" class="btn btn-secondary btn-kecil" id="psp-retry">Coba lagi</button></div>';
+    $('psp-retry').addEventListener('click', () => bukaPengelolaSoalPaket(paketSoalAktif.id, paketSoalAktif.nama));
+  }
+}
+function normalisasiSoalPaket(row) {
+  const raw = typeof row.data === 'string' ? JSON.parse(row.data) : (row.data || {});
+  const tipeMentah = String(raw.tipe || row.tipe_soal || 'pg').toLowerCase();
+  return {
+    ...raw, id: String(row.id),
+    mataPelajaran: raw.mataPelajaran || row.kategori || 'PK',
+    topik: raw.topik || (row.kategori === 'PM' ? 'Tryout PM' : 'Tryout PK'),
+    tipe: ['isian','isian_bilangan_cacah'].includes(tipeMentah) ? 'isian' : (tipeMentah === 'pg_kompleks' ? 'kompleks' : tipeMentah)
+  };
+}
+function renderDaftarSoalPaket() {
+  const list = $('psp-list');
+  if (!list) return;
+  $('psp-meta').textContent = daftarSoalPaketAktif.length + ' soal · Perubahan disimpan langsung ke paket';
+  if (!daftarSoalPaketAktif.length) {
+    list.innerHTML = '<div class="tryout-empty"><h3>Belum ada soal</h3><p class="muted">Paket ini belum memiliki soal.</p></div>';
+    return;
+  }
+  list.innerHTML = daftarSoalPaketAktif.map(row => {
+    const s = normalisasiSoalPaket(row);
+    return `<article class="psp-item">
+      <div class="psp-item-info"><span class="psp-nomor">Soal ${Number(row.nomor_soal) || 0}</span><strong>${esc(namaMapel(s.mataPelajaran))} · ${esc(tipeSoal(s))}</strong><p>${esc(previewTeks(s.soal))}</p></div>
+      <div class="psp-item-actions"><button type="button" class="btn btn-secondary btn-kecil" data-aksi-soal-paket="pratinjau" data-id="${esc(row.id)}">Pratinjau</button><button type="button" class="btn btn-primary btn-kecil" data-aksi-soal-paket="edit" data-id="${esc(row.id)}">Edit soal</button></div>
+    </article>`;
+  }).join('');
+}
+function tutupPengelolaSoalPaket() {
+  const el = $('pengelola-soal-paket');
+  if (el) el.hidden = true;
+  document.body.classList.remove('esl-terbuka');
+}
+function pratinjauSoalPaket(row) {
+  if (!ADMIN) return;
+  const s = normalisasiSoalPaket(row);
+  let el = $('pratinjau-soal-paket');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pratinjau-soal-paket';
+    el.className = 'editor-soal-live';
+    el.hidden = true;
+    el.innerHTML = `
+      <section class="editor-soal-live-panel" role="dialog" aria-modal="true" aria-labelledby="pspv-judul">
+        <header class="esl-head"><div><span class="esl-eyebrow">PRATINJAU TRYOUT</span><h2 id="pspv-judul">Pratinjau soal</h2><p id="pspv-meta" class="muted"></p></div><button type="button" class="btn btn-secondary btn-kecil" data-pspv-tutup>Tutup</button></header>
+        <div id="pspv-konten" class="pratinjau-soal-konten"></div>
+        <footer class="esl-actions"><button type="button" class="btn btn-secondary" data-pspv-tutup>Kembali ke daftar</button><button type="button" class="btn btn-primary" id="pspv-edit">Edit soal</button></footer>
+      </section>`;
+    document.body.appendChild(el);
+    el.addEventListener('click', e => {
+      if (e.target === el || e.target.closest('[data-pspv-tutup]')) {
+        el.hidden = true;
+        document.body.classList.remove('esl-terbuka');
+      }
+    });
+    $('pspv-edit').addEventListener('click', () => {
+      const row = daftarSoalPaketAktif.find(x => String(x.id) === el.dataset.soalId);
+      el.hidden = true;
+      if (row) bukaEditorSoalPaket(row);
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !el.hidden) {
+        el.hidden = true;
+        document.body.classList.remove('esl-terbuka');
+      }
+    });
+  }
+  el.dataset.soalId = String(row.id);
+  $('pspv-meta').textContent = 'Soal ' + row.nomor_soal + ' · ' + namaMapel(s.mataPelajaran) + ' · ' + tipeSoal(s);
+  const isian = adaIsian(s);
+  $('pspv-konten').innerHTML = `
+    <div class="rev-body">
+      <div><p class="rev-sub">Pertanyaan</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div></div>
+      <div><p class="rev-sub">${isian ? 'Kunci jawaban' : 'Pilihan jawaban'}</p>${isian ? '<div class="isian-review"><div class="kunci"><span class="muted">Kunci bilangan cacah</span><strong>' + esc(s.jawaban) + '</strong></div></div>' : '<div class="opsi-list">' + opsiReviewHTML(s, undefined) + '</div>'}<p class="rev-ket"><span>Jawaban benar: <b>${esc(kunciHuruf(s))}</b></span></p></div>
+      <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
+    </div>`;
+  el.hidden = false;
+  document.body.classList.add('esl-terbuka');
+  rumus(el);
+}
+function bukaEditorSoalPaket(row) {
+  if (!ADMIN) return;
+  soalPaketTarget = { row, soal: normalisasiSoalPaket(row) };
+  soalLaporanTarget = null;
+  soalEditorTarget = null;
+  bukaEditorSoalLive();
+}
 async function mulaiTryoutPaket(id, nama, durasi) {
   if (!AkunApp.sesi()) return alert('Silakan masuk terlebih dahulu untuk mengikuti Tryout.');
   if (!ADMIN) return alert('Sesi Tryout untuk peserta belum diaktifkan. Saat ini paket Draft hanya dapat diuji oleh admin.');
@@ -1174,18 +1309,15 @@ function aktifkanInteraksiKartuTryout() {
   const wadah = $('daftar-paket-tryout');
   if (!wadah || wadah.dataset.interaksiTryout === '1') return;
   wadah.dataset.interaksiTryout = '1';
-  const buka = (target) => {
-    const kartu = target.closest('.tryout-paket[data-paket-id]');
-    if (!kartu) return;
-    mulaiTryoutPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout', kartu.dataset.paketDurasi);
-  };
-  wadah.addEventListener('click', (e) => buka(e.target));
-  wadah.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const kartu = e.target.closest('.tryout-paket[data-paket-id]');
-    if (!kartu) return;
+  wadah.addEventListener('click', (e) => {
+    const aksi = e.target.closest('[data-aksi-paket]');
+    if (!aksi) return;
     e.preventDefault();
-    buka(kartu);
+    e.stopPropagation();
+    const kartu = aksi.closest('.tryout-paket[data-paket-id]');
+    if (!kartu) return;
+    if (aksi.dataset.aksiPaket === 'kelola') bukaPengelolaSoalPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout');
+    if (aksi.dataset.aksiPaket === 'mulai') mulaiTryoutPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout', kartu.dataset.paketDurasi);
   });
 }
 
@@ -1953,10 +2085,10 @@ function bukaEditorSoalDariLaporan(id) {
 function bukaEditorSoalLive() {
   if (!ADMIN) return;
 
-  const s = soalLaporanTarget || soalEditorTarget ||
-    (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+  const s = soalPaketTarget ? soalPaketTarget.soal : (soalLaporanTarget || soalEditorTarget ||
+    (sesi && sesi.aktif ? sesi.soal[sesi.i] : null));
 
-  if (!s || !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id))) return;
+  if (!s || (!soalPaketTarget && !Object.prototype.hasOwnProperty.call(DefaultSoal.urutan, String(s.id)))) return;
 
   buatEditorSoalLive();
   editorSoalLiveFokus = document.activeElement;
@@ -2014,6 +2146,7 @@ function tutupEditorSoalLive() {
 
   soalLaporanTarget = null;
   soalEditorTarget = null;
+  soalPaketTarget = null;
 
   if (!el) return;
 
@@ -2030,8 +2163,8 @@ async function simpanEditorSoalLive(e) {
 
   const tombol = $('esl-simpan');
   const pesan = $('esl-pesan');
-  const lama = soalLaporanTarget || soalEditorTarget ||
-    (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+  const lama = soalPaketTarget ? soalPaketTarget.soal : (soalLaporanTarget || soalEditorTarget ||
+    (sesi && sesi.aktif ? sesi.soal[sesi.i] : null));
 
   if (!lama) {
     pesan.textContent = 'Soal yang akan disimpan tidak ditemukan. Tutup editor lalu buka kembali dari laporan.';
@@ -2086,11 +2219,14 @@ async function simpanEditorSoalLive(e) {
 
   // Tahap 1: simpan ke database. Jika tahap ini gagal, jangan ubah status laporan.
   try {
-    const hasilSimpan = await rest('soal_default?id=eq.' + encodeURIComponent(id), {
-      method: 'PATCH',
-      prefer: 'return=representation',
-      body: { data, diperbarui_pada: new Date().toISOString() }
-    });
+    const hasilSimpan = soalPaketTarget
+      ? await rest('tryout_soal?id=eq.' + encodeURIComponent(id) + '&paket_id=eq.' + encodeURIComponent(soalPaketTarget.row.paket_id), {
+          method: 'PATCH', prefer: 'return=representation', body: { data }
+        })
+      : await rest('soal_default?id=eq.' + encodeURIComponent(id), {
+          method: 'PATCH', prefer: 'return=representation',
+          body: { data, diperbarui_pada: new Date().toISOString() }
+        });
     if (!Array.isArray(hasilSimpan) || !hasilSimpan.length) {
       throw new Error('Server tidak mengonfirmasi perubahan. Periksa hak akses admin.');
     }
@@ -2113,12 +2249,18 @@ async function simpanEditorSoalLive(e) {
   if (diBank) Object.assign(diBank, data, { id });
 
   let catatanTampilan = '';
-  try {
-    DefaultSoal.asli[id] = kanon(sinId(lama));
-    DefaultSoal.simpanCache();
-  } catch (err) {
-    console.warn('Cache soal gagal diperbarui:', err);
-    catatanTampilan = ' Cache lokal perlu dimuat ulang.';
+  if (soalPaketTarget) {
+    soalPaketTarget.row.data = data;
+    daftarSoalPaketAktif = daftarSoalPaketAktif.map(row => String(row.id) === id ? soalPaketTarget.row : row);
+    renderDaftarSoalPaket();
+  } else {
+    try {
+      DefaultSoal.asli[id] = kanon(sinId(lama));
+      DefaultSoal.simpanCache();
+    } catch (err) {
+      console.warn('Cache soal gagal diperbarui:', err);
+      catatanTampilan = ' Cache lokal perlu dimuat ulang.';
+    }
   }
 
   if (soalLaporanTarget) {
@@ -5111,6 +5253,9 @@ let DATA_PERGURUAN_TINGGI = null;
 let DATA_PROGRAM_STUDI = new Map();
 let PETA_KAMPUS = new Map();
 let PETA_PRODI = new Map();
+let soalPaketTarget = null;
+let paketSoalAktif = null;
+let daftarSoalPaketAktif = [];
 function teksKampus(k) { return k.nama_pt; }
 function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang tidak diketahui'}`; }
 async function muatKampusProfil() {
