@@ -5453,7 +5453,7 @@ segarkanSoalBawaan();
         : { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
             form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
-        form: `<div class="ob-f">${lab('ob-in', 'Target PTN', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(draf.ptn)}" list="ob-ptn" autocomplete="off"><datalist id="ob-ptn"></datalist><small class="ob-catatan">Pilih kampus dari daftar agar program studinya bisa disesuaikan.</small></div>` };
+        form: `<div class="ob-f">${lab('ob-in', 'Target PTN', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(draf.ptn)}" list="ob-ptn" autocomplete="off"><datalist id="ob-ptn"></datalist></div>` };
       case 8: return { teks: bubble('Kalau begitu, program studi apa yang ingin kamu perjuangkan?'), tombol: 'Lanjut',
         form: (draf.ptn ? `<p class="ob-ctx">Target PTN: ${esc(draf.ptn)}</p>` : '') + `<div class="ob-f">${lab('ob-in', 'Program studi tujuan', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Pilih program studi dari daftar" value="${esc(draf.prodi)}" list="ob-prodi" autocomplete="off"><datalist id="ob-prodi"></datalist></div>` };
       case 9: return { teks: bubble('Sekarang, boleh tahu tanggal lahirmu?'), tombol: 'Lanjut',
