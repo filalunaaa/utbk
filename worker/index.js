@@ -157,6 +157,28 @@ export default {
       });
     }
 
+    // Serve the latest application script from the main GitHub branch.
+    // This keeps the live app in sync while the static asset bundle is refreshed separately.
+    if (url.pathname === "/js/app.js" && request.method === "GET") {
+      try {
+        const remote = await fetch("https://raw.githubusercontent.com/filalunaaa/utbk/main/js/app.js", {
+          headers: { "Accept": "text/plain" }
+        });
+        if (remote.ok) {
+          const headers = new Headers(remote.headers);
+          headers.delete("Content-Length");
+          headers.delete("Content-Encoding");
+          headers.delete("ETag");
+          headers.set("Content-Type", "application/javascript; charset=utf-8");
+          headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+          return new Response(await remote.text(), { status: 200, headers });
+        }
+      } catch (error) {
+        console.error("Gagal mengambil app.js terbaru dari GitHub:", error);
+      }
+      return env.ASSETS.fetch(request);
+    }
+
     if (url.pathname === "/api/berita") {
       if (request.method === "OPTIONS") {
         return new Response(null, { status: 204, headers: API_HEADERS });
