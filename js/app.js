@@ -4376,6 +4376,7 @@ document.querySelectorAll('.nav-link').forEach((a) => a.addEventListener('click'
   else if (a.dataset.hal === 'bank') renderBank();
   else if (a.dataset.hal === 'pengaturan') { renderPengaturan(); tampil('pengaturan'); }
   else if (a.dataset.hal === 'setup') tampil('setup');
+  else if (a.dataset.hal === 'tryout') tampil('tryout');
   else if (a.dataset.hal === 'koleksi') { renderKoleksiSoal(); tampil('koleksi'); }
  else if (a.dataset.hal === 'rekomendasi') { renderRekomendasi(); tampil('rekomendasi'); }
 else if (a.dataset.hal === 'profil') { renderProfil(!ProfilApp.ambil()); tampil('profil'); }
