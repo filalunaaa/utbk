@@ -4164,7 +4164,7 @@ function akhiriDenganKonfirmasi() {
 $('btn-keluar-ujian').addEventListener('click', () => {
   if (!sesi || !sesi.aktif) return tampil('menu');
   if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri === false) return selesai();
-  if (sesi.mode === 'tryout') konfirmUjian('Keluar dari Mode Ngebut?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri & lihat hasil', fn: selesai }, { label: 'Keluar tanpa menyimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
+  if (sesi.mode === 'tryout') konfirmUjian('Mau keluar ya?', 'Sesi sedang berjalan dan waktu tetap berjalan. Jika keluar tanpa menyelesaikan, jawaban sesi ini tidak disimpan ke statistik. Kamu juga bisa mengakhiri sekarang dan melihat hasil.', [{ label: 'Lanjut deh', kelas: 'btn-primary' }, { label: 'Akhiri aja, liat hasilnya', fn: selesai }, { label: 'Keluar, jangan disimpan', kelas: 'btn-bahaya', fn: batalSesi }]);
   else konfirmUjian('Kok? Yaudah aku bantu buat keluar deh', 'Soal yang udah kamu jawab tetap tercatat di statistik kok. Tapi kalo soal yang belum dijawab gabakal dihitung.', [{ label: 'Lanjut aja', kelas: 'btn-primary' }, { label: 'Pokoknya mau keluar', kelas: 'btn-bahaya', fn: batalSesi }]);
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('modal-ex').hidden = true; });
