@@ -1453,11 +1453,11 @@ konfirmUjian(
   'Tindakan ini gabisa dibatalin loh.',
   [
     {
-      label: 'gajadi deh',
+      label: 'Gajadi deh',
       kelas: 'btn-primary'
     },
     {
-      label: 'hapus aja',
+      label: 'Hapus aja',
       kelas: 'btn-bahaya',
       fn: () => {
         KoleksiSoal.simpan(
