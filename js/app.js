@@ -5165,7 +5165,7 @@ async function simpanFormProfil() {
     sekolah = kampusTeks;
     jurusan = prodiTeks.split(' — ')[0];
     angkatan = angkatanEl.value.trim();
-    if (angkatan && (!/^\\d{4}$/.test(angkatan) || Number(angkatan) < 1950 || Number(angkatan) > new Date().getFullYear())) return pesanProfil('Angkatan harus berupa tahun yang valid.');
+    if (angkatan && (!/^\d{4}$/.test(angkatan) || Number(angkatan) < 1950 || Number(angkatan) > new Date().getFullYear())) return pesanProfil('Angkatan harus berupa tahun yang valid.');
   } else {
     const sekolahEl = $('pf-sekolah'), jurusanEl = $('pf-jurusan'), targetEl = $('pf-target');
     if (!sekolahEl || !jurusanEl || !targetEl) {
