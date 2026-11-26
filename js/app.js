@@ -4985,8 +4985,18 @@ function teksKampus(k) { return k.nama_pt; }
 function teksProdi(p) { return `${p.nm_prodi} — ${p.nm_jenj_didik || 'Jenjang tidak diketahui'}`; }
 async function muatKampusProfil() {
   if (DATA_PERGURUAN_TINGGI) return DATA_PERGURUAN_TINGGI;
-  DATA_PERGURUAN_TINGGI = (await restSemua('perguruan_tinggi?select=npsn,nama_pt,provinsi_pt,nm_bp&order=nama_pt.asc'))
-    .filter((k) => ['Universitas', 'Institut'].includes(String(k.nm_bp || '').trim()));
+  const kampusIndonesia = await restSemua('perguruan_tinggi?select=npsn,nama_pt,provinsi_pt,nm_bp&order=nama_pt.asc');
+  const namaKampusLuarNegeri = new Set([
+    'Deakin University',
+    'Georgetown University',
+    "King's College London",
+    'Lancaster University',
+    'Western Sydney University'
+  ]);
+  DATA_PERGURUAN_TINGGI = kampusIndonesia.filter((k) =>
+    ['Universitas', 'Institut'].includes(String(k.nm_bp || '').trim()) &&
+    !namaKampusLuarNegeri.has(String(k.nama_pt || '').trim())
+  );
   PETA_KAMPUS = new Map(DATA_PERGURUAN_TINGGI.map((k) => [teksKampus(k), k]));
   return DATA_PERGURUAN_TINGGI;
 }
