@@ -1608,7 +1608,7 @@ function buatModalLaporanSoal() {
     }
   });
 
-  $('form-laporan-soal').addEventListener('submit', kirimLaporanSoal);
+  $('form-laporan-soal')?.addEventListener('submit', kirimLaporanSoal);
 }
 function tampilkanToast(teks) {
   const lama = document.getElementById('notifikasi-pytago');
@@ -3182,7 +3182,7 @@ wadah.querySelectorAll('[data-edit-laporan]').forEach((btn) => {
       </button>
     `;
 
-    $('btn-ulangi-muat-laporan').addEventListener('click', muatLaporanAdmin);
+    $('btn-ulangi-muat-laporan')?.addEventListener('click', muatLaporanAdmin);
   }
 }
 
@@ -4217,7 +4217,7 @@ $('chip-folder').addEventListener('change', (e) => {
 });
 $('btn-tambah-folder').addEventListener('click', tambahFolder);
 $('folder-baru').addEventListener('keydown', (e) => { if (e.key === 'Enter') tambahFolder(); });
-$('btn-ubah-folder').addEventListener('click', ubahNamaFolder);
+$('btn-ubah-folder')?.addEventListener('click', ubahNamaFolder);
 $('btn-hapus-folder').addEventListener('click', hapusFolder);
 $('btn-cetak').addEventListener('click', cetakPDF);
 
