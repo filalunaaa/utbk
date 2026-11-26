@@ -1065,6 +1065,42 @@ function grafikHTML(g) {
 function isiOpsi(html) {
   return `<div class="opsi-isi konten">${sanitize(html)}</div>`;
 }
+// ---------- Daftar paket Tryout dari Supabase ----------
+async function renderDaftarTryout() {
+  const wadah = $('daftar-paket-tryout');
+  if (!wadah) return;
+  wadah.innerHTML = '<div class="card tryout-empty"><span class="muted">Memuat paket tryout...</span></div>';
+  if (!AkunApp.sesi()) {
+    wadah.innerHTML = '<div class="card tryout-empty"><h3>Masuk untuk melihat paket</h3><p class="muted">Silakan masuk ke akun Pytago terlebih dahulu agar daftar paket tryout dapat dimuat.</p></div>';
+    return;
+  }
+  try {
+    const paket = await rest('tryout_paket?select=id,nama,deskripsi,kategori,durasi_menit,jumlah_soal,status,dibuat_pada&order=dibuat_pada.desc');
+    if (!Array.isArray(paket) || !paket.length) {
+      wadah.innerHTML = '<div class="card tryout-empty"><h3>Belum ada paket yang tersedia</h3><p class="muted">Paket tryout yang sudah diterbitkan akan muncul di sini.</p></div>';
+      return;
+    }
+    wadah.innerHTML = paket.map((p) => {
+      const status = p.status === 'published'
+        ? '<span class="tryout-status terbit">Tersedia</span>'
+        : (ADMIN ? '<span class="tryout-status draft">Draft · hanya admin</span>' : '');
+      const kategori = esc(String(p.kategori || 'Campuran').toUpperCase());
+      return `<article class="card tryout-paket">
+        <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
+        <h3>${esc(p.nama || 'Paket Tryout')}</h3>
+        <p class="muted tryout-paket-deskripsi">${esc(p.deskripsi || 'Paket latihan simulasi ujian.')}</p>
+        <div class="tryout-paket-meta">
+          <span><strong>${Number(p.jumlah_soal) || 0}</strong><small>Soal</small></span>
+          <span><strong>${Number(p.durasi_menit) || 0}</strong><small>Menit</small></span>
+        </div>
+      </article>`;
+    }).join('');
+  } catch (e) {
+    console.error('Gagal memuat paket tryout:', e);
+    wadah.innerHTML = '<div class="card tryout-empty"><h3>Paket belum dapat dimuat</h3><p class="muted">Terjadi kendala saat mengambil daftar paket. Coba muat ulang halaman.</p></div>';
+  }
+}
+
 function tampil(id) {
   terapkanAksesTamu();
   if (!AkunApp.sesi() && !['setup', 'tryout', 'kuis', 'hasil', 'review'].includes(id)) id = 'setup';
@@ -1087,6 +1123,7 @@ function tampil(id) {
   })[id] || 'menu';
   document.querySelectorAll('.halaman').forEach((h) => (h.hidden = h.id !== id));
   document.body.dataset.hal = id;
+  if (id === 'tryout') renderDaftarTryout();
   const tombolProfil = $('btn-profil');
   if (tombolProfil) tombolProfil.hidden = id === 'kuis';
   if (id === 'menu') renderBeranda();
