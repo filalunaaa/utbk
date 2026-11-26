@@ -5444,10 +5444,12 @@ segarkanSoalBawaan();
       case 4: return { teks: bubble('Sekarang kamu sedang berada di jenjang pendidikan apa?'), tombol: 'Lanjut',
         form: `<div class="ob-f" role="radiogroup" aria-label="Status pendidikan"><span class="ob-lab">Status pendidikan <span style="color:var(--ob-err)">*</span></span><div class="ob-grid2">${radio('ob-status', PROFIL_STATUS, p.statusPendidikan)}</div></div>` };
       case 5: return { teks: bubble('Di mana kamu sedang menempuh pendidikan?'), tombol: 'Lanjut',
-        form: teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
+        form: p.statusPendidikan === 'mahasiswa'
+          ? `<div class="ob-f">${lab('ob-kampus', 'Perguruan tinggi', true, false)}<input class="ob-input" id="ob-kampus" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(p.sekolah)}" list="ob-kampus-list" autocomplete="off"><datalist id="ob-kampus-list"></datalist></div>`
+          : teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
       case 6: return p.statusPendidikan === 'mahasiswa'
         ? { teks: bubble('Apa program studi yang sedang kamu tempuh saat ini?'), tombol: 'Lanjut',
-            form: teksIn('Program studi', {}, 'Contoh: Teknologi Laboratorium Medis', p.jurusan, 80, 'autocomplete="organization-title" ') }
+            form: `<div class="ob-f">${lab('ob-prodi-kuliah', 'Program studi', true, false)}<input class="ob-input" id="ob-prodi-kuliah" maxlength="120" placeholder="Pilih program studi sesuai kampus" value="${esc(p.jurusan)}" list="ob-prodi-kuliah-list" autocomplete="off"><datalist id="ob-prodi-kuliah-list"></datalist></div>` }
         : { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
             form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
@@ -5491,6 +5493,24 @@ segarkanSoalBawaan();
     OB.scrollTop = 0;
     const f = OB.querySelector('#ob-in,[name="ob-status"]:checked,[name="ob-status"],[name="ob-jur"]:checked,[name="ob-jur"],#ob-publik') || $('ob-lanjut');
     if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
+    if (tahap === 5 && ambilProfil().statusPendidikan === 'mahasiswa') {
+      muatKampusProfil().then((kampus) => {
+        const list = $('ob-kampus-list');
+        if (list) list.innerHTML = kampus.map((k) => `<option value="${esc(teksKampus(k))}"></option>`).join('');
+      }).catch((e) => { console.error('Gagal memuat kampus onboarding:', e); pesan('Daftar kampus belum bisa dimuat. Periksa koneksi lalu coba lagi.'); });
+    }
+    if (tahap === 6 && ambilProfil().statusPendidikan === 'mahasiswa') {
+      (async () => {
+        try {
+          const kampus = await muatKampusProfil();
+          const k = kampus.find((x) => x.npsn === ambilProfil().perguruanTinggiNpsn);
+          if (!k) { pesan('Pilih perguruan tinggi terlebih dahulu pada langkah sebelumnya.'); return; }
+          const prodi = await muatProdiProfil(k.npsn);
+          const list = $('ob-prodi-kuliah-list');
+          if (list) list.innerHTML = prodi.map((p) => `<option value="${esc(teksProdi(p))}"></option>`).join('');
+        } catch (e) { console.error('Gagal memuat program studi onboarding:', e); pesan('Daftar program studi belum bisa dimuat. Coba kembali sebentar lagi.'); }
+      })();
+    }
     if (tahap === 7) {
       muatKampusProfil().then((kampus) => {
         const list = $('ob-ptn');
@@ -5581,11 +5601,27 @@ segarkanSoalBawaan();
         case 2: return atur(3);
         case 3: await simpanProfil({ deskripsi: val() }); return atur(4);
         case 4: { const s = OB.querySelector('[name="ob-status"]:checked'); if (!s) return pesan('Pilih status pendidikanmu dulu.'); await simpanProfil({ statusPendidikan: s.value }); return atur(5); }
-        case 5: await simpanProfil({ sekolah: val() }); return atur(6);
+        case 5: {
+          if (ambilProfil().statusPendidikan === 'mahasiswa') {
+            const namaKampus = $('ob-kampus') ? $('ob-kampus').value.trim() : '';
+            const kampus = await muatKampusProfil();
+            const k = kampus.find((x) => teksKampus(x) === namaKampus);
+            if (!k) return pesan('Pilih perguruan tinggi dari daftar yang tersedia.');
+            await simpanProfil({ sekolah: teksKampus(k), perguruanTinggiNpsn: k.npsn, programStudiId: '' });
+          } else await simpanProfil({ sekolah: val() });
+          return atur(6);
+        }
         case 6: {
-          const j = OB.querySelector('[name="ob-jur"]:checked');
-          const jurusan = j ? j.value : ($('ob-in') ? $('ob-in').value.trim() : '');
-          await simpanProfil({ jurusan });
+          if (ambilProfil().statusPendidikan === 'mahasiswa') {
+            const namaProdi = $('ob-prodi-kuliah') ? $('ob-prodi-kuliah').value.trim() : '';
+            const data = await muatProdiProfil(ambilProfil().perguruanTinggiNpsn);
+            const prodi = data.find((x) => teksProdi(x) === namaProdi);
+            if (!prodi) return pesan('Pilih program studi dari daftar sesuai perguruan tinggi.');
+            await simpanProfil({ jurusan: prodi.nm_prodi, programStudiId: String(prodi.id) });
+          } else {
+            const j = OB.querySelector('[name="ob-jur"]:checked');
+            await simpanProfil({ jurusan: j ? j.value : '' });
+          }
           return atur(ambilProfil().statusPendidikan === 'mahasiswa' ? 9 : 7);
         }
         case 7: {
@@ -5648,6 +5684,15 @@ segarkanSoalBawaan();
     OB.querySelectorAll('[data-ob-av]').forEach((b) => b.classList.toggle('aktif', !!a && a.tipe === 'preset' && a.id === b.dataset.obAv));
   }
   OB.addEventListener('change', async (e) => {
+    if (e.target.id === 'ob-kampus') {
+      const kampus = await muatKampusProfil().catch(() => []);
+      const k = kampus.find((x) => teksKampus(x) === e.target.value.trim());
+      if (k) {
+        const p = ambilProfil();
+        ProfilApp.simpan({ ...p, sekolah: teksKampus(k), perguruanTinggiNpsn: k.npsn, programStudiId: '' });
+      }
+      return;
+    }
     if (e.target.id === 'ob-ptn') {
       const kampus = await muatKampusProfil().catch(() => []);
       const k = kampus.find((x) => teksKampus(x) === e.target.value.trim());
