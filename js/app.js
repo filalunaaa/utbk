@@ -5475,7 +5475,7 @@ segarkanSoalBawaan();
 
   function avatarHTML(p) {
     const a = avatarTersimpan();
-    return `<div class="ob-f"><span class="ob-lab">Foto profil <em class="ob-opt">opsional</em></span>
+    return `<div class="ob-f"><span class="ob-lab">Foto profil</span>
       <div class="ob-av-baris"><div class="ob-av-prev" id="ob-av-prev">${avatarIsi(p.nama)}</div>
       <button type="button" class="ob-btn kecil" data-ob-galeri>Unggah foto</button>
       <button type="button" class="ob-btn kecil" data-ob-inisial>Pakai inisial</button></div>
@@ -5488,7 +5488,7 @@ segarkanSoalBawaan();
       case 0: return { teks: bubble('Hai! Aku NARO. Sebelum mulai belajar, aku ingin mengenalmu lebih dulu. Yuk, kita berkenalan!', 'Siapa nama lengkapmu?'), tombol: 'Lanjut',
         form: teksIn('Nama lengkap', { wajib: true }, 'Masukkan nama lengkapmu', p.nama, 50, 'autocomplete="name" ') };
       case 1: return { teks: bubble('Selanjutnya, kita buat identitas unik untukmu di Nalarine!'), tombol: 'Lanjut',
-        form: `<div class="ob-f">${lab('ob-in', 'Username', false, true)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: khabib_nurmagomedov" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
+        form: `<div class="ob-f">${lab('ob-in', 'Username', true, false)}<input class="ob-input" id="ob-in" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Contoh: khabib_nurmagomedov" value="${esc(p.username)}"><small class="ob-cekuser" id="ob-cekuser">Username wajib diisi. Gunakan huruf kecil, angka, dan _ (3-20 karakter).</small></div>` };
       case 2: return { teks: bubble('Yuk, pilih foto profil yang paling menggambarkan dirimu!'), tombol: 'Lanjut', form: avatarHTML(p) };
       case 3: return { teks: bubble('Sekarang ceritakan sedikit tentang dirimu. Apa yang sedang kamu perjuangkan?'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Deskripsi singkat', false, true)}<textarea class="ob-input" id="ob-in" maxlength="300" rows="4" placeholder="Contoh: Sedang mempersiapkan UTBK 2027 dengan fokus pada PKPM.">${esc(p.deskripsi)}</textarea><span class="ob-hit" id="ob-hit">${(p.deskripsi || '').length}/300</span></div>` };
@@ -5497,20 +5497,20 @@ segarkanSoalBawaan();
       case 5: return { teks: bubble('Di mana kamu sedang menempuh pendidikan?'), tombol: 'Lanjut',
         form: p.statusPendidikan === 'mahasiswa'
           ? `<div class="ob-f">${lab('ob-kampus', 'Perguruan tinggi', true, false)}<input class="ob-input" id="ob-kampus" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(p.sekolah)}" list="ob-kampus-list" autocomplete="off"><datalist id="ob-kampus-list"></datalist></div>`
-          : teksIn('Sekolah atau kampus', {}, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
+          : teksIn('Sekolah', { wajib: true }, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
       case 6: return p.statusPendidikan === 'mahasiswa'
         ? { teks: bubble('Apa program studi yang sedang kamu tempuh saat ini?'), tombol: 'Lanjut',
             form: `<div class="ob-f">${lab('ob-prodi-kuliah', 'Program studi', true, false)}<input class="ob-input" id="ob-prodi-kuliah" maxlength="120" placeholder="Pilih program studi sesuai kampus" value="${esc(p.jurusan)}" list="ob-prodi-kuliah-list" autocomplete="off"><datalist id="ob-prodi-kuliah-list"></datalist></div>` }
         : { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
-            form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <em class="ob-opt">opsional</em></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
+            form: `<div class="ob-f" role="radiogroup" aria-label="Jurusan"><span class="ob-lab">Jurusan <span style="color:var(--ob-err)">*</span></span><div class="ob-grid2">${radio('ob-jur', PROFIL_JURUSAN, p.jurusan)}</div></div>` };
       case 7: return { teks: bubble('Sudah punya kampus impian? Aku penasaran dengan targetmu!'), tombol: 'Lanjut',
-        form: `<div class="ob-f">${lab('ob-in', 'Target PTN', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(draf.ptn)}" list="ob-ptn" autocomplete="off"><datalist id="ob-ptn"></datalist></div>` };
+        form: `<div class="ob-f">${lab('ob-in', 'Target PTN', true, false)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(draf.ptn)}" list="ob-ptn" autocomplete="off"><datalist id="ob-ptn"></datalist></div>` };
       case 8: return { teks: bubble('Kalau begitu, program studi apa yang ingin kamu perjuangkan?'), tombol: 'Lanjut',
-        form: (draf.ptn ? `<p class="ob-ctx">Target PTN: ${esc(draf.ptn)}</p>` : '') + `<div class="ob-f">${lab('ob-in', 'Program studi tujuan', false, true)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Pilih program studi dari daftar" value="${esc(draf.prodi)}" list="ob-prodi" autocomplete="off"><datalist id="ob-prodi"></datalist></div>` };
+        form: (draf.ptn ? `<p class="ob-ctx">Target PTN: ${esc(draf.ptn)}</p>` : '') + `<div class="ob-f">${lab('ob-in', 'Program studi tujuan', true, false)}<input class="ob-input" id="ob-in" maxlength="120" placeholder="Pilih program studi dari daftar" value="${esc(draf.prodi)}" list="ob-prodi" autocomplete="off"><datalist id="ob-prodi"></datalist></div>` };
       case 9: return { teks: bubble('Sekarang, boleh tahu tanggal lahirmu?'), tombol: 'Lanjut',
         form: `<div class="ob-f">${lab('ob-in', 'Tanggal lahir', false, true)}<input class="ob-input" type="date" id="ob-in" max="${hariIni()}" value="${esc(p.tanggalLahir)}"></div><p class="ob-catatan">Tanggal lahir tidak pernah ditampilkan ke orang lain.</p>` };
       case 10: return { teks: bubble('Kamu tinggal di kota mana?'), tombol: 'Lanjut',
-        form: teksIn('Kota domisili', {}, 'Contoh: Dagestan', p.kota, 40, 'autocomplete="address-level2" ') };
+        form: teksIn('Kota domisili', { wajib: false }, 'Contoh: Dagestan', p.kota, 40, 'autocomplete="address-level2" ') };
       case 11: return { teks: bubble('Hampir selesai! Sekarang atur informasi mana yang boleh dilihat orang lain.'), tombol: 'Simpan dan selesai',
         form: `<label class="ob-switch"><input type="checkbox" id="ob-publik" ${p.publik ? 'checked' : ''}><span><b>Tampilkan profil di link publik</b><small>Orang lain bisa membuka profilmu lewat link. Hanya nama, username, avatar, dan deskripsi yang tampil.</small></span></label>
         <div class="ob-f" id="ob-wadah-user" ${p.publik && !p.username ? '' : 'hidden'}><label for="ob-username2">Username untuk link publik</label><input class="ob-input" id="ob-username2" maxlength="20" autocapitalize="none" autocomplete="off" placeholder="huruf kecil, angka, atau _ (3-20 karakter)" value="${esc(p.username)}"></div>
@@ -5604,7 +5604,7 @@ segarkanSoalBawaan();
     renderProfil(false); renderSalam();
   }
   async function cekUsername(u) {
-    if (!u) return true;
+    if (!u) { pesan('Username wajib diisi.'); return false; }
     if (!/^[a-z0-9_]{3,20}$/.test(u)) { pesan('Username hanya boleh huruf kecil, angka, dan _ (3-20 karakter).'); return false; }
     if (u === (ambilProfil().username || '')) return true;
     try {
@@ -5619,7 +5619,7 @@ segarkanSoalBawaan();
     if (!el) return;
     clearTimeout(timerUser);
     const set = (kelas, t) => { el.className = 'ob-cekuser' + (kelas ? ' ' + kelas : ''); el.textContent = t; };
-    if (!u) return set('', 'Huruf kecil, angka, dan _ (3-20 karakter). Boleh dikosongkan.');
+    if (!u) return set('salah', 'Username wajib diisi.');
     if (!/^[a-z0-9_]{3,20}$/.test(u)) return set('salah', 'Hanya huruf kecil, angka, dan _ (3-20 karakter).');
     if (u === (ambilProfil().username || '')) return set('ok', 'Username ini sudah milikmu.');
     set('', 'Memeriksa ketersediaan...');
@@ -5653,6 +5653,7 @@ segarkanSoalBawaan();
         case 3: await simpanProfil({ deskripsi: val() }); return atur(4);
         case 4: { const s = OB.querySelector('[name="ob-status"]:checked'); if (!s) return pesan('Pilih status pendidikanmu dulu.'); await simpanProfil({ statusPendidikan: s.value }); return atur(5); }
         case 5: {
+          if (ambilProfil().statusPendidikan !== 'mahasiswa' && !val()) return pesan('Nama sekolah wajib diisi.');
           if (ambilProfil().statusPendidikan === 'mahasiswa') {
             const namaKampus = $('ob-kampus') ? $('ob-kampus').value.trim() : '';
             const kampus = await muatKampusProfil();
@@ -5671,7 +5672,8 @@ segarkanSoalBawaan();
             await simpanProfil({ jurusan: prodi.nm_prodi, programStudiId: String(prodi.id) });
           } else {
             const j = OB.querySelector('[name="ob-jur"]:checked');
-            await simpanProfil({ jurusan: j ? j.value : '' });
+            if (!j) return pesan('Pilih jurusan terlebih dahulu.');
+            await simpanProfil({ jurusan: j.value });
           }
           return atur(ambilProfil().statusPendidikan === 'mahasiswa' ? 9 : 7);
         }
