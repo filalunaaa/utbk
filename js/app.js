@@ -1448,20 +1448,30 @@ $('isi-koleksi-soal').addEventListener('click', e => {
 
   const b = e.target.closest('[data-koleksi-hapus]');
   if (!b) return;
+konfirmUjian(
+  'Hapus soal dari koleksi?',
+  'Soal ini akan dihapus dari koleksi kamu. Tindakan ini tidak dapat dibatalkan.',
+  [
+    {
+      label: 'Batal',
+      kelas: 'btn-primary'
+    },
+    {
+      label: 'Ya, hapus soal',
+      kelas: 'btn-bahaya',
+      fn: () => {
+        KoleksiSoal.simpan(
+          KoleksiSoal.ambil().filter(
+            x => String(x.id) !== b.dataset.koleksiHapus
+          )
+        );
 
-  const yakin = confirm('Yakin nih mau hapus koleksi soal nya?');
-  if (!yakin) return;
-
-  KoleksiSoal.simpan(
-    KoleksiSoal.ambil().filter(
-      x => String(x.id) !== b.dataset.koleksiHapus
-    )
-  );
-
-  renderKoleksiSoal();
-  tampilkanToast('Soal dihapus dari koleksi.');
-});
-                                                   
+        renderKoleksiSoal();
+        tampilkanToast('Soal dihapus dari koleksi.');
+      }
+    }
+  ]
+);                                     
 function renderSoal() {
   const { soal, jawab, kunci, i, mode } = sesi;
   const s = soal[i];
