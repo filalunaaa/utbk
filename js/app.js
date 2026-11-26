@@ -5420,6 +5420,7 @@ segarkanSoalBawaan();
       try { localStorage.setItem(KUNCI, JSON.stringify(v)); localStorage.setItem(KUNCI_LOKAL, JSON.stringify(v)); } catch (e) {}
     }
   };
+  const statusKuliah = (v) => v === 'mahasiswa' || v === 'alumni';
   const profilLengkap = (p) => !!(p && String(p.nama || '').trim() && p.statusPendidikan);
   let tahap = 0, sibuk = false, terbuka = false, memuat = false, jedaMuat = null, timerUser = null;
   const root = document.documentElement;
@@ -5495,10 +5496,10 @@ segarkanSoalBawaan();
       case 4: return { teks: bubble('Sekarang kamu sedang berada di jenjang pendidikan apa?'), tombol: 'Lanjut',
         form: `<div class="ob-f" role="radiogroup" aria-label="Status pendidikan"><span class="ob-lab">Status pendidikan <span style="color:var(--ob-err)">*</span></span><div class="ob-grid2">${radio('ob-status', PROFIL_STATUS, p.statusPendidikan)}</div></div>` };
       case 5: return { teks: bubble('Di mana kamu sedang menempuh pendidikan?'), tombol: 'Lanjut',
-        form: p.statusPendidikan === 'mahasiswa'
+        form: statusKuliah(p.statusPendidikan)
           ? `<div class="ob-f">${lab('ob-kampus', 'Perguruan tinggi', true, false)}<input class="ob-input" id="ob-kampus" maxlength="120" placeholder="Ketik nama universitas atau institut" value="${esc(p.sekolah)}" list="ob-kampus-list" autocomplete="off"><datalist id="ob-kampus-list"></datalist></div>`
           : teksIn('Sekolah', { wajib: true }, 'Contoh: SMA Negeri 1 Sildi', p.sekolah, 80, 'autocomplete="organization" ') };
-      case 6: return p.statusPendidikan === 'mahasiswa'
+      case 6: return statusKuliah(p.statusPendidikan)
         ? { teks: bubble('Apa program studi yang sedang kamu tempuh saat ini?'), tombol: 'Lanjut',
             form: `<div class="ob-f">${lab('ob-prodi-kuliah', 'Program studi', true, false)}<input class="ob-input" id="ob-prodi-kuliah" maxlength="120" placeholder="Pilih program studi sesuai kampus" value="${esc(p.jurusan)}" list="ob-prodi-kuliah-list" autocomplete="off"><datalist id="ob-prodi-kuliah-list"></datalist></div>` }
         : { teks: bubble('Apa jurusan atau bidang studimu saat ini?'), tombol: 'Lanjut',
@@ -5523,9 +5524,9 @@ segarkanSoalBawaan();
   function render(mundur) {
     const p = ambilProfil(), k = isiLangkah(p), L = LANGKAH[tahap] || LANGKAH[12];
     const akhir = tahap >= TOTAL;
-    const mahasiswa = p.statusPendidikan === 'mahasiswa';
-    const jumlahPertanyaan = mahasiswa ? TOTAL - 2 : TOTAL;
-    const tahapTampil = mahasiswa && tahap >= 7 && !akhir ? tahap - 2 : tahap;
+    const kuliah = statusKuliah(p.statusPendidikan);
+    const jumlahPertanyaan = kuliah ? TOTAL - 2 : TOTAL;
+    const tahapTampil = kuliah && tahap >= 7 && !akhir ? tahap - 2 : tahap;
     const nomor = Math.min(tahapTampil + 1, jumlahPertanyaan);
     const label = akhir ? 'Selesai' : `Pertanyaan ${nomor} dari ${jumlahPertanyaan}`;
     OB.innerHTML = `<div class="ob-wrap">
@@ -5544,13 +5545,13 @@ segarkanSoalBawaan();
     OB.scrollTop = 0;
     const f = OB.querySelector('#ob-in,[name="ob-status"]:checked,[name="ob-status"],[name="ob-jur"]:checked,[name="ob-jur"],#ob-publik') || $('ob-lanjut');
     if (f) setTimeout(() => f.focus({ preventScroll: true }), 60);
-    if (tahap === 5 && ambilProfil().statusPendidikan === 'mahasiswa') {
+    if (tahap === 5 && statusKuliah(ambilProfil().statusPendidikan)) {
       muatKampusProfil().then((kampus) => {
         const list = $('ob-kampus-list');
         if (list) list.innerHTML = kampus.map((k) => `<option value="${esc(teksKampus(k))}"></option>`).join('');
       }).catch((e) => { console.error('Gagal memuat kampus onboarding:', e); pesan('Daftar kampus belum bisa dimuat. Periksa koneksi lalu coba lagi.'); });
     }
-    if (tahap === 6 && ambilProfil().statusPendidikan === 'mahasiswa') {
+    if (tahap === 6 && statusKuliah(ambilProfil().statusPendidikan)) {
       (async () => {
         try {
           const kampus = await muatKampusProfil();
@@ -5653,8 +5654,8 @@ segarkanSoalBawaan();
         case 3: await simpanProfil({ deskripsi: val() }); return atur(4);
         case 4: { const s = OB.querySelector('[name="ob-status"]:checked'); if (!s) return pesan('Pilih status pendidikanmu dulu.'); await simpanProfil({ statusPendidikan: s.value }); return atur(5); }
         case 5: {
-          if (ambilProfil().statusPendidikan !== 'mahasiswa' && !val()) return pesan('Nama sekolah wajib diisi.');
-          if (ambilProfil().statusPendidikan === 'mahasiswa') {
+          if (!statusKuliah(ambilProfil().statusPendidikan) && !val()) return pesan('Nama sekolah wajib diisi.');
+          if (statusKuliah(ambilProfil().statusPendidikan)) {
             const namaKampus = $('ob-kampus') ? $('ob-kampus').value.trim() : '';
             const kampus = await muatKampusProfil();
             const k = kampus.find((x) => teksKampus(x) === namaKampus);
@@ -5664,7 +5665,7 @@ segarkanSoalBawaan();
           return atur(6);
         }
         case 6: {
-          if (ambilProfil().statusPendidikan === 'mahasiswa') {
+          if (statusKuliah(ambilProfil().statusPendidikan)) {
             const namaProdi = $('ob-prodi-kuliah') ? $('ob-prodi-kuliah').value.trim() : '';
             const data = await muatProdiProfil(ambilProfil().perguruanTinggiNpsn);
             const prodi = data.find((x) => teksProdi(x) === namaProdi);
@@ -5675,7 +5676,7 @@ segarkanSoalBawaan();
             if (!j) return pesan('Pilih jurusan terlebih dahulu.');
             await simpanProfil({ jurusan: j.value });
           }
-          return atur(ambilProfil().statusPendidikan === 'mahasiswa' ? 9 : 7);
+          return atur(statusKuliah(ambilProfil().statusPendidikan) ? 9 : 7);
         }
         case 7: {
           draf.ptn = val();
@@ -5722,7 +5723,7 @@ segarkanSoalBawaan();
   OB.addEventListener('click', async (e) => {
     const t = e.target;
     if (t.closest('[data-ob-kembali]')) {
-      if (tahap > 0) atur(tahap === 9 && ambilProfil().statusPendidikan === 'mahasiswa' ? 6 : tahap - 1, true);
+      if (tahap > 0) atur(tahap === 9 && statusKuliah(ambilProfil().statusPendidikan) ? 6 : tahap - 1, true);
       return;
     }
     if (t.closest('[data-ob-keluar]')) { await aksiAkun('keluar'); return; }
@@ -5800,7 +5801,7 @@ segarkanSoalBawaan();
   draf = (s && (s.ptn || s.prodi))
     ? { ptn: s.ptn, prodi: s.prodi }
     : pecahTarget(ambilProfil().target);
-  if (ambilProfil().statusPendidikan === 'mahasiswa' && (tahap === 7 || tahap === 8)) tahap = 9;
+  if (statusKuliah(ambilProfil().statusPendidikan) && (tahap === 7 || tahap === 8)) tahap = 9;
 
   render();
 };
@@ -5820,7 +5821,7 @@ segarkanSoalBawaan();
     draf = (s && (s.ptn || s.prodi)) ? { ptn: s.ptn, prodi: s.prodi } : pecahTarget(ambilProfil().target);
     // data profil sudah terisi (misal progres format lama): jangan mengulang dari nama
     if (tahap === 0 && String(ambilProfil().nama).trim()) tahap = 1;
-    if (ambilProfil().statusPendidikan === 'mahasiswa' && (tahap === 7 || tahap === 8)) tahap = 9;
+    if (statusKuliah(ambilProfil().statusPendidikan) && (tahap === 7 || tahap === 8)) tahap = 9;
     render();
   };
   window.tutupOnboarding = tutup;
