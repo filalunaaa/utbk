@@ -975,21 +975,34 @@ function sumberSoal() {
 // ---------- Helper ----------
 const antreanMathJax = new Set();
 let pendengarMathJax = false;
-function rumus(el) {
-  if (el && window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-    window.MathJax.typesetPromise([el]).catch(() => {});
-  } else if (el) {
-    // MathJax dimuat secara async. Simpan elemen yang menunggu agar tidak terlewat
-    // ketika konten soal/pembahasan dirender sebelum pustaka selesai dimuat.
+async function rumus(el) {
+  if (!el) return;
+  if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+    try {
+      // Tunggu MathJax selesai inisialisasi agar render tidak mendahului startup.
+      if (window.MathJax.startup && window.MathJax.startup.promise) {
+        await window.MathJax.startup.promise;
+      }
+      if (window.MathJax.typesetClear) window.MathJax.typesetClear([el]);
+      await window.MathJax.typesetPromise([el]);
+    } catch (err) {
+      console.warn('MathJax gagal merender konten:', err);
+    }
+  } else {
     antreanMathJax.add(el);
     const skripMathJax = document.getElementById('MathJax-script');
     if (skripMathJax && !pendengarMathJax) {
       pendengarMathJax = true;
-      skripMathJax.addEventListener('load', () => {
+      skripMathJax.addEventListener('load', async () => {
         const target = [...antreanMathJax].filter((node) => node.isConnected);
         antreanMathJax.clear();
         if (target.length && window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-          window.MathJax.typesetPromise(target).catch(() => {});
+          try {
+            if (window.MathJax.startup && window.MathJax.startup.promise) await window.MathJax.startup.promise;
+            await window.MathJax.typesetPromise(target);
+          } catch (err) {
+            console.warn('MathJax gagal merender antrean:', err);
+          }
         }
       }, { once: true });
     }
