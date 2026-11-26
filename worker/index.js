@@ -131,22 +131,18 @@ export default {
       if (!page.ok) return page;
       let html = await page.text();
       const imageUrl = "https://id.nalarine.workers.dev/og-image.png?v=4";
-      html = html.replace(
-        /https:\/\/id\\.nalarine\\.workers\\.dev\/og-image\\.(?:jpg|png)(?:\\?v=\\d+)?/g,
-        imageUrl
-      );
-      if (!/<meta\\s+property=["']og:image["']/i.test(html)) {
-        html = html.replace(
-          /<\\/head>/i,
+      html = html.split("https://id.nalarine.workers.dev/og-image.jpg?v=2").join(imageUrl);
+      html = html.split("https://id.nalarine.workers.dev/og-image.png?v=3").join(imageUrl);
+      if (!html.includes('property="og:image"')) {
+        const socialTags =
           '<meta property="og:image" content="' + imageUrl + '">' +
           '<meta property="og:image:secure_url" content="' + imageUrl + '">' +
           '<meta property="og:image:type" content="image/jpeg">' +
           '<meta property="og:image:width" content="1376">' +
           '<meta property="og:image:height" content="768">' +
           '<meta name="twitter:card" content="summary_large_image">' +
-          '<meta name="twitter:image" content="' + imageUrl + '">' +
-          '</head>'
-        );
+          '<meta name="twitter:image" content="' + imageUrl + '">';
+        html = html.replace("</head>", socialTags + "</head>");
       }
       const headers = new Headers(page.headers);
       headers.delete("Content-Length");
