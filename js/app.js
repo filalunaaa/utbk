@@ -1900,80 +1900,133 @@ function tutupEditorSoalLive() {
 }
 async function simpanEditorSoalLive(e) {
   e.preventDefault();
-if (!ADMIN) return;
+  if (!ADMIN) return;
 
-const tombol = $('esl-simpan');
-const pesan = $('esl-pesan');
-const lama = soalLaporanTarget || soalEditorTarget ||
-  (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
+  const tombol = $('esl-simpan');
+  const pesan = $('esl-pesan');
+  const lama = soalLaporanTarget || soalEditorTarget ||
+    (sesi && sesi.aktif ? sesi.soal[sesi.i] : null);
 
-if (!lama) return;
+  if (!lama) {
+    pesan.textContent = 'Soal yang akan disimpan tidak ditemukan. Tutup editor lalu buka kembali dari laporan.';
+    return;
+  }
+
   const tipe = tipeSoal(lama);
   const soal = $('esl-soal').value.trim();
   const pembahasan = $('esl-pembahasan').value.trim();
-  if (!soal || !pembahasan) { pesan.textContent = 'Pertanyaan dan pembahasan wajib diisi.'; return; }
+  if (!soal || !pembahasan) {
+    pesan.textContent = 'Pertanyaan dan pembahasan wajib diisi.';
+    return;
+  }
+
   const jumlahOpsi = Number($('esl-opsi-wrap').dataset.jumlah || 5);
-  const opsi = tipe === 'isian' ? [] : Array.from({length:jumlahOpsi},(_,i)=>$('esl-opsi-' + i).value.trim());
-  if (tipe !== 'isian' && opsi.some((x)=>!x)) { pesan.textContent = 'Semua opsi harus diisi.'; return; }
+  const opsi = tipe === 'isian' ? [] : Array.from(
+    { length: jumlahOpsi },
+    (_, i) => $('esl-opsi-' + i).value.trim()
+  );
+  if (tipe !== 'isian' && opsi.some((x) => !x)) {
+    pesan.textContent = 'Semua opsi harus diisi.';
+    return;
+  }
+
   let jawaban;
   if (tipe === 'pg') jawaban = Number($('esl-kunci-pg').value);
-  else if (tipe === 'kompleks') jawaban = [...document.querySelectorAll('[data-esl-kunci]:checked')].map(x=>Number(x.value)).sort((a,b)=>a-b);
-  else jawaban = Number($('esl-kunci-isian').value);
-  if (tipe === 'kompleks' && !jawaban.length) { pesan.textContent = 'Pilih minimal satu opsi yang benar.'; return; }
-  if (tipe === 'isian' && (!Number.isSafeInteger(jawaban) || jawaban < 0)) { pesan.textContent = 'Kunci isian harus bilangan cacah.'; return; }
+  else if (tipe === 'kompleks') {
+    jawaban = [...document.querySelectorAll('[data-esl-kunci]:checked')]
+      .map((x) => Number(x.value)).sort((a, b) => a - b);
+  } else jawaban = Number($('esl-kunci-isian').value);
+
+  if (tipe === 'kompleks' && !jawaban.length) {
+    pesan.textContent = 'Pilih minimal satu opsi yang benar.';
+    return;
+  }
+  if (tipe === 'isian' && (!Number.isSafeInteger(jawaban) || jawaban < 0)) {
+    pesan.textContent = 'Kunci isian harus bilangan cacah.';
+    return;
+  }
+
   const id = String(lama.id);
-  const data = { ...sinId(lama), soal: sanitize(soal), opsi: opsi.map(sanitize), jawaban, pembahasan: sanitize(pembahasan) };
+  const data = {
+    ...sinId(lama),
+    soal: sanitize(soal),
+    opsi: opsi.map(sanitize),
+    jawaban,
+    pembahasan: sanitize(pembahasan)
+  };
+
   tombol.disabled = true;
   pesan.textContent = 'Menyimpan perubahan ke server...';
+
+  // Tahap 1: simpan ke database. Jika tahap ini gagal, jangan ubah status laporan.
   try {
     const hasilSimpan = await rest('soal_default?id=eq.' + encodeURIComponent(id), {
-      method: 'PATCH', prefer: 'return=representation',
+      method: 'PATCH',
+      prefer: 'return=representation',
       body: { data, diperbarui_pada: new Date().toISOString() }
     });
-    if (!Array.isArray(hasilSimpan) || !hasilSimpan.length) throw new Error('Server tidak mengonfirmasi perubahan. Periksa hak akses admin.');
-    Object.assign(lama, data, { id });
-    if (sesi && Array.isArray(sesi.soal)) {
-      const diSesi = sesi.soal.find(x => String(x.id) === id);
-      if (diSesi) Object.assign(diSesi, data, { id });
+    if (!Array.isArray(hasilSimpan) || !hasilSimpan.length) {
+      throw new Error('Server tidak mengonfirmasi perubahan. Periksa hak akses admin.');
     }
-    const diBank = SOAL.find(x=>String(x.id)===id);
-    if (diBank) Object.assign(diBank, data, { id });
-    DefaultSoal.asli[id] = kanon(sinId(lama));
-    DefaultSoal.simpanCache();
-    pesan.textContent = 'Tersimpan. Pengguna lain akan menerima pembaruan otomatis dalam sekitar 15 detik.';
-    if (sesi && sesi.aktif) renderSoal();
-    if ($('review') && !$('review').hidden) renderReviewIsi();
-    if ($('riwayat-detail') && !$('riwayat-detail').hidden) renderDetailSesi();
-
-if (soalLaporanTarget) {
-  try {
-    await rest(
-      'laporan_soal?question_id=eq.' + encodeURIComponent(id) + '&status=neq.selesai',
-      {
-        method: 'PATCH',
-        prefer: 'return=representation',
-        body: {
-          status: 'selesai'
-        }
-      }
-    );
-
-    soalLaporanTarget = null;
-    await muatLaporanAdmin();
-
   } catch (err) {
-    console.error('Gagal memperbarui status laporan:', err);
-    pesan.textContent =
-      'Soal berhasil disimpan, tetapi status laporan gagal diperbarui: ' + err.message;
+    console.error('Gagal menyimpan soal ke database:', err);
+    pesan.textContent = 'Gagal menyimpan ke database: ' +
+      (err && err.message ? err.message : 'Periksa koneksi dan izin admin.');
     tombol.disabled = false;
     return;
   }
-}
-setTimeout(tutupEditorSoalLive, 700);
-  } catch (err) {
-    pesan.textContent = 'Gagal menyimpan: ' + (err && err.message ? err.message : 'Periksa koneksi dan izin admin.');
-    tombol.disabled = false;
+
+  // Database sudah mengonfirmasi penyimpanan. Semua pembaruan tampilan/cache
+  // dipisahkan agar kegagalan render tidak keliru dilaporkan sebagai gagal simpan.
+  Object.assign(lama, data, { id });
+  if (sesi && Array.isArray(sesi.soal)) {
+    const diSesi = sesi.soal.find((x) => String(x.id) === id);
+    if (diSesi) Object.assign(diSesi, data, { id });
   }
+  const diBank = SOAL.find((x) => String(x.id) === id);
+  if (diBank) Object.assign(diBank, data, { id });
+
+  let catatanTampilan = '';
+  try {
+    DefaultSoal.asli[id] = kanon(sinId(lama));
+    DefaultSoal.simpanCache();
+  } catch (err) {
+    console.warn('Cache soal gagal diperbarui:', err);
+    catatanTampilan = ' Cache lokal perlu dimuat ulang.';
+  }
+
+  if (soalLaporanTarget) {
+    try {
+      await rest(
+        'laporan_soal?question_id=eq.' + encodeURIComponent(id) + '&status=neq.selesai',
+        {
+          method: 'PATCH',
+          prefer: 'return=representation',
+          body: { status: 'selesai' }
+        }
+      );
+      soalLaporanTarget = null;
+      await muatLaporanAdmin();
+    } catch (err) {
+      console.error('Soal tersimpan, tetapi pembaruan status laporan gagal:', err);
+      pesan.textContent = 'Soal berhasil disimpan, tetapi status laporan belum berhasil diperbarui: ' +
+        (err && err.message ? err.message : 'Kesalahan tidak diketahui.');
+      tombol.disabled = false;
+      return;
+    }
+  }
+
+  pesan.textContent = 'Soal berhasil disimpan untuk semua pengguna.' + catatanTampilan;
+  try {
+    if (sesi && sesi.aktif) renderSoal();
+    if ($('review') && !$('review').hidden) renderReviewIsi();
+    if ($('riwayat-detail') && !$('riwayat-detail').hidden) renderDetailSesi();
+  } catch (err) {
+    console.error('Soal sudah tersimpan; pembaruan tampilan gagal:', err);
+    pesan.textContent = 'Soal berhasil disimpan untuk semua pengguna. Pratinjau tampilan perlu dimuat ulang.';
+  }
+
+  setTimeout(tutupEditorSoalLive, 900);
 }
 let lastPollSoalAt = Date.now() - 60000;
 async function pantauPerubahanSoalAktif() {
