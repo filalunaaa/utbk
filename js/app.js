@@ -5607,7 +5607,7 @@ segarkanSoalBawaan();
             const kampus = await muatKampusProfil();
             const k = kampus.find((x) => teksKampus(x) === namaKampus);
             if (!k) return pesan('Pilih perguruan tinggi dari daftar yang tersedia.');
-            await simpanProfil({ sekolah: teksKampus(k), perguruanTinggiNpsn: k.npsn, programStudiId: '' });
+            await simpanProfil({ sekolah: teksKampus(k), perguruanTinggiNpsn: k.npsn, programStudiId: null });
           } else await simpanProfil({ sekolah: val() });
           return atur(6);
         }
@@ -5689,7 +5689,7 @@ segarkanSoalBawaan();
       const k = kampus.find((x) => teksKampus(x) === e.target.value.trim());
       if (k) {
         const p = ambilProfil();
-        ProfilApp.simpan({ ...p, sekolah: teksKampus(k), perguruanTinggiNpsn: k.npsn, programStudiId: '' });
+        ProfilApp.simpan({ ...p, sekolah: teksKampus(k), perguruanTinggiNpsn: k.npsn, programStudiId: null });
       }
       return;
     }
