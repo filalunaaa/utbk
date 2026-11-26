@@ -1449,15 +1449,15 @@ $('isi-koleksi-soal').addEventListener('click', e => {
   const b = e.target.closest('[data-koleksi-hapus]');
   if (!b) return;
 konfirmUjian(
-  'Hapus soal dari koleksi?',
-  'Soal ini akan dihapus dari koleksi kamu. Tindakan ini tidak dapat dibatalkan.',
+  'Yakin ga nihh hapus dari koleksi soal?',
+  'Tindakan ini gabisa dibatalin loh.',
   [
     {
-      label: 'Batal',
+      label: 'gajadi deh',
       kelas: 'btn-primary'
     },
     {
-      label: 'Ya, hapus soal',
+      label: 'hapus aja',
       kelas: 'btn-bahaya',
       fn: () => {
         KoleksiSoal.simpan(
