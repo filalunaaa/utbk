@@ -1795,11 +1795,14 @@ function bukaPratinjauSoalDariLaporan(id) {
 
   el.dataset.soalId = String(s.id);
   $('pls-meta').textContent = `${s.id} · ${namaMapel(s.mataPelajaran)} · ${s.topik} · ${tipeSoal(s)}`;
-  const pilihan = adaIsian(s) ? opsiReviewHTML(s, undefined) : `<div class="opsi-list">${opsiReviewHTML(s, undefined)}</div>`;
+  const isian = adaIsian(s);
+  const pilihan = isian
+    ? '<p class="muted">Soal ini menggunakan isian bilangan cacah, bukan pilihan ganda.</p>'
+    : `<div class="opsi-list">${opsiReviewHTML(s, undefined)}</div>`;
   $('pls-konten').innerHTML = `
     <div class="rev-body">
       <div><p class="rev-sub">Pertanyaan</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div></div>
-      <div><p class="rev-sub">Pilihan jawaban</p>${pilihan}<p class="rev-ket"><span>Kunci jawaban: <b>${esc(kunciHuruf(s))}</b></span></p></div>
+      <div><p class="rev-sub">${isian ? 'Format jawaban' : 'Pilihan jawaban'}</p>${pilihan}<p class="rev-ket"><span>${isian ? 'Kunci jawaban (bilangan cacah)' : 'Kunci jawaban'}: <b>${esc(kunciHuruf(s))}</b></span></p></div>
       <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
     </div>`;
   el.hidden = false;
