@@ -2651,7 +2651,7 @@ let filterReview = 'semua'; // 'semua' | 'benar' | 'salah' | 'kosong'
 // Isi halaman review: filter di atas, lalu soal bisa digeser kanan-kiri
 function renderReviewIsi() {
   const { soal, jawab } = sesi;
-  const status = soal.map((s, k) => (jawab[k] === null ? 'kosong' : jawabBenar(s, jawab[k]) ? 'benar' : skorJawaban(s, jawab[k]) > 0 ? 'parsial' : 'salah'));
+  const status = soal.map((s, k) => (jawab[k] === null || jawab[k] === undefined || (Array.isArray(jawab[k]) && !jawab[k].length) ? 'kosong' : jawabBenar(s, jawab[k]) ? 'benar' : skorJawaban(s, jawab[k]) > 0 ? 'parsial' : 'salah'));
   const hitung = { semua: soal.length, benar: 0, parsial: 0, salah: 0, kosong: 0 };
   status.forEach((st) => hitung[st]++);
   const label = { semua: 'Semua', benar: 'Benar', parsial: 'Parsial', salah: 'Salah', kosong: 'Kosong' };
@@ -2666,7 +2666,7 @@ function renderReviewIsi() {
     const opsi = opsiReviewHTML(s, jawab[k]);
     return `<div class="slide-review" data-nomor="${k + 1}">
       <div class="card" style="margin-bottom:0">
-        <div class="rev-meta"><span class="badge ${kelasBadge}">${teksBadge}</span><span class="no">Soal ${k + 1}</span><span class="pill-mapel" title="${esc(namaMapel(s.mataPelajaran))}">${esc(s.mataPelajaran)}</span><span class="muted">${esc(s.topik)}</span><span class="badge kosong tk-${esc(s.tingkatKesulitan)}">${esc(s.tingkatKesulitan)}</span></div>
+        <div class="rev-meta"><span class="badge ${kelasBadge}">${teksBadge}</span><span class="no">Soal ${k + 1}</span><span class="pill-mapel" title="${esc(namaMapel(s.mataPelajaran || ''))}">${esc(s.mataPelajaran || 'Soal')}</span><span class="muted">${esc(s.topik || 'Topik belum diatur')}</span>${['mudah','sedang','sulit'].includes(String(s.tingkatKesulitan || '').toLowerCase()) ? `<span class="badge kosong tk-${esc(String(s.tingkatKesulitan).toLowerCase())}">${esc(String(s.tingkatKesulitan).toLowerCase())}</span>` : ''}</div>
         <div class="rev-body">
           <div><p class="rev-sub">Soal</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div></div>
           <div><p class="rev-sub">Jawaban</p>
