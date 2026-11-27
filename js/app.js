@@ -1336,7 +1336,6 @@ function konfirmasiMulaiTryout(nama, menit, admin) {
     modal.className = 'konfirmasi-tryout';
     modal.innerHTML = `
       <section class="konfirmasi-tryout-panel" role="dialog" aria-modal="true" aria-labelledby="kty-judul" aria-describedby="kty-deskripsi">
-        <div class="kty-ikon" aria-hidden="true"><span>▶</span></div>
         <span class="kty-eyebrow">PERSIAPAN TRYOUT</span>
         <h2 id="kty-judul">Mulai tryout sekarang?</h2>
         <p class="kty-nama"></p>
