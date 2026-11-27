@@ -8,6 +8,10 @@ on:
       - "js/synthetic-examinee-engine.js"
       - "scripts/run-irt-monte-carlo.js"
       - ".github/workflows/irt-monte-carlo.yml"
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
