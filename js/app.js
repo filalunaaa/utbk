@@ -1176,8 +1176,9 @@ async function renderDaftarTryout() {
       const deskripsiPaket = 'Paket Tryout ' + kategoriNama + (nomorPaket ? ' ' + nomorPaket : '');
       return `<article class="card tryout-paket tingkat-${tingkat}" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
         <div class="tryout-paket-strip" aria-hidden="true"></div>
-        <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span><span class="tryout-difficulty ${tingkat}">${labelTingkat}</span>${status}</div>
+        <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
         <h3>${esc(namaPaket)}</h3>
+        <div class="tryout-paket-level"><span class="tryout-difficulty ${tingkat}">${labelTingkat}</span></div>
         <p class="tryout-paket-deskripsi">${esc(deskripsiPaket)}</p>
         <div class="tryout-paket-meta">
           <span><strong>${Number(p.jumlah_soal) || 0}</strong><small>Soal</small></span>
