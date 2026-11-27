@@ -134,6 +134,19 @@
     return ll;
   }
 
+
+  function isPositiveDefinite(matrix) {
+    const n=matrix.length,L=Array.from({length:n},()=>Array(n).fill(0));
+    const scale=Math.max(...matrix.map((row,i)=>Math.abs(row[i])));
+    if(!Number.isFinite(scale)||scale<=0)return false;
+    for(let i=0;i<n;i++)for(let j=0;j<=i;j++){
+      let value=matrix[i][j];for(let k=0;k<j;k++)value-=L[i][k]*L[j][k];
+      if(i===j){if(!Number.isFinite(value)||value<=scale*1e-12)return false;L[i][j]=Math.sqrt(value);}
+      else L[i][j]=value/L[j][j];
+    }
+    return true;
+  }
+
   function invertInformationMatrix(matrix) {
     const n=matrix.length,a=matrix.map(row=>row.slice()),inverse=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
     const scale=Math.max(...a.map((row,i)=>Math.abs(row[i])));if(!Number.isFinite(scale)||scale<=0)return null;
@@ -172,6 +185,7 @@
       for(let i=0;i<dimension;i++)for(let k=0;k<dimension;k++)information[i][k]-=second[i][k]-meanScore[i]*meanScore[k];
     }
     for(let i=0;i<dimension;i++)for(let k=i+1;k<dimension;k++){const v=(information[i][k]+information[k][i])/2;information[i][k]=v;information[k][i]=v;}
+    if(!isPositiveDefinite(information))return {status:'unavailable',reason:'joint_observed_information_not_positive_definite',work,items:[]};
     const inverted=invertInformationMatrix(information);if(!inverted)return {status:'unavailable',reason:'joint_observed_information_singular',work,items:[]};
     const covariance=inverted.inverse;
     const estimates=items.map((item,j)=>{
