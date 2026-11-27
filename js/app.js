@@ -2046,13 +2046,16 @@ function buatEditorSoalLive() {
   el.addEventListener('click', (e) => {
     if (e.target === el || e.target.closest('[data-esl-tutup],[data-esl-batal]')) tutupEditorSoalLive();
   });
+  // Delegasi input pada wadah permanen agar tetap bekerja meski buatEditor()
+  // membuat ulang elemen .editor-area setiap kali editor dibuka.
+  el.addEventListener('input', (e) => {
+    if (e.target.matches('#esl-soal-editor .editor-area, #esl-pembahasan-editor .editor-area')) {
+      renderEditorSoalLivePreview();
+    }
+  });
   el.querySelector('#esl-form').addEventListener('submit', simpanEditorSoalLive);
   buatEditor('esl-soal-editor', 'Tulis pertanyaan di sini...', false);
   buatEditor('esl-pembahasan-editor', 'Tulis pembahasan di sini...', false);
-  ['esl-soal-editor','esl-pembahasan-editor'].forEach(id => {
-    const area = $(id).querySelector('.editor-area');
-    area.addEventListener('input', renderEditorSoalLivePreview);
-  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !el.hidden) tutupEditorSoalLive();
   });
