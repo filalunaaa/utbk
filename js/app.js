@@ -1147,6 +1147,49 @@ function isiOpsi(html) {
   return `<div class="opsi-isi konten">${sanitize(html)}</div>`;
 }
 // ---------- Daftar paket Tryout dari Supabase ----------
+async function jalankanKalibrasiIRT(paketId, namaPaket) {
+  if (!ADMIN) return;
+  const tombol = document.querySelector('[data-paket-id="' + CSS.escape(String(paketId)) + '"] [data-aksi-paket="kalibrasi-irt"]');
+  if (tombol) { tombol.disabled = true; tombol.textContent = 'Memeriksa data…'; }
+  try {
+    const token = await tokenAktif();
+    if (!token) throw new Error('Sesi login tidak tersedia. Silakan masuk kembali.');
+    const response = await fetch(SB_URL + '/functions/v1/irt-calibrate', {
+      method: 'POST',
+      headers: {
+        apikey: SB_KEY,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ paket_id: String(paketId) })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = result.sample_size !== undefined
+        ? '\nPeserta unik: ' + result.sample_size + ' / ' + (result.minimum_sample || 300)
+        : '';
+      throw new Error((result.message || result.error || 'Kalibrasi belum dapat dijalankan.') + detail);
+    }
+    const warnings = Array.isArray(result.warnings) && result.warnings.length
+      ? '\nCatatan: ' + result.warnings.length + ' indikator perlu ditinjau.'
+      : '';
+    alert('Kalibrasi 2PL selesai untuk ' + (namaPaket || 'paket ini') +
+      '.\nPeserta: ' + result.sample_size +
+      '\nButir dikalibrasi: ' + result.calibrated_items +
+      '\nButir non-dikotomis yang dilewati: ' + result.excluded_items +
+      '\nIterasi EM: ' + result.iterations + warnings);
+    await renderDaftarTryout();
+  } catch (err) {
+    alert('Kalibrasi 2PL belum berhasil: ' + (err.message || 'Terjadi kesalahan.'));
+    await renderDaftarTryout();
+  } finally {
+    if (tombol && tombol.isConnected) {
+      tombol.disabled = false;
+      tombol.textContent = 'Kalibrasi 2PL';
+    }
+  }
+}
+
 async function renderDaftarTryout() {
   const wadah = $('daftar-paket-tryout');
   if (!wadah) return;
@@ -1204,6 +1247,7 @@ async function renderDaftarTryout() {
         </div>
         <div class="tryout-paket-actions">
           ${ADMIN ? `<button type="button" class="btn btn-secondary btn-kecil" data-aksi-paket="kelola">Edit &amp; pratinjau soal</button>` : ''}
+          ${ADMIN ? `<button type="button" class="btn btn-secondary btn-kecil" data-aksi-paket="kalibrasi-irt" ${irt && irt.irt_status === 'sedang_dikalibrasi' ? 'disabled' : ''}>${irt && ['terkalibrasi','perlu_tinjauan'].includes(irt.irt_status) ? 'Kalibrasi ulang 2PL' : 'Kalibrasi 2PL'}</button>` : ''}
           <button type="button" class="btn btn-primary btn-kecil" data-aksi-paket="mulai">${ADMIN ? 'Uji paket' : 'Mulai tryout'}</button>
         </div>
       </article>`;
@@ -1454,7 +1498,8 @@ function aktifkanInteraksiKartuTryout() {
     const kartu = aksi.closest('.tryout-paket[data-paket-id]');
     if (!kartu) return;
     if (aksi.dataset.aksiPaket === 'kelola') bukaPengelolaSoalPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout');
-    if (aksi.dataset.aksiPaket === 'mulai') mulaiTryoutPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout', kartu.dataset.paketDurasi);
+    if (aksi.dataset.aksiPaket === 'kalibrasi-irt') jalankanKalibrasiIRT(kartu.dataset.paketId, kartu.dataset.paketNama || 'Paket Tryout');
+    if (aksi.dataset.aksiPaket === 'mulai') mulaiTryoutPaket(kartu.dataset.paketId, kartu.dataset.paketNama || 'Tryout', kartu.dataset.paketDurasi);
   });
 }
 
