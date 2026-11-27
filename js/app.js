@@ -1165,11 +1165,20 @@ async function renderDaftarTryout() {
       const status = p.status === 'published'
         ? '<span class="tryout-status terbit">Tersedia</span>'
         : (ADMIN ? '<span class="tryout-status draft">Draft · hanya admin</span>' : '');
-      const kategori = esc(({ PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' })[String(p.kategori || '').toUpperCase()] || String(p.kategori || 'Campuran'));
-      return `<article class="card tryout-paket" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
-        <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
-        <h3>${esc(p.nama || 'Paket Tryout')}</h3>
-        <p class="muted tryout-paket-deskripsi">${esc(p.deskripsi || 'Paket latihan simulasi ujian.')}</p>
+      const kodeKategori = String(p.kategori || '').toUpperCase();
+      const kategoriNama = ({ PK: 'Pengetahuan Kuantitatif', PM: 'Penalaran Matematika' })[kodeKategori] || String(p.kategori || 'Campuran');
+      const kategori = esc(kategoriNama);
+      // Kedua paket awal PM dan PK ditetapkan pada level sedang.
+      const tingkat = 'sedang';
+      const labelTingkat = tingkat === 'sulit' ? 'Sulit' : tingkat === 'mudah' ? 'Mudah' : 'Sedang';
+      const namaPaket = String(p.nama || 'Tryout');
+      const nomorPaket = namaPaket.match(/\\d+/)?.[0] || '';
+      const deskripsiPaket = 'Paket Tryout ' + kategoriNama + (nomorPaket ? ' ' + nomorPaket : '');
+      return `<article class="card tryout-paket tingkat-${tingkat}" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
+        <div class="tryout-paket-strip" aria-hidden="true"></div>
+        <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span><span class="tryout-difficulty ${tingkat}">${labelTingkat}</span>${status}</div>
+        <h3>${esc(namaPaket)}</h3>
+        <p class="tryout-paket-deskripsi">${esc(deskripsiPaket)}</p>
         <div class="tryout-paket-meta">
           <span><strong>${Number(p.jumlah_soal) || 0}</strong><small>Soal</small></span>
           <span><strong>${Number(p.durasi_menit) || 0}</strong><small>Menit</small></span>
