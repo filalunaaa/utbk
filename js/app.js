@@ -1327,13 +1327,53 @@ function bukaEditorSoalPaket(row) {
   soalEditorTarget = null;
   bukaEditorSoalLive();
 }
+function konfirmasiMulaiTryout(nama, menit, admin) {
+  return new Promise((resolve) => {
+    const lama = document.getElementById('modal-konfirmasi-tryout');
+    if (lama) lama.remove();
+    const modal = document.createElement('div');
+    modal.id = 'modal-konfirmasi-tryout';
+    modal.className = 'konfirmasi-tryout';
+    modal.innerHTML = `
+      <section class="konfirmasi-tryout-panel" role="dialog" aria-modal="true" aria-labelledby="kty-judul" aria-describedby="kty-deskripsi">
+        <div class="kty-ikon" aria-hidden="true"><span>▶</span></div>
+        <span class="kty-eyebrow">PERSIAPAN TRYOUT</span>
+        <h2 id="kty-judul">Mulai tryout sekarang?</h2>
+        <p class="kty-nama"></p>
+        <div class="kty-info"><span>Durasi</span><strong>${menit} menit</strong></div>
+        <p id="kty-deskripsi" class="kty-deskripsi">${admin ? 'Paket akan dibuka dalam mode simulasi admin.' : 'Pastikan kamu sudah siap. Waktu akan mulai dihitung setelah tryout dibuka.'}</p>
+        <div class="kty-actions">
+          <button type="button" class="btn btn-secondary" data-kty-batal>Belum</button>
+          <button type="button" class="btn btn-primary" data-kty-mulai>Mulai tryout</button>
+        </div>
+      </section>`;
+    modal.querySelector('.kty-nama').textContent = nama;
+    document.body.appendChild(modal);
+    document.body.classList.add('kty-terbuka');
+    let selesai = false;
+    const tutup = (hasil) => {
+      if (selesai) return;
+      selesai = true;
+      document.removeEventListener('keydown', tombolKeyboard);
+      modal.remove();
+      document.body.classList.remove('kty-terbuka');
+      resolve(hasil);
+    };
+    const tombolKeyboard = (e) => {
+      if (e.key === 'Escape') tutup(false);
+    };
+    modal.querySelector('[data-kty-batal]').addEventListener('click', () => tutup(false));
+    modal.querySelector('[data-kty-mulai]').addEventListener('click', () => tutup(true));
+    modal.addEventListener('click', (e) => { if (e.target === modal) tutup(false); });
+    document.addEventListener('keydown', tombolKeyboard);
+    modal.querySelector('[data-kty-mulai]').focus();
+  });
+}
+
 async function mulaiTryoutPaket(id, nama, durasi) {
   if (!AkunApp.sesi()) return alert('Silakan masuk terlebih dahulu untuk mengikuti Tryout.');
   const menit = Math.max(1, Number(durasi) || 20);
-  const konfirmasi = ADMIN
-    ? 'Mulai "' + nama + '"?\\n\\nDurasi: ' + menit + ' menit.\\nSoal akan dibuka dalam mode simulasi admin.'
-    : 'Mulai "' + nama + '"?\\n\\nDurasi: ' + menit + ' menit.\\nPastikan kamu siap sebelum memulai.';
-  if (!confirm(konfirmasi)) return;
+  if (!(await konfirmasiMulaiTryout(nama, menit, ADMIN))) return;
   try {
     const rows = await rest('tryout_soal?select=id,nomor_soal,kategori,tipe_soal,data&paket_id=eq.' + encodeURIComponent(id) + '&order=nomor_soal.asc');
     if (!Array.isArray(rows) || !rows.length) throw new Error('Soal dalam paket belum tersedia.');
