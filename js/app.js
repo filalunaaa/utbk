@@ -2033,11 +2033,11 @@ function buatEditorSoalLive() {
   el.hidden = true;
   el.innerHTML = '<section class="editor-soal-live-panel" role="dialog" aria-modal="true" aria-labelledby="esl-judul">' +
     '<header class="esl-head"><div><span class="esl-eyebrow">PANEL ADMIN</span><h2 id="esl-judul">Edit soal aktif</h2><p id="esl-meta" class="muted"></p></div><button type="button" class="btn btn-secondary btn-kecil" data-esl-tutup aria-label="Tutup editor">Tutup</button></header>' +
-    '<form id="esl-form" novalidate><label class="esl-label" for="esl-soal">Pertanyaan (HTML/LaTeX)</label><textarea id="esl-soal" class="input esl-area" rows="5" required></textarea>' +
+    '<form id="esl-form" novalidate><label class="esl-label">Pertanyaan</label><div id="esl-soal-editor"></div>' +
     '<div class="esl-live-preview"><div class="esl-label">Pratinjau pertanyaan</div><div id="esl-soal-preview" class="teks-soal"></div></div>' +
     '<div id="esl-grafik-editor"></div>' +
     '<div id="esl-opsi-wrap"></div><div id="esl-kunci-wrap"></div>' +
-    '<label class="esl-label" for="esl-pembahasan">Pembahasan (HTML/LaTeX)</label><textarea id="esl-pembahasan" class="input esl-area" rows="6" required></textarea>' +
+    '<label class="esl-label">Pembahasan</label><div id="esl-pembahasan-editor"></div>' +
     '<div class="esl-live-preview"><div class="esl-label">Pratinjau pembahasan</div><div id="esl-pembahasan-preview" class="feedback"></div></div>' +
     '<p class="esl-hint">Format HTML dan LaTeX tetap didukung. Periksa kembali kunci dan pembahasan sebelum menyimpan.</p>' +
     '<p id="esl-pesan" class="esl-pesan" role="status" aria-live="polite"></p>' +
@@ -2047,8 +2047,12 @@ function buatEditorSoalLive() {
     if (e.target === el || e.target.closest('[data-esl-tutup],[data-esl-batal]')) tutupEditorSoalLive();
   });
   el.querySelector('#esl-form').addEventListener('submit', simpanEditorSoalLive);
-  el.querySelector('#esl-soal').addEventListener('input', renderEditorSoalLivePreview);
-  el.querySelector('#esl-pembahasan').addEventListener('input', renderEditorSoalLivePreview);
+  buatEditor('esl-soal-editor', 'Tulis pertanyaan di sini...', false);
+  buatEditor('esl-pembahasan-editor', 'Tulis pembahasan di sini...', false);
+  ['esl-soal-editor','esl-pembahasan-editor'].forEach(id => {
+    const area = $(id).querySelector('.editor-area');
+    area.addEventListener('input', renderEditorSoalLivePreview);
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !el.hidden) tutupEditorSoalLive();
   });
@@ -2056,8 +2060,8 @@ function buatEditorSoalLive() {
 function renderEditorSoalLivePreview() {
   const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
   const visualLama = (soalPaketTarget && soalPaketTarget.soal.visual) || (soalLaporanTarget && soalLaporanTarget.visual) || (soalEditorTarget && soalEditorTarget.visual) || null;
-  if (soal) soal.innerHTML = konten($('esl-soal').value, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null, visualLama);
-  if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan').value);
+  if (soal) soal.innerHTML = konten($('esl-soal-editor').querySelector('.editor-area').innerHTML, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null, visualLama);
+  if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan-editor').querySelector('.editor-area').innerHTML);
   const root = $('editor-soal-live');
   if (root) rumus(root);
 }
@@ -2175,8 +2179,10 @@ function bukaEditorSoalLive() {
   const el = $('editor-soal-live');
 
   $('esl-meta').textContent = String(s.id) + ' · ' + namaMapel(s.mataPelajaran) + ' · ' + s.topik + ' · ' + tipeSoal(s);
-  $('esl-soal').value = s.soal || '';
-  $('esl-pembahasan').value = s.pembahasan || '';
+  buatEditor('esl-soal-editor', 'Tulis pertanyaan di sini...', false);
+  buatEditor('esl-pembahasan-editor', 'Tulis pembahasan di sini...', false);
+  $('esl-soal-editor').querySelector('.editor-area').innerHTML = s.soal || '';
+  $('esl-pembahasan-editor').querySelector('.editor-area').innerHTML = s.pembahasan || '';
   if (window.NalarineGraph) {
     window.NalarineGraph.initEditor($('esl-grafik-editor'));
     window.NalarineGraph.setEditorValue(s.grafik || null);
@@ -2194,10 +2200,16 @@ function bukaEditorSoalLive() {
     ? '<p class="esl-hint">Soal isian bilangan cacah tidak menggunakan opsi.</p>'
     : '<div class="esl-label">Pilihan jawaban</div>' +
       Array.from({ length: jumlahOpsi }, (_, i) =>
-        '<label class="esl-label" for="esl-opsi-' + i + '">Opsi ' + HURUF[i] +
-        '</label><textarea class="input esl-area esl-opsi" id="esl-opsi-' + i +
-        '" rows="2">' + esc((s.opsi || [])[i] || '') + '</textarea>'
+        '<label class="esl-label">Opsi ' + HURUF[i] + '</label><div class="esl-opsi-editor" id="esl-opsi-' + i + '"></div>'
       ).join('');
+
+  if (tipe !== 'isian') {
+    Array.from({length: jumlahOpsi}, (_, i) => {
+      const id = 'esl-opsi-' + i;
+      buatEditor(id, 'Tulis opsi ' + HURUF[i] + '...', true);
+      $(id).querySelector('.editor-area').innerHTML = (s.opsi || [])[i] || '';
+    });
+  }
 
   if (tipe === 'pg') {
     $('esl-kunci-wrap').innerHTML =
@@ -2223,7 +2235,7 @@ function bukaEditorSoalLive() {
   $('esl-simpan').disabled = false;
   el.hidden = false;
   document.body.classList.add('esl-terbuka');
-  $('esl-soal').focus();
+  $('esl-soal-editor').querySelector('.editor-area').focus();
 }
 function tutupEditorSoalLive() {
   const el = $('editor-soal-live');
@@ -2256,8 +2268,8 @@ async function simpanEditorSoalLive(e) {
   }
 
   const tipe = tipeSoal(lama);
-  const soal = $('esl-soal').value.trim();
-  const pembahasan = $('esl-pembahasan').value.trim();
+  const soal = $('esl-soal-editor').querySelector('.editor-area').innerHTML.trim();
+  const pembahasan = $('esl-pembahasan-editor').querySelector('.editor-area').innerHTML.trim();
   if (!soal || !pembahasan) {
     pesan.textContent = 'Pertanyaan dan pembahasan wajib diisi.';
     return;
@@ -2266,7 +2278,7 @@ async function simpanEditorSoalLive(e) {
   const jumlahOpsi = Number($('esl-opsi-wrap').dataset.jumlah || 5);
   const opsi = tipe === 'isian' ? [] : Array.from(
     { length: jumlahOpsi },
-    (_, i) => $('esl-opsi-' + i).value.trim()
+    (_, i) => $('esl-opsi-' + i).querySelector('.editor-area').innerHTML.trim()
   );
   if (tipe !== 'isian' && opsi.some((x) => !x)) {
     pesan.textContent = 'Semua opsi harus diisi.';
