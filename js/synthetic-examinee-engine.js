@@ -310,10 +310,11 @@
     buttons.forEach(b=>b.disabled=true);exportButton.disabled=true;
     out.innerHTML='';status.className='pesan';
     const scenarios=[
-      {id:'2PL',label:'2PL · kontrol nol sesuai model'},
-      {id:'1PL',label:'1PL / Rasch · diskriminasi sama'},
-      {id:'3PL',label:'3PL · peluang tebakan 0,15'},
-      {id:'2D',label:'2D · trait kedua / multidimensi'}
+      {id:'2PL',role:'kalibrasi',label:'2PL · data untuk menentukan cutoff'},
+      {id:'2PL',role:'validasi_nol',label:'2PL · data baru untuk menguji false positive'},
+      {id:'1PL',role:'misspecification',label:'1PL / Rasch · diskriminasi sama'},
+      {id:'3PL',role:'misspecification',label:'3PL · peluang tebakan 0,15'},
+      {id:'2D',role:'misspecification',label:'2D · trait kedua / multidimensi'}
     ];
     const repetitions=100,examinees=1000,results=[];
     const primaryStatistic='max_abs_q3';
@@ -321,7 +322,8 @@
       for(const scenario of scenarios){
         const runs=[];let converged=0;
         for(let rep=0;rep<repetitions;rep++){
-          status.textContent=scenario.label+' · replikasi '+(rep+1)+'/'+repetitions+' · total '+(results.reduce((s,x)=>s+x.runs.length,0)+rep+1)+'/400';
+          const completed=results.reduce((s,x)=>s+x.runs.length,0)+rep+1;
+          status.textContent=scenario.label+' · replikasi '+(rep+1)+'/'+repetitions+' · total '+completed+'/500';
           await delay(15);
           const data=generateScenario(scenario.id,examinees);
           const est=estimateMML2PL(data.responses);
@@ -332,7 +334,7 @@
             max_abs_q3:diag.max_abs_q3,item_curve_rms:diag.item_curve_rms,
             mean_estimated_a:mean(est.items.map(x=>x.a))});
         }
-        results.push({scenario:scenario.id,label:scenario.label,examinees,repetitions,
+        results.push({scenario:scenario.id,role:scenario.role,label:scenario.label,examinees,repetitions,
           convergence_rate:converged/repetitions,converged_count:converged,
           mean_iterations:mean(runs.map(x=>x.iterations)),
           mean_abs_q3:mean(runs.map(x=>x.mean_abs_q3)),
@@ -340,41 +342,43 @@
           mean_item_curve_rms:mean(runs.map(x=>x.item_curve_rms)),
           mean_estimated_a:mean(runs.map(x=>x.mean_estimated_a)),runs});
       }
-      const nullRuns=results[0].runs;
-      const cutoff=quantile(nullRuns.map(x=>x[primaryStatistic]),.95);
-      const nullExceed=nullRuns.filter(x=>x[primaryStatistic]>cutoff).length;
+      const calibrationRuns=results[0].runs;
+      const validationRuns=results[1].runs;
+      const cutoff=quantile(calibrationRuns.map(x=>x[primaryStatistic]),.95);
+      const validationExceed=validationRuns.filter(x=>x[primaryStatistic]>cutoff).length;
       results.forEach((s,i)=>{
         s.primary_statistic=primaryStatistic;
         s.empirical_null_cutoff_95=cutoff;
         s.exceedance_count=s.runs.filter(x=>x[primaryStatistic]>cutoff).length;
         s.empirical_detection_rate=s.exceedance_count/repetitions;
-        s.empirical_false_positive_rate=i===0?s.empirical_detection_rate:null;
+        s.empirical_false_positive_rate=i===1?s.empirical_detection_rate:null;
       });
-      latest={schema:'pytago.irt.model-fit-monte-carlo.v2',source:'synthetic_only',
-        estimator:'MML-EM 2PL',examinees,repetitions_per_scenario:repetitions,
-        total_fits:repetitions*scenarios.length,
-        calibration:{method:'empirical_null_quantile',null_scenario:'2PL',
+      latest={schema:'pytago.irt.model-fit-monte-carlo.v3',source:'synthetic_only',
+        estimator:'MML-EM 2PL',examinees,repetitions_per_condition:repetitions,total_fits:repetitions*scenarios.length,
+        design:'independent_null_calibration_and_validation',
+        calibration:{method:'empirical_null_quantile',calibration_scenario:'2PL',validation_scenario:'independent_2PL',
           primary_statistic:primaryStatistic,nominal_level:.05,cutoff_95:cutoff,
-          null_exceedances:nullExceed,null_false_positive_rate:nullExceed/repetitions,
-          note:'Cutoff is estimated from finite Monte Carlo null replications; this is a pilot calibration, not a universal clinical/operational threshold.'},
-        diagnostics_note:'Mean absolute Q3 and item-curve RMS are secondary exploratory diagnostics. Detection rates are conditional on these synthetic data-generating mechanisms.',
+          calibration_repetitions:repetitions,validation_repetitions:repetitions,
+          validation_false_positives:validationExceed,validation_false_positive_rate:validationExceed/repetitions,
+          note:'Cutoff ditentukan dari 100 replikasi 2PL kalibrasi, lalu false-positive diukur pada 100 replikasi 2PL independen. Hasil tetap pilot dan khusus untuk konfigurasi simulasi ini.'},
+        diagnostics_note:'Mean absolute Q3 dan item-curve RMS adalah diagnostik sekunder. Detection rates bersyarat pada mekanisme pembangkitan data sintetis yang digunakan.',
         scenarios:results,generated_at:new Date().toISOString()};
       renderMisspecification(root,results,latest.calibration);
       exportButton.disabled=false;
       const total=results.reduce((s,x)=>s+x.converged_count,0);
-      status.textContent='Selesai: '+total+'/400 estimasi konvergen. Cutoff empiris Max |Q3| = '+fmt(cutoff)+'.';
-      status.className=total===400?'pesan ok':'pesan';
+      status.textContent='Selesai: '+total+'/500 estimasi konvergen. Cutoff kalibrasi Max |Q3| = '+fmt(cutoff)+'.';
+      status.className=total===500?'pesan ok':'pesan';
     } catch(err) {
       status.textContent='Uji Monte Carlo model-fit gagal: '+(err&&err.message?err.message:String(err));
       status.className='pesan error';
     } finally {buttons.forEach(b=>b.disabled=false);}
   }
   function renderMisspecification(root,results,calibration) {
-    const rows=results.map(s=>'<tr><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+fmt(s.mean_item_curve_rms)+'</td><td>'+fmt(s.mean_estimated_a)+'</td><td>'+s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)</td></tr>').join('');
+    const rows=results.map(s=>'<tr><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+fmt(s.mean_item_curve_rms)+'</td><td>'+fmt(s.mean_estimated_a)+'</td><td>'+(s.role==='kalibrasi'?'Dipakai menentukan cutoff':s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)')+'</td></tr>').join('');
     root.querySelector('#pse-results').innerHTML=
-      '<div class="card" style="margin:12px 0"><h3>Model Fit Validation · Monte Carlo</h3><p>Empat kondisi pembangkitan, masing-masing 100 replikasi × 1.000 peserta × 20 butir. Total 400 estimasi MML-EM 2PL.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Model pembangkit</th><th>Konvergensi</th><th>Rerata iterasi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>RMS kurva</th><th>Rerata a estimasi</th><th>Melampaui cutoff</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
-      '<div class="card" style="margin:12px 0"><h3>Kalibrasi empiris distribusi nol</h3><p>Statistik primer: Max |Q3|. Cutoff 95% diturunkan dari 100 replikasi kontrol 2PL, bukan dipilih sebagai angka tetap.</p><p><b>Cutoff empiris:</b> '+fmt(calibration.cutoff_95)+' · <b>False positive empiris:</b> '+calibration.null_exceedances+'/100 ('+fmt(calibration.null_false_positive_rate*100)+'%).</p><p>Detection rate pada 1PL, 3PL, dan 2D adalah proporsi replikasi yang melampaui cutoff kontrol. Mean |Q3| dan RMS kurva tetap diagnostik sekunder, bukan dasar keputusan formal tunggal.</p><p><b>Batas interpretasi:</b> cutoff ini hanya dikalibrasi untuk konfigurasi simulasi ini (N=1.000, 20 butir, distribusi parameter dan kemampuan yang digunakan). Ia bukan cutoff universal. Estimasi false-positive juga memiliki ketidakpastian Monte Carlo.</p></div>'+
-      results.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>'+esc(s.label)+' · 100 replikasi</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva</th><th>Cutoff terlampaui</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.mean_abs_q3)+'</td><td>'+fmt(r.max_abs_q3)+'</td><td>'+fmt(r.item_curve_rms)+'</td><td>'+(r.max_abs_q3>calibration.cutoff_95?'Ya':'Tidak')+'</td></tr>').join('')+'</tbody></table></div>').join('');
+      '<div class="card" style="margin:12px 0"><h3>Model Fit Validation · Monte Carlo independen</h3><p>Lima kondisi, masing-masing 100 replikasi × 1.000 peserta × 20 butir. Total 500 estimasi MML-EM 2PL. Replikasi kontrol untuk kalibrasi cutoff dipisahkan dari replikasi kontrol untuk validasi false positive.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Kondisi</th><th>Konvergensi</th><th>Rerata iterasi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>RMS kurva</th><th>Rerata a estimasi</th><th>Hasil cutoff</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Kalibrasi dan validasi distribusi nol</h3><p>Statistik primer: Max |Q3|. Cutoff 95% ditentukan hanya dari 100 replikasi kontrol 2PL kalibrasi.</p><p><b>Cutoff:</b> '+fmt(calibration.cutoff_95)+' · <b>False positive pada 100 replikasi 2PL baru:</b> '+calibration.validation_false_positives+'/100 ('+fmt(calibration.validation_false_positive_rate*100)+'%).</p><p>Detection rate pada 1PL, 3PL, dan 2D dihitung terhadap cutoff yang sama. Mean |Q3| dan RMS kurva adalah diagnostik sekunder.</p><p><b>Batas interpretasi:</b> hasil ini tetap pilot dan cutoff hanya berlaku untuk konfigurasi simulasi ini (N=1.000, 20 butir, serta distribusi parameter dan kemampuan yang digunakan). Cutoff bukan standar universal; estimasi false-positive dan detection rate memiliki ketidakpastian Monte Carlo.</p></div>'+
+      results.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>'+esc(s.label)+' · 100 replikasi</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva</th><th>Cutoff terlampaui</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.mean_abs_q3)+'</td><td>'+fmt(r.max_abs_q3)+'</td><td>'+fmt(r.item_curve_rms)+'</td><td>'+(s.role==='kalibrasi'?'—':r.max_abs_q3>calibration.cutoff_95?'Ya':'Tidak')+'</td></tr>').join('')+'</tbody></table></div>').join('');
   }
   async function runSampleSensitivity() {
     const root=document.getElementById('pytago-synth-panel');
