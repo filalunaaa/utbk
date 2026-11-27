@@ -1011,6 +1011,10 @@ const antreanMathJax = new Set();
 let pendengarMathJax = false;
 async function rumus(el) {
   if (!el) return;
+  // Grafik berbasis data-ng-graph harus dirender setelah HTML konten masuk ke DOM.
+  if (window.NalarineGraph && typeof window.NalarineGraph.renderAll === 'function') {
+    window.NalarineGraph.renderAll(el);
+  }
   if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
     try {
       // Tunggu MathJax selesai inisialisasi agar render tidak mendahului startup.
