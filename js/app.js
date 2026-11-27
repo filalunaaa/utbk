@@ -2177,8 +2177,14 @@ function bukaEditorSoalLive() {
   $('esl-meta').textContent = String(s.id) + ' · ' + namaMapel(s.mataPelajaran) + ' · ' + s.topik + ' · ' + tipeSoal(s);
   buatEditor('esl-soal-editor', 'Tulis pertanyaan di sini...', false);
   buatEditor('esl-pembahasan-editor', 'Tulis pembahasan di sini...', false);
-  $('esl-soal-editor').querySelector('.editor-area').innerHTML = s.soal || '';
-  $('esl-pembahasan-editor').querySelector('.editor-area').innerHTML = s.pembahasan || '';
+  const areaSoalLive = $('esl-soal-editor').querySelector('.editor-area');
+  const areaPembahasanLive = $('esl-pembahasan-editor').querySelector('.editor-area');
+  // Pasang listener langsung pada instance editor yang baru dibuat.
+  // Instance ini selalu diganti oleh buatEditor() setiap kali modal dibuka.
+  areaSoalLive.addEventListener('input', renderEditorSoalLivePreview);
+  areaPembahasanLive.addEventListener('input', renderEditorSoalLivePreview);
+  areaSoalLive.innerHTML = s.soal || '';
+  areaPembahasanLive.innerHTML = s.pembahasan || '';
   if (window.NalarineGraph) {
     window.NalarineGraph.initEditor($('esl-grafik-editor'));
     window.NalarineGraph.setEditorValue(s.grafik || null);
@@ -3342,12 +3348,22 @@ function buatEditor(id, placeholder, kecil) {
     const b = e.target.closest('button');
     if (!b) return;
     editorAktif = area;
-    if (b.dataset.aksi === 'rumus') { area.focus(); return sisipRumus(); }
+    if (b.dataset.aksi === 'rumus') {
+      area.focus();
+      sisipRumus();
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
     if (b.dataset.aksi === 'gambar') { $('file-gambar').click(); return; }
     if (b.dataset.aksi === 'tabel') return pemilihTabel(wadah, area, b);
     area.focus();
-    if (b.dataset.list) return terapkanDaftar(b.dataset.list, area);
+    if (b.dataset.list) {
+      terapkanDaftar(b.dataset.list, area);
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
     document.execCommand(b.dataset.cmd, false, b.dataset.val || null);
+    area.dispatchEvent(new Event('input', { bubbles: true }));
   });
   // Klik gambar di dalam editor untuk memilih dan mengatur posisinya
   area.addEventListener('click', (e) => {
