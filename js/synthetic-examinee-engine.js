@@ -236,7 +236,7 @@
         latest={...data,estimator:'MML-EM',recovery:recovery,estimator_config:CFG};
         render(root,recovery,estimated);
         root.querySelector('#pse-export').disabled=false;
-        status.textContent=estimated.converged?'Konvergensi tercapai pada iterasi '+estimated.iterations+'.':'Belum konvergen dalam batas iterasi. Jangan gunakan estimasi ini.';
+        status.textContent=estimated.converged?'Konvergensi tercapai pada iterasi '+estimated.iterations+'.':'Estimasi ditolak: '+(estimated.failure?(estimated.failure.reason||'optimasi tidak konvergen'):'batas iterasi tercapai')+'. Jangan gunakan estimasi ini.';
         status.className=estimated.converged?'pesan ok':'pesan';
       }catch(err){status.textContent='Pengujian gagal: '+(err&&err.message?err.message:String(err));status.className='pesan error';}
       finally{button.disabled=false;}
