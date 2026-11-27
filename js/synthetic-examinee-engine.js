@@ -133,7 +133,59 @@
     }
     return ll;
   }
-  function estimateMML2PL(responses) {
+
+  function invertInformationMatrix(matrix) {
+    const n=matrix.length,a=matrix.map(row=>row.slice()),inverse=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+    const scale=Math.max(...a.map((row,i)=>Math.abs(row[i])));if(!Number.isFinite(scale)||scale<=0)return null;
+    let minPivot=Infinity;
+    for(let col=0;col<n;col++){
+      let pivotRow=col;for(let r=col+1;r<n;r++)if(Math.abs(a[r][col])>Math.abs(a[pivotRow][col]))pivotRow=r;
+      const pivot=Math.abs(a[pivotRow][col]);if(!Number.isFinite(pivot)||pivot<scale*1e-12)return null;
+      minPivot=Math.min(minPivot,pivot/scale);
+      if(pivotRow!==col){[a[col],a[pivotRow]]=[a[pivotRow],a[col]];[inverse[col],inverse[pivotRow]]=[inverse[pivotRow],inverse[col]];}
+      const divisor=a[col][col];for(let j=0;j<n;j++){a[col][j]/=divisor;inverse[col][j]/=divisor;}
+      for(let r=0;r<n;r++){if(r===col)continue;const factor=a[r][col];if(!factor)continue;for(let j=0;j<n;j++){a[r][j]-=factor*a[col][j];inverse[r][j]-=factor*inverse[col][j];}}
+    }
+    return {inverse,minPivot};
+  }
+  // Louis' identity: E[complete information|Y] - Cov(complete score|Y), jointly across items.
+  function estimateJointObservedSE(rows,items,prior) {
+    const itemCount=items.length,dimension=2*itemCount,work=rows.length*NODES.length*dimension*dimension;
+    if(!itemCount)return {status:'unavailable',reason:'no_items',items:[]};
+    if(dimension>80||work>80000000)return {status:'unavailable',reason:'computational_budget_exceeded',work,items:[]};
+    const information=Array.from({length:dimension},()=>Array(dimension).fill(0));
+    for(const row of rows){
+      const weights=posterior(row,items,prior),meanScore=new Float64Array(dimension);
+      const second=Array.from({length:dimension},()=>new Float64Array(dimension));
+      for(let q=0;q<NODES.length;q++){
+        const theta=NODES[q],weight=weights[q];if(weight<=0)continue;
+        const score=new Float64Array(dimension);
+        for(let j=0;j<itemCount;j++){
+          const y=row[j];if(y===null)continue;
+          const p=clamp(prob(items[j],theta),1e-12,1-1e-12),residual=y-p,x=2*j;
+          score[x]=residual;score[x+1]=residual*theta;
+          const h=weight*p*(1-p);
+          information[x][x]+=h;information[x][x+1]+=h*theta;information[x+1][x]+=h*theta;information[x+1][x+1]+=h*theta*theta;
+        }
+        for(let i=0;i<dimension;i++){const si=score[i];meanScore[i]+=weight*si;if(si===0)continue;for(let k=0;k<dimension;k++)second[i][k]+=weight*si*score[k];}
+      }
+      for(let i=0;i<dimension;i++)for(let k=0;k<dimension;k++)information[i][k]-=second[i][k]-meanScore[i]*meanScore[k];
+    }
+    for(let i=0;i<dimension;i++)for(let k=i+1;k<dimension;k++){const v=(information[i][k]+information[k][i])/2;information[i][k]=v;information[k][i]=v;}
+    const inverted=invertInformationMatrix(information);if(!inverted)return {status:'unavailable',reason:'joint_observed_information_singular',work,items:[]};
+    const covariance=inverted.inverse;
+    const estimates=items.map((item,j)=>{
+      const c=2*j,d=c+1;if(item.a<=.050001||item.a>=4.999999||Math.abs(item.a*item.b)>=19.999)return {se_a:null,se_b:null,status:'boundary_parameter'};
+      const varA=covariance[d][d],g0=-1/item.a,g1=-item.b/item.a;
+      const varB=g0*g0*covariance[c][c]+2*g0*g1*covariance[c][d]+g1*g1*covariance[d][d];
+      if(!Number.isFinite(varA)||!Number.isFinite(varB)||varA<=0||varB<=0)return {se_a:null,se_b:null,status:'non_positive_variance'};
+      return {se_a:Math.sqrt(varA),se_b:Math.sqrt(varB),status:'computed'};
+    });
+    return {status:estimates.every(x=>x.status==='computed')?'computed':'partial',method:'louis_identity_full_joint_observed_information',
+      parameterization:'intercept_slope',matrix_dimension:dimension,min_pivot_ratio:inverted.minPivot,work,items:estimates};
+  }
+
+  function estimateMML2PL(responses,options={}) {
     const rows=responses.map(r=>r.slice()), count=rows[0]?rows[0].length:0;
     const prior=priorWeights(), items=Array.from({length:count},()=>({a:1,b:0}));
     let converged=false,iterations=0,ll=logLikelihood(rows,items,prior),failure=null;
@@ -171,8 +223,8 @@
         converged=true;break;
       }
     }
-    return {items:items,converged:converged,iterations:iterations,logLikelihood:ll,
-      history:history,failure:failure};
+    const standardErrors=converged&&options.standardErrors===true?estimateJointObservedSE(rows,items,prior):{status:'not_requested',items:[]};
+    return {items:items,converged:converged,iterations:iterations,logLikelihood:ll,history:history,failure:failure,standard_errors:standardErrors};
   }
   function metric(errors) {
     return {bias:mean(errors),mae:mean(errors.map(Math.abs)),
@@ -183,6 +235,7 @@
       const truth=data.true_items[j], correct=data.responses.reduce((s,r)=>s+r[j],0);
       return {id:truth.id,true_a:truth.a,estimated_a:x.a,delta_a:x.a-truth.a,
         true_b:truth.b,estimated_b:x.b,delta_b:x.b-truth.b,
+        se_a:est.standard_errors?.items?.[j]?.se_a??null,se_b:est.standard_errors?.items?.[j]?.se_b??null,
         p_value:correct/data.examinees,correct:correct,incorrect:data.examinees-correct};
     });
     const tm=mean(data.true_theta),ts=Math.sqrt(mean(data.true_theta.map(x=>(x-tm)*(x-tm))));
@@ -231,7 +284,7 @@
       try{
         const data=generate();
         // Ground-truth values are intentionally not passed to the estimator.
-        const estimated=estimateMML2PL(data.responses);
+        const estimated=estimateMML2PL(data.responses,{standardErrors:true});
         const recovery=evaluate(data,estimated);
         latest={...data,estimator:'MML-EM',recovery:recovery,estimator_config:CFG};
         render(root,recovery,estimated);
@@ -542,13 +595,13 @@
   function render(root,result,est) {
     const s=result.summary;
     const card=(label,m)=>'<div class="card"><small>'+label+'</small><h3>'+fmt(m.mae)+'</h3><small>Bias '+fmt(m.bias)+' · RMSE '+fmt(m.rmse)+'</small></div>';
-    const rows=result.fitted.map(x=>'<tr><td>'+esc(x.id)+'</td><td>'+fmt(x.true_a)+'</td><td>'+fmt(x.estimated_a)+'</td><td>'+fmt(x.delta_a)+'</td><td>'+fmt(x.true_b)+'</td><td>'+fmt(x.estimated_b)+'</td><td>'+fmt(x.delta_b)+'</td><td>'+fmt(x.p_value)+'</td></tr>').join('');
+    const rows=result.fitted.map(x=>'<tr><td>'+esc(x.id)+'</td><td>'+fmt(x.true_a)+'</td><td>'+fmt(x.estimated_a)+'</td><td>'+fmt(x.delta_a)+'</td><td>'+fmt(x.true_b)+'</td><td>'+fmt(x.estimated_b)+'</td><td>'+fmt(x.delta_b)+'</td><td>'+fmt(x.p_value)+'</td><td>'+fmt(x.se_a)+'</td><td>'+fmt(x.se_b)+'</td></tr>').join('');
     root.querySelector('#pse-results').innerHTML='<div class="card" style="margin:12px 0"><h3>Hasil pemulihan parameter</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">'+
       '<div><small>Konvergensi</small><h3>'+(est.converged?'Tercapai':'Belum')+'</h3></div><div><small>Iterasi</small><h3>'+s.iterations+'</h3></div>'+
       '<div><small>Rerata θ pembangkit</small><h3>'+fmt(s.theta_mean)+'</h3></div><div><small>SD θ pembangkit</small><h3>'+fmt(s.theta_sd)+'</h3></div>'+
       '<div><small>Log-likelihood</small><h3>'+fmt(s.log_likelihood)+'</h3></div></div></div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0">'+card('Parameter a · MAE',s.a)+card('Parameter b · MAE',s.b)+'</div>'+
-      '<div class="card" style="overflow:auto"><h3>Parameter asli vs estimasi MML-EM</h3><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Butir</th><th>a asli</th><th>a estimasi</th><th>Δa</th><th>b asli</th><th>b estimasi</th><th>Δb</th><th>p benar</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="card" style="overflow:auto"><h3>Parameter asli vs estimasi MML-EM</h3><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Butir</th><th>a asli</th><th>a estimasi</th><th>Δa</th><th>b asli</th><th>b estimasi</th><th>Δb</th><th>p benar</th><th>SE a</th><th>SE b</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:10px">MAE/RMSE mengukur selisih dari parameter pembangkit. Satu replikasi belum cukup untuk menyatakan algoritma tervalidasi; ulangi beberapa replikasi dan periksa kestabilan serta bias.</p>';
   }
   function exportData() {
@@ -557,7 +610,7 @@
     const url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='pytago-irt-model-fit-monte-carlo.json';a.click();URL.revokeObjectURL(url);
   }
-  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,getLatest:()=>latest});
+  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,getLatest:()=>latest});
   new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
   mount();
 })();
