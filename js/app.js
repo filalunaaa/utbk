@@ -398,8 +398,43 @@ const DefaultSoal = {
   urutan: {},            // id -> urutan di server
   asli: {},              // id -> isi terakhir yang ada di server (bentuk kanonik)
   antrean: Promise.resolve(),
+  muatTerbatas: false,
+  jumlahMuatTerbatas: 0,
   simpanCache() {
+    // Jangan menimpa cache lengkap dengan subset yang sedang dibuka admin.
+    if (this.muatTerbatas) return;
     try { localStorage.setItem('utbk_soal_default', JSON.stringify({ soal: SOAL })); } catch (e) {}
+  },
+  async hitung() {
+    const token = await tokenAktif();
+    const headers = { apikey: SB_KEY, Prefer: 'count=exact', Range: '0-0', 'Range-Unit': 'items' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch(SB_URL + '/rest/v1/soal_default?select=id', { method: 'HEAD', headers });
+    if (!r.ok) throw new Error('Jumlah soal dari server tidak dapat diperiksa.');
+    const rentang = r.headers.get('content-range') || '';
+    const teksTotal = rentang.split('/').pop();
+    const total = Number(teksTotal);
+    if (!teksTotal || teksTotal === '*' || !Number.isFinite(total)) throw new Error('Server tidak mengirim jumlah soal yang valid.');
+    return total;
+  },
+  // Muat hanya N soal yang paling baru ditambahkan (urutan tertinggi).
+  async muatTerbaru(jumlah) {
+    const n = Math.max(0, Math.floor(Number(jumlah) || 0));
+    const halaman = n ? await rest(
+      `soal_default?select=id,urutan,data&order=urutan.desc,id.desc&limit=${n}`
+    ) : [];
+    if (!Array.isArray(halaman)) throw new Error('Respons server soal_default tidak valid.');
+    const terbaru = halaman.reverse();
+    this.urutan = {};
+    this.asli = {};
+    SOAL = terbaru.map((r) => {
+      const s = { ...r.data, id: String(r.id) };
+      this.urutan[s.id] = r.urutan;
+      this.asli[s.id] = kanon(sinId(s));
+      return s;
+    });
+    this.muatTerbatas = true;
+    this.jumlahMuatTerbatas = n;
   },
  // Ambil semua soal bawaan dari server secara bertahap
   async muat() {
@@ -425,6 +460,8 @@ const DefaultSoal = {
 
     this.urutan = {};
     this.asli = {};
+    this.muatTerbatas = false;
+    this.jumlahMuatTerbatas = 0;
 
     SOAL = semua.map((r) => {
       const s = { ...r.data, id: String(r.id) };
@@ -472,8 +509,8 @@ const DefaultSoal = {
   }
 };
 // Muat soal bawaan terbaru dan segarkan tampilan (dipakai semua pengguna saat aplikasi dibuka)
-async function segarkanSoalBawaan() {
-  if (modeAdmin) return;
+async function segarkanSoalBawaan(paksa = false) {
+  if (modeAdmin || (AkunApp.sesi() && !paksa)) return;
   try { await DefaultSoal.muat(); }
   catch (e) { console.warn('Soal bawaan dari server tidak terambil, memakai cache/cadangan:', e); return; }
   buatDatalist();
@@ -781,13 +818,9 @@ tampilkanPanelAdmin();
     console.warn('Sinkronisasi gagal:', e);
   }
 
-if (ADMIN) {
-  try {
-    await DefaultSoal.muat();
-  } catch (e) {
-    console.warn('Daftar soal server belum termuat untuk editor admin:', e);
-  }
-}
+// Admin tidak memuat seluruh bank saat login. Soal terbaru baru diambil
+// setelah admin menentukan jumlah yang ingin ditampilkan.
+if (!ADMIN) await segarkanSoalBawaan(true);
   renderSemuaBank();
   renderBeranda();
   renderSalam();
@@ -3590,25 +3623,85 @@ async function keluarModeAdmin() {
   tampilkanPanelAdmin();
   terapkanModeAdmin();
   await DefaultSoal.antrean;
-  segarkanSoalBawaan();
+  segarkanSoalBawaan(true);
+}
+async function bukaKonfirmasiMuatAdmin() {
+  const dialog = $('modal-admin-muat');
+  const input = $('admin-jumlah-soal');
+  const info = $('admin-soal-tersedia');
+  const tombolMuat = $('btn-konfirmasi-admin-muat');
+  const status = $('admin-muat-status');
+  dialog.showModal();
+  input.disabled = true;
+  tombolMuat.disabled = true;
+  info.textContent = 'Memeriksa jumlah soal terbaru...';
+  status.textContent = '';
+  status.className = 'pesan';
+  try {
+    const total = await DefaultSoal.hitung();
+    input.max = String(total);
+    input.min = '0';
+    input.value = String(Math.min(total, 100));
+    input.disabled = false;
+    tombolMuat.disabled = false;
+    info.textContent = total.toLocaleString('id-ID') + ' soal tersedia. Pilih jumlah soal terbaru yang ingin ditampilkan.';
+    input.focus();
+    input.select();
+  } catch (err) {
+    info.textContent = 'Jumlah soal tidak dapat diperiksa.';
+    status.textContent = err.message;
+    status.className = 'pesan err';
+  }
 }
 $('sw-admin').addEventListener('change', async (e) => {
   if (e.target.checked) {
-    statusAdmin('Memuat soal bawaan dari server...', false);
-    try { await DefaultSoal.muat(); }
-    catch (err) { e.target.checked = false; return statusAdmin('Gagal memuat soal bawaan: ' + err.message, true); }
-    modeAdmin = true;
-    terapkanModeAdmin();
-    statusAdmin('Mode admin aktif: perubahan langsung berlaku untuk semua pengguna.', false);
+    e.target.checked = false;
+    bukaKonfirmasiMuatAdmin();
   } else {
     await keluarModeAdmin();
     statusAdmin('', false);
   }
 });
+$('btn-batal-admin-muat').addEventListener('click', () => $('modal-admin-muat').close());
+$('modal-admin-muat').addEventListener('click', (e) => {
+  if (e.target === $('modal-admin-muat')) $('modal-admin-muat').close();
+});
+$('modal-admin-muat').addEventListener('close', () => $('sw-admin').focus());
+$('btn-konfirmasi-admin-muat').addEventListener('click', async () => {
+  const input = $('admin-jumlah-soal');
+  const jumlah = Number(input.value);
+  const total = Number(input.max);
+  const status = $('admin-muat-status');
+  if (input.value.trim() === '' || !Number.isInteger(jumlah) || jumlah < 0 || jumlah > total) {
+    status.textContent = 'Masukkan jumlah antara 0 dan ' + total.toLocaleString('id-ID') + '.';
+    status.className = 'pesan err';
+    input.focus();
+    return;
+  }
+  const tombol = $('btn-konfirmasi-admin-muat');
+  tombol.disabled = true;
+  input.disabled = true;
+  status.textContent = 'Memuat ' + jumlah.toLocaleString('id-ID') + ' soal terbaru...';
+  status.className = 'pesan';
+  try {
+    await DefaultSoal.muatTerbaru(jumlah);
+    modeAdmin = true;
+    $('sw-admin').checked = true;
+    terapkanModeAdmin();
+    $('modal-admin-muat').close();
+    statusAdmin('Mode admin aktif. ' + SOAL.length.toLocaleString('id-ID') + ' soal terbaru ditampilkan; perubahan tetap tersimpan ke server.', false);
+  } catch (err) {
+    status.textContent = 'Gagal memuat soal: ' + err.message;
+    status.className = 'pesan err';
+    tombol.disabled = false;
+    input.disabled = false;
+  }
+});
 $('btn-muat-ulang-bawaan').addEventListener('click', async () => {
   try {
     await DefaultSoal.antrean;
-    await DefaultSoal.muat();
+    if (modeAdmin && DefaultSoal.muatTerbatas) await DefaultSoal.muatTerbaru(DefaultSoal.jumlahMuatTerbatas);
+    else await DefaultSoal.muat();
     buatDatalist(); renderSemuaBank(); renderPilihSumber();
     statusAdmin('Soal bawaan dimuat ulang dari server.', false);
   } catch (err) { statusAdmin('Gagal memuat ulang: ' + err.message, true); }
