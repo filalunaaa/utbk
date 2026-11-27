@@ -2168,3 +2168,20 @@ dialog.admin-muat-dialog::backdrop{background:rgba(10,20,40,.54);backdrop-filter
 .tryout-difficulty{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:var(--tryout-level-soft);color:var(--tryout-level-color);font-size:.7rem;font-weight:800;letter-spacing:.01em}
 .tryout-paket h3{margin-top:1px}
 .tryout-paket-deskripsi{font-weight:750;color:var(--text);min-height:0}
+
+
+/* Modal konfirmasi mulai tryout */
+.konfirmasi-tryout{position:fixed;inset:0;z-index:1500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.62);backdrop-filter:blur(4px)}
+.konfirmasi-tryout-panel{width:min(420px,100%);background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:20px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:kty-masuk .18s ease-out}
+.kty-ikon{width:46px;height:46px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:19px;margin-bottom:16px}
+.kty-eyebrow{font-size:.68rem;font-weight:800;letter-spacing:.13em;color:var(--accent)}
+.konfirmasi-tryout-panel h2{font-size:1.3rem;margin:5px 0 8px}
+.kty-nama{font-weight:700;font-size:1rem;margin:0 0 18px;overflow-wrap:anywhere}
+.kty-info{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg);margin-bottom:12px;font-size:.9rem}
+.kty-info span,.kty-deskripsi{color:var(--muted)}
+.kty-deskripsi{font-size:.84rem;line-height:1.6;margin:0 0 22px}
+.kty-actions{display:flex;justify-content:flex-end;gap:9px}
+.kty-actions .btn{min-height:44px}
+body.kty-terbuka{overflow:hidden}
+@keyframes kty-masuk{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:480px){.konfirmasi-tryout{align-items:flex-end;padding:0}.konfirmasi-tryout-panel{width:100%;border-radius:20px 20px 0 0;padding:24px 20px calc(20px + env(safe-area-inset-bottom,0px))}.kty-actions .btn{flex:1}}
