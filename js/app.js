@@ -1157,7 +1157,7 @@ async function renderDaftarTryout() {
     let ringkasanIRT = {};
     if (ADMIN) {
       try {
-        const rowsIRT = await rest('tryout_irt_ringkasan?select=paket_id,irt_model,irt_status,irt_sample_size,jumlah_soal,parameter_belum_lengkap,jumlah_respons_selesai');
+        const rowsIRT = await rest('tryout_irt_ringkasan?select=paket_id,irt_model,irt_status,irt_sample_size,jumlah_soal,parameter_belum_lengkap,jumlah_respons_selesai,jumlah_peserta_unik');
         (Array.isArray(rowsIRT) ? rowsIRT : []).forEach((r) => { ringkasanIRT[String(r.paket_id)] = r; });
       } catch (errIRT) {
         console.warn('Ringkasan kalibrasi IRT belum dapat dimuat:', errIRT);
@@ -1190,7 +1190,7 @@ async function renderDaftarTryout() {
         perlu_tinjauan: 'Perlu tinjauan',
         gagal: 'Kalibrasi gagal'
       })[irt.irt_status] || 'Status belum diketahui' : 'Ringkasan belum tersedia';
-      const infoIRT = ADMIN ? `<p class="muted" style="font-size:12px;margin:8px 0 0">IRT ${esc(irt && irt.irt_model || '2PL')} · ${esc(statusIRTLabel)} · ${Number(irt && irt.jumlah_respons_selesai || 0)} respons · ${Number(irt && irt.parameter_belum_lengkap || 0)} butir belum terkalibrasi</p>` : '';
+      const infoIRT = ADMIN ? `<p class="muted" style="font-size:12px;margin:8px 0 0">IRT ${esc(irt && irt.irt_model || '2PL')} · ${esc(statusIRTLabel)} · ${Number(irt && irt.jumlah_peserta_unik || 0)} peserta unik · ${Number(irt && irt.jumlah_respons_selesai || 0)} respons · ${Number(irt && irt.parameter_belum_lengkap || 0)} butir belum terkalibrasi</p>` : '';
       return `<article class="card tryout-paket tingkat-${tingkat}" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
         <div class="tryout-paket-strip" aria-hidden="true"></div>
         <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
