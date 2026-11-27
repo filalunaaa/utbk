@@ -1151,10 +1151,7 @@ async function renderDaftarTryout() {
   const wadah = $('daftar-paket-tryout');
   if (!wadah) return;
   wadah.innerHTML = '<div class="card tryout-empty"><span class="muted">Memuat paket tryout...</span></div>';
-  if (!AkunApp.sesi()) {
-    wadah.innerHTML = '<div class="card tryout-empty"><h3>Masuk untuk melihat paket</h3><p class="muted">Silakan masuk ke akun Pytago terlebih dahulu agar daftar paket tryout dapat dimuat.</p></div>';
-    return;
-  }
+  // Paket yang sudah diterbitkan dapat dilihat publik; login tetap diwajibkan saat memulai tryout.
   try {
     const paket = await rest('tryout_paket?select=id,nama,deskripsi,kategori,durasi_menit,jumlah_soal,status,dibuat_pada&order=dibuat_pada.desc');
     if (!Array.isArray(paket) || !paket.length) {
