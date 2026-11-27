@@ -376,13 +376,13 @@
     }catch(err){status.textContent='Diagnostik gagal: '+(err?.message||String(err));status.className='pesan error';}
     finally{button.disabled=false;}
   }
-  async function runLocalDependenceNullValidation() {
+  async function runLocalDependenceNullValidation(options={}) {
     const root=document.getElementById('pytago-synth-panel');if(!root)return;
     const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
     const button=root.querySelector('#pse-local-null'),exportButton=root.querySelector('#pse-export');
     const controls=['#pse-run','#pse-repeat','#pse-sensitivity','#pse-misspec','#pse-se-calibration','#pse-local-dependence','#pse-local-null'].map(sel=>root.querySelector(sel)).filter(Boolean);
     controls.forEach(x=>x.disabled=true);exportButton.disabled=true;out.innerHTML='';status.className='pesan';
-    const repetitions=100,examinees=500;
+    const repetitions=Math.max(2,Math.floor(options.repetitions??100)),examinees=Math.max(100,Math.floor(options.examinees??500));
     const fixedItems=Array.from({length:CFG.items},(_,i)=>({id:'LD0-'+String(i+1).padStart(2,'0'),
       a:+(.65+Math.random()*1.25).toFixed(3),b:+(-1.5+Math.random()*3).toFixed(3)}));
     const runs=[],failures=[];
@@ -892,7 +892,7 @@
     const url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=(latest.schema||'pytago-irt-results').replace(/[^a-z0-9.-]+/gi,'-')+'.json';a.click();URL.revokeObjectURL(url);
   }
-  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,runMisspecification:runMisspecification,getLatest:()=>latest});
+  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,runMisspecification:runMisspecification,runLocalDependenceNullValidation:runLocalDependenceNullValidation,getLatest:()=>latest});
   new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
   mount();
 })();
