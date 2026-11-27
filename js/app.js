@@ -1172,7 +1172,7 @@ async function renderDaftarTryout() {
       const tingkat = 'sedang';
       const labelTingkat = tingkat === 'sulit' ? 'Sulit' : tingkat === 'mudah' ? 'Mudah' : 'Sedang';
       const namaPaket = String(p.nama || 'Tryout');
-      const nomorPaket = namaPaket.match(/\\d+/)?.[0] || '';
+      const nomorPaket = namaPaket.match(/\d+/)?.[0] || '';
       const deskripsiPaket = 'Paket Tryout ' + kategoriNama + (nomorPaket ? ' ' + nomorPaket : '');
       return `<article class="card tryout-paket tingkat-${tingkat}" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
         <div class="tryout-paket-strip" aria-hidden="true"></div>
