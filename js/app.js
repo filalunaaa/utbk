@@ -2597,7 +2597,7 @@ async function simpanHasilTryoutPaket(soal, jawab, poin, benar, mulai, durasi) {
   });
 }
 
-function selesai() {
+async function selesai() {
   if (!sesi || !sesi.aktif) return;
   $('modal-ex').hidden = true;
   filterReview = 'semua';
