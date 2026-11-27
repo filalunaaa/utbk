@@ -296,6 +296,12 @@
     return {mean_abs_q3:mean(absQ3),max_abs_q3:Math.max(...absQ3),
       item_curve_rms:Math.sqrt(curveSq/Math.max(1,curveCount))};
   }
+  const quantile = (values,p) => {
+    const xs=values.filter(Number.isFinite).slice().sort((a,b)=>a-b);
+    if(!xs.length)return null;
+    const pos=(xs.length-1)*p,lo=Math.floor(pos),hi=Math.ceil(pos);
+    return xs[lo]+(xs[hi]-xs[lo])*(pos-lo);
+  };
   async function runMisspecification() {
     const root=document.getElementById('pytago-synth-panel');if(!root)return;
     const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
@@ -304,60 +310,71 @@
     buttons.forEach(b=>b.disabled=true);exportButton.disabled=true;
     out.innerHTML='';status.className='pesan';
     const scenarios=[
-      {id:'2PL',label:'2PL · kontrol sesuai model'},
+      {id:'2PL',label:'2PL · kontrol nol sesuai model'},
       {id:'1PL',label:'1PL / Rasch · diskriminasi sama'},
       {id:'3PL',label:'3PL · peluang tebakan 0,15'},
       {id:'2D',label:'2D · trait kedua / multidimensi'}
     ];
-    const repetitions=15,examinees=1000,results=[];
+    const repetitions=100,examinees=1000,results=[];
+    const primaryStatistic='max_abs_q3';
     try {
       for(const scenario of scenarios){
-        const runs=[],allQ3=[],allCurve=[],allA=[];
-        let converged=0;
+        const runs=[];let converged=0;
         for(let rep=0;rep<repetitions;rep++){
-          status.textContent=scenario.label+' · replikasi '+(rep+1)+'/'+repetitions+' · N='+examinees;
-          await delay(20);
+          status.textContent=scenario.label+' · replikasi '+(rep+1)+'/'+repetitions+' · total '+(results.reduce((s,x)=>s+x.runs.length,0)+rep+1)+'/400';
+          await delay(15);
           const data=generateScenario(scenario.id,examinees);
-          // Only the response matrix enters the 2PL estimator.
           const est=estimateMML2PL(data.responses);
           const diag=residualDiagnostics(data.responses,est.items);
           if(est.converged)converged++;
-          allQ3.push(diag.mean_abs_q3);allCurve.push(diag.item_curve_rms);
-          allA.push(...est.items.map(x=>x.a));
           runs.push({repetition:rep+1,converged:est.converged,iterations:est.iterations,
             log_likelihood:est.logLikelihood,mean_abs_q3:diag.mean_abs_q3,
             max_abs_q3:diag.max_abs_q3,item_curve_rms:diag.item_curve_rms,
             mean_estimated_a:mean(est.items.map(x=>x.a))});
         }
-        results.push({
-          scenario:scenario.id,label:scenario.label,examinees,repetitions,
+        results.push({scenario:scenario.id,label:scenario.label,examinees,repetitions,
           convergence_rate:converged/repetitions,converged_count:converged,
           mean_iterations:mean(runs.map(x=>x.iterations)),
-          mean_abs_q3:mean(allQ3),max_abs_q3:Math.max(...runs.map(x=>x.max_abs_q3)),
-          mean_item_curve_rms:mean(allCurve),
-          mean_estimated_a:mean(allA),sd_estimated_a:Math.sqrt(mean(allA.map(x=>(x-mean(allA))**2))),
-          runs
-        });
+          mean_abs_q3:mean(runs.map(x=>x.mean_abs_q3)),
+          max_abs_q3:mean(runs.map(x=>x.max_abs_q3)),
+          mean_item_curve_rms:mean(runs.map(x=>x.item_curve_rms)),
+          mean_estimated_a:mean(runs.map(x=>x.mean_estimated_a)),runs});
       }
-      latest={schema:'pytago.irt.model-misspecification.v1',source:'synthetic_only',
+      const nullRuns=results[0].runs;
+      const cutoff=quantile(nullRuns.map(x=>x[primaryStatistic]),.95);
+      const nullExceed=nullRuns.filter(x=>x[primaryStatistic]>cutoff).length;
+      results.forEach((s,i)=>{
+        s.primary_statistic=primaryStatistic;
+        s.empirical_null_cutoff_95=cutoff;
+        s.exceedance_count=s.runs.filter(x=>x[primaryStatistic]>cutoff).length;
+        s.empirical_detection_rate=s.exceedance_count/repetitions;
+        s.empirical_false_positive_rate=i===0?s.empirical_detection_rate:null;
+      });
+      latest={schema:'pytago.irt.model-fit-monte-carlo.v2',source:'synthetic_only',
         estimator:'MML-EM 2PL',examinees,repetitions_per_scenario:repetitions,
-        diagnostics_note:'Exploratory residual diagnostics only; not formal M2/C2 or calibrated item-fit tests.',
+        total_fits:repetitions*scenarios.length,
+        calibration:{method:'empirical_null_quantile',null_scenario:'2PL',
+          primary_statistic:primaryStatistic,nominal_level:.05,cutoff_95:cutoff,
+          null_exceedances:nullExceed,null_false_positive_rate:nullExceed/repetitions,
+          note:'Cutoff is estimated from finite Monte Carlo null replications; this is a pilot calibration, not a universal clinical/operational threshold.'},
+        diagnostics_note:'Mean absolute Q3 and item-curve RMS are secondary exploratory diagnostics. Detection rates are conditional on these synthetic data-generating mechanisms.',
         scenarios:results,generated_at:new Date().toISOString()};
-      renderMisspecification(root,results);
+      renderMisspecification(root,results,latest.calibration);
       exportButton.disabled=false;
-      status.textContent='Selesai: '+results.reduce((s,x)=>s+x.converged_count,0)+'/'+(scenarios.length*repetitions)+' estimasi konvergen.';
-      status.className=results.every(x=>x.convergence_rate===1)?'pesan ok':'pesan';
+      const total=results.reduce((s,x)=>s+x.converged_count,0);
+      status.textContent='Selesai: '+total+'/400 estimasi konvergen. Cutoff empiris Max |Q3| = '+fmt(cutoff)+'.';
+      status.className=total===400?'pesan ok':'pesan';
     } catch(err) {
-      status.textContent='Uji misspecification gagal: '+(err&&err.message?err.message:String(err));
+      status.textContent='Uji Monte Carlo model-fit gagal: '+(err&&err.message?err.message:String(err));
       status.className='pesan error';
     } finally {buttons.forEach(b=>b.disabled=false);}
   }
-  function renderMisspecification(root,results) {
-    const rows=results.map(s=>'<tr><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+fmt(s.mean_item_curve_rms)+'</td><td>'+fmt(s.mean_estimated_a)+'</td></tr>').join('');
+  function renderMisspecification(root,results,calibration) {
+    const rows=results.map(s=>'<tr><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+fmt(s.mean_item_curve_rms)+'</td><td>'+fmt(s.mean_estimated_a)+'</td><td>'+s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)</td></tr>').join('');
     root.querySelector('#pse-results').innerHTML=
-      '<div class="card" style="margin:12px 0"><h3>Model Misspecification Test · 2PL estimator</h3><p>Empat kondisi pembangkitan, masing-masing 15 replikasi × 1.000 peserta × 20 butir. Semua respons diestimasi menggunakan model 2PL.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Model pembangkit</th><th>Konvergensi</th><th>Rerata iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva item</th><th>Rerata a estimasi</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
-      '<div class="card" style="margin:12px 0"><h3>Cara membaca hasil</h3><p>2PL adalah kontrol positif. 1PL menguji apakah data dengan diskriminasi seragam menghasilkan estimasi 2PL yang relatif seragam. 3PL menambahkan lower asymptote c=0,15. Kondisi 2D membangkitkan respons dari dua trait laten tetapi tetap dipaksa diestimasi sebagai satu trait.</p><p>Mean |Q3| dan Max |Q3| merangkum korelasi residual antarbutir setelah mengondisikan secara aproksimatif pada skor EAP. RMS kurva item merangkum selisih proporsi observasi dan prediksi dalam lima kelompok theta EAP. Nilai ini bersifat eksploratif, bukan cutoff keputusan formal.</p><p><b>Penting:</b> konvergensi 2PL pada data 1PL/3PL/2D tidak membuktikan model 2PL cocok. Untuk keputusan model-fit formal, tahap berikutnya tetap memerlukan statistik fit terkalibrasi, misalnya M2/C2 atau item-fit dengan prosedur bootstrap/Monte Carlo.</p></div>'+
-      results.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>'+esc(s.label)+' · diagnostik 15 replikasi</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.mean_abs_q3)+'</td><td>'+fmt(r.max_abs_q3)+'</td><td>'+fmt(r.item_curve_rms)+'</td></tr>').join('')+'</tbody></table></div>').join('');
+      '<div class="card" style="margin:12px 0"><h3>Model Fit Validation · Monte Carlo</h3><p>Empat kondisi pembangkitan, masing-masing 100 replikasi × 1.000 peserta × 20 butir. Total 400 estimasi MML-EM 2PL.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Model pembangkit</th><th>Konvergensi</th><th>Rerata iterasi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>RMS kurva</th><th>Rerata a estimasi</th><th>Melampaui cutoff</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Kalibrasi empiris distribusi nol</h3><p>Statistik primer: Max |Q3|. Cutoff 95% diturunkan dari 100 replikasi kontrol 2PL, bukan dipilih sebagai angka tetap.</p><p><b>Cutoff empiris:</b> '+fmt(calibration.cutoff_95)+' · <b>False positive empiris:</b> '+calibration.null_exceedances+'/100 ('+fmt(calibration.null_false_positive_rate*100)+'%).</p><p>Detection rate pada 1PL, 3PL, dan 2D adalah proporsi replikasi yang melampaui cutoff kontrol. Mean |Q3| dan RMS kurva tetap diagnostik sekunder, bukan dasar keputusan formal tunggal.</p><p><b>Batas interpretasi:</b> cutoff ini hanya dikalibrasi untuk konfigurasi simulasi ini (N=1.000, 20 butir, distribusi parameter dan kemampuan yang digunakan). Ia bukan cutoff universal. Estimasi false-positive juga memiliki ketidakpastian Monte Carlo.</p></div>'+
+      results.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>'+esc(s.label)+' · 100 replikasi</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva</th><th>Cutoff terlampaui</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.mean_abs_q3)+'</td><td>'+fmt(r.max_abs_q3)+'</td><td>'+fmt(r.item_curve_rms)+'</td><td>'+(r.max_abs_q3>calibration.cutoff_95?'Ya':'Tidak')+'</td></tr>').join('')+'</tbody></table></div>').join('');
   }
   async function runSampleSensitivity() {
     const root=document.getElementById('pytago-synth-panel');
