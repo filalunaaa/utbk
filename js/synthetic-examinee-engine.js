@@ -123,7 +123,7 @@
     const fitted=est.items.map((x,j)=>{
       const truth=data.true_items[j], correct=data.responses.reduce((s,r)=>s+r[j],0);
       return {id:truth.id,true_a:truth.a,estimated_a:x.a,delta_a:x.a-truth.a,
-        true_b:truth.b,estimated_b:x.b,delta_b:x.b-correct*0-truth.b,
+        true_b:truth.b,estimated_b:x.b,delta_b:x.b-truth.b,
         p_value:correct/data.examinees,correct:correct,incorrect:data.examinees-correct};
     });
     const tm=mean(data.true_theta),ts=Math.sqrt(mean(data.true_theta.map(x=>(x-tm)*(x-tm))));
