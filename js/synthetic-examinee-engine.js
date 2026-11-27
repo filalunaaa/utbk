@@ -574,7 +574,7 @@
     const conditions=[
       {id:'2PL',role:'kalibrasi',label:'2PL null · kalibrasi'},
       {id:'2PL',role:'validasi_nol',label:'2PL null · validasi'},
-      {id:'1PL',role:'misspecification',label:'1PL / Rasch'},
+      {id:'1PL',role:'benchmark',label:'Rasch benchmark · equal discrimination'},
       {id:'3PL',role:'misspecification',label:'3PL · c=0,05',options:{guessing:.05}},
       {id:'3PL',role:'misspecification',label:'3PL · c=0,15',options:{guessing:.15}},
       {id:'3PL',role:'misspecification',label:'3PL · c=0,25',options:{guessing:.25}},
@@ -645,7 +645,7 @@
           scenario.exceedance_count=summary.exceedance_count;
           scenario.valid_diagnostic_count=summary.valid_diagnostic_count;
           scenario.failed_or_unavailable_count=summary.failed_or_unavailable_count;
-          scenario.empirical_detection_rate=summary.operational_rate;
+          scenario.empirical_detection_rate=scenario.role==='benchmark'?null:summary.operational_rate;\n          scenario.benchmark_exceedance_rate=scenario.role==='benchmark'?summary.operational_rate:null;
           scenario.conditional_detection_rate=summary.conditional_rate;
           scenario.operational_wilson_95=summary.operational_wilson_95;
           scenario.conditional_wilson_95=summary.conditional_wilson_95;
@@ -659,7 +659,7 @@
         item_count:CFG.items,total_fits:totalFits,primary_statistic:primaryStatistic,
         design:'sample_size_stratified_independent_null_calibration_and_validation',
         calibration_by_sample_size:calibrations,
-        diagnostics_note:'Pada setiap N, cutoff Max |Q3| dikalibrasi dari 100 replikasi 2PL dan diuji pada 100 replikasi 2PL independen. Alternatif mencakup Rasch, 3PL dengan c=0,05/0,15/0,25, dan 2D dengan loading sekunder 0,25/0,45/0,70. Rate operasional memakai seluruh replikasi; kegagalan konvergensi dihitung sebagai kegagalan deteksi. Rate kondisional hanya memakai fit konvergen. Wilson CI dan MCSE mengukur ketidakpastian Monte Carlo per kondisi, belum ketidakpastian cutoff kalibrasi.',
+        diagnostics_note:'Pada setiap N, cutoff Max |Q3| dikalibrasi dari 100 replikasi 2PL dan diuji pada 100 replikasi 2PL independen. Alternatif power mencakup 3PL dengan c=0,05/0,15/0,25 dan 2D dengan loading sekunder 0,25/0,45/0,70. Rasch/1PL dilaporkan sebagai benchmark, bukan power karena Q3 tidak menguji kesamaan diskriminasi. Rate operasional memakai seluruh replikasi; kegagalan konvergensi dihitung sebagai kegagalan deteksi. Rate kondisional hanya memakai fit konvergen. Wilson CI dan MCSE mengukur ketidakpastian Monte Carlo per kondisi, belum ketidakpastian cutoff kalibrasi.',
         interpretation_limits:'Power/detection rate adalah estimasi untuk generator sintetis dan konfigurasi item/distribusi yang ditentukan, bukan power universal atau validasi data empiris. N=500/1000/2000; 20 butir; 100 replikasi per kondisi.',
         scenarios:results,generated_at:new Date().toISOString()};
       renderMisspecification(root,results,calibrations);
@@ -761,7 +761,7 @@
   }
   function renderMisspecification(root,results,calibrations) {
     const rows=results.map(s=>{
-      const rate=s.role==='kalibrasi'?'Kalibrasi cutoff':s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)';
+      const rate=s.role==='kalibrasi'?'Kalibrasi cutoff':s.role==='benchmark'?'Benchmark: '+s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.benchmark_exceedance_rate*100)+'%)':s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)';
       const ci=s.operational_wilson_95;
       return '<tr><td>'+s.examinees+'</td><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+rate+'</td><td>'+(s.role==='kalibrasi'?'—':fmt(ci.lower*100)+'–'+fmt(ci.upper*100)+'%')+'</td></tr>';
     }).join('');
@@ -769,7 +769,7 @@
       '<div class="card" style="margin:8px 0"><b>N='+n+'</b><p>Cutoff Max |Q3|: '+fmt(x.cutoff_95)+' · valid calibration '+x.calibration_valid_diagnostics+'/'+x.calibration_repetitions+'</p><p>False positive operasional: '+x.validation_false_positives+'/'+x.validation_repetitions+' ('+fmt(x.validation_false_positive_rate*100)+'%) · Wilson 95% '+fmt(x.validation_operational_wilson_95.lower*100)+'–'+fmt(x.validation_operational_wilson_95.upper*100)+'%</p><p>False positive kondisional: '+fmt(x.validation_conditional_false_positive_rate*100)+'% · MCSE '+fmt(x.validation_conditional_mcse*100)+' percentage points</p></div>'
     ).join('');
     root.querySelector('#pse-results').innerHTML=
-      '<div class="card" style="margin:12px 0"><h3>Power Analysis · desain multi-N</h3><p>27 kondisi × 100 replikasi = 2.700 estimasi MML-EM 2PL. Ukuran sampel 500, 1.000, dan 2.000; 20 butir. Cutoff null dikalibrasi dan divalidasi secara independen pada setiap ukuran sampel.</p><p>Alternatif: Rasch/1PL; 3PL dengan c=0,05, 0,15, 0,25; dan 2D dengan loading sekunder 0,25, 0,45, 0,70.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>N</th><th>Kondisi</th><th>Konvergensi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>Detection rate</th><th>Wilson 95%</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Power Analysis · desain multi-N</h3><p>27 kondisi × 100 replikasi = 2.700 estimasi MML-EM 2PL. Kondisi Rasch ditampilkan sebagai benchmark, bukan alternatif power berbasis Q3. Ukuran sampel 500, 1.000, dan 2.000; 20 butir. Cutoff null dikalibrasi dan divalidasi secara independen pada setiap ukuran sampel.</p><p>Alternatif untuk estimasi detection/power: 3PL dengan c=0,05, 0,15, 0,25; dan 2D dengan loading sekunder 0,25, 0,45, 0,70. Rasch/1PL adalah benchmark karena Q3 menguji dependensi residual, bukan restriksi kesamaan diskriminasi.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>N</th><th>Kondisi</th><th>Konvergensi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>Detection / benchmark exceedance</th><th>Wilson 95%</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
       '<div class="card" style="margin:12px 0"><h3>Kalibrasi false-positive per ukuran sampel</h3>'+calibrationCards+'</div>'+
       '<div class="card" style="margin:12px 0"><h3>Batas interpretasi</h3><p>Rate operasional menghitung kegagalan konvergensi sebagai kegagalan deteksi; rate kondisional hanya memakai fit konvergen. Wilson CI/MCSE mengukur ketidakpastian Monte Carlo dari replikasi pengujian, tetapi belum memasukkan ketidakpastian cutoff yang berasal dari 100 replikasi kalibrasi.</p><p>Hasil ini adalah estimasi power sintetis untuk generator dan parameter yang ditentukan, bukan power universal atau bukti validitas pada data peserta Pytago. Untuk laporan final, jumlah replikasi dan kalibrasi cutoff perlu ditingkatkan.</p></div>';
   }
