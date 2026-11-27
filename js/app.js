@@ -1106,11 +1106,32 @@ function sanitize(html) {
   return div.innerHTML;
 }
 // Konten soal/pembahasan yang sudah dibersihkan, plus gambar lama dan grafik opsional.
-function konten(html, gambarLama, alt, grafik) {
-  return `<div class="konten">${sanitize(html)}${gambarLama && gambarLama.startsWith('data:image/') ? `<img class="gambar-soal" src="${gambarLama}" alt="${esc(alt)}">` : ''}${grafikHTML(grafik)}</div>`;
+function konten(html, gambarLama, alt, grafik, visual) {
+  return `<div class="konten">${sanitize(html)}${gambarLama && gambarLama.startsWith('data:image/') ? `<img class="gambar-soal" src="${gambarLama}" alt="${esc(alt)}">` : ''}${visualHTML(visual, grafik)}</div>`;
 }
 function grafikHTML(g) {
   return window.NalarineGraph && g ? window.NalarineGraph.graphHTML(g) : '';
+}
+// Kompatibilitas visual lama dari generator soal tryout.
+function visualHTML(v, grafik) {
+  if (!v || typeof v !== 'object') return grafikHTML(grafik);
+  if (v.jenis === 'tabel' && Array.isArray(v.kolom) && Array.isArray(v.baris)) {
+    const head = v.kolom.map(x => '<th scope="col">' + esc(x) + '</th>').join('');
+    const rows = v.baris.map(row => '<tr>' + (Array.isArray(row) ? row : []).map(x => '<td>' + esc(x) + '</td>').join('') + '</tr>').join('');
+    return '<figure class="ng-visualisasi ng-visual-card ng-table-visual">' +
+      (v.judul ? '<figcaption class="ng-visual-title">' + esc(v.judul) + '</figcaption>' : '') +
+      '<div class="ng-table-wrap"><table class="ng-data-table"><thead><tr>' + head +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div></figure>' + grafikHTML(grafik);
+  }
+  if (v.jenis === 'grafik_garis' && !grafik && window.NalarineGraph) {
+    const categories = Array.isArray(v.sumbu_x) ? v.sumbu_x : [];
+    const datasets = Array.isArray(v.seri) ? v.seri.map(x => ({ nama: x.nama || 'Data', nilai: Array.isArray(x.data) ? x.data : [] })) : [];
+    const converted = { versi: 1, jenis: 'line', judul: v.judul || 'Grafik garis',
+      sumbuX: v.label_sumbu_x || 'Kategori', sumbuY: v.sumbu_y || 'Nilai',
+      kategori: categories, datasets };
+    return grafikHTML(converted);
+  }
+  return grafikHTML(grafik);
 }
 // Isi satu pilihan jawaban (teks atau gambar)
 function isiOpsi(html) {
@@ -1273,7 +1294,7 @@ function pratinjauSoalPaket(row) {
   const isian = adaIsian(s);
   $('pspv-konten').innerHTML = `
     <div class="rev-body">
-      <div><p class="rev-sub">Pertanyaan</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik)}</div></div>
+      <div><p class="rev-sub">Pertanyaan</p><div class="teks-soal">${konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik, s.visual)}</div></div>
       <div><p class="rev-sub">${isian ? 'Kunci jawaban' : 'Pilihan jawaban'}</p>${isian ? '<div class="isian-review"><div class="kunci"><span class="muted">Kunci bilangan cacah</span><strong>' + esc(s.jawaban) + '</strong></div></div>' : '<div class="opsi-list">' + opsiReviewHTML(s, undefined) + '</div>'}<p class="rev-ket"><span>Jawaban benar: <b>${esc(kunciHuruf(s))}</b></span></p></div>
       <div class="feedback rev-pembahasan"><strong>Pembahasan</strong><div>${konten(s.pembahasan, s.gambarPembahasan, 'Gambar pembahasan')}</div></div>
     </div>`;
@@ -1791,7 +1812,7 @@ function renderSoal() {
   $('info-nomor').textContent = `Soal ${i + 1} dari ${soal.length} (${namaMapel(s.mataPelajaran)}, ${s.topik || (sesi.paketTryoutId ? 'Paket Tryout' : 'Tanpa topik')})${adaGanda(s) ? ' · centang semua yang benar' : adaIsian(s) ? ' · isian bilangan cacah' : ''}`;
   renderTombolEditSoal(s);
   const evaluasiAktif = mode === 'latihan' && kunci[i];
-  $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik);
+  $('teks-soal').innerHTML = konten(s.soal, s.gambarSoal, 'Gambar soal', s.grafik, s.visual);
   if (adaIsian(s)) {
     const j = jawab[i];
     const kelasIsi = evaluasiAktif ? (jawabBenar(s, j) ? ' benar' : ' salah') : '';
