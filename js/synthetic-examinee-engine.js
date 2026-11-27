@@ -277,7 +277,7 @@
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0">'+
       '<div class="card"><small>Peserta</small><h2>500</h2><small>Data sintetis</small></div><div class="card"><small>Butir</small><h2>20</h2><small>PG dikotomis</small></div>'+
       '<div class="card"><small>Estimator</small><h2>MML-EM</h2><small>61 titik kuadratur</small></div><div class="card"><small>Iterasi maksimum</small><h2>300</h2><small>Toleransi 0,0001</small></div></div>'+
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-primary" id="pse-se-calibration">Uji Kalibrasi SE · 100 Replikasi</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-primary" id="pse-se-calibration">Uji Kalibrasi SE · 100 Replikasi</button><button type="button" class="btn btn-primary" id="pse-local-dependence" disabled>Diagnostik Ketergantungan Lokal</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
       '<p id="pse-status" class="pesan" role="status" aria-live="polite">Siap. Estimator hanya menerima matriks respons, bukan θ atau parameter asli.</p><div id="pse-results"></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:18px">Terisolasi: tidak membaca/menulis Supabase dan tidak mengubah paket produksi. Ini uji pemulihan pada data yang dibangkitkan dari model 2PL, bukan validasi model-fit pada peserta nyata.</p></section>';
     document.body.appendChild(root);
@@ -287,6 +287,7 @@
     root.querySelector('#pse-sensitivity').addEventListener('click',runSampleSensitivity);
     root.querySelector('#pse-misspec').addEventListener('click',runMisspecification);
     root.querySelector('#pse-se-calibration').addEventListener('click',runSECalibration);
+    root.querySelector('#pse-local-dependence').addEventListener('click',runLocalDependenceDiagnostic);
     root.querySelector('#pse-export').addEventListener('click',exportData);
   }
   function run() {
@@ -301,14 +302,49 @@
         // Ground-truth values are intentionally not passed to the estimator.
         const estimated=estimateMML2PL(data.responses,{standardErrors:true});
         const recovery=evaluate(data,estimated);
-        latest={...data,estimator:'MML-EM',recovery:recovery,estimator_config:CFG};
+        latest={...data,estimator:'MML-EM',recovery:recovery,estimator_config:CFG,estimated_items:estimated.items};
         render(root,recovery,estimated);
+         root.querySelector('#pse-local-dependence').disabled=!estimated.converged;
         root.querySelector('#pse-export').disabled=false;
         status.textContent=estimated.converged?'Konvergensi tercapai pada iterasi '+estimated.iterations+'.':'Estimasi ditolak: '+(estimated.failure?(estimated.failure.reason||'optimasi tidak konvergen'):'batas iterasi tercapai')+'. Jangan gunakan estimasi ini.';
         status.className=estimated.converged?'pesan ok':'pesan';
       }catch(err){status.textContent='Pengujian gagal: '+(err&&err.message?err.message:String(err));status.className='pesan error';}
       finally{button.disabled=false;}
     },30);
+  }
+  async function runLocalDependenceDiagnostic() {
+    const root=document.getElementById('pytago-synth-panel');if(!root||!latest?.responses)return;
+    const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
+    const button=root.querySelector('#pse-local-dependence'),exportButton=root.querySelector('#pse-export');
+    const estimated=latest.estimated_items;
+    if(!estimated||!latest.responses.length){status.textContent='Jalankan satu replikasi MML-EM terlebih dahulu.';return;}
+    button.disabled=true;exportButton.disabled=true;status.className='pesan';out.innerHTML='';
+    const prior=priorWeights(),pairs=[],n=latest.responses.length,k=estimated.length;
+    try {
+      for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
+        const rj=[],rm=[];
+        for(let r=0;r<n;r++){
+          const row=latest.responses[r].slice();row[j]=null;row[m]=null;
+          const post=posterior(row,estimated,prior);
+          const theta=mean(post.map((w,q)=>w*NODES[q]));
+          rj.push(latest.responses[r][j]-prob(estimated[j],theta));
+          rm.push(latest.responses[r][m]-prob(estimated[m],theta));
+        }
+        const q3=correlation(rj,rm);
+        if(Number.isFinite(q3))pairs.push({item_1:estimated[j].id||('Item '+(j+1)),item_2:estimated[m].id||('Item '+(m+1)),q3});
+        if(pairs.length%5===0){status.textContent='Leave-two-out: '+pairs.length+'/'+(k*(k-1)/2)+' pasangan.';await delay(10);}
+      }
+      const meanQ3=mean(pairs.map(x=>x.q3));
+      const adjusted=pairs.map(x=>({...x,q3_adjusted:x.q3-meanQ3}));
+      const sorted=adjusted.slice().sort((a,b)=>Math.abs(b.q3_adjusted)-Math.abs(a.q3_adjusted));
+      latest.local_dependence={method:'pairwise_leave_two_items_out_eap',pairs:adjusted,mean_raw_q3:meanQ3,
+        mean_adjusted_q3:mean(adjusted.map(x=>x.q3_adjusted)),
+        max_abs_adjusted_q3:Math.max(...adjusted.map(x=>Math.abs(x.q3_adjusted))),
+        note:'Eksploratif; cutoff dan tingkat kesalahan belum dikalibrasi.'};
+      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Ketergantungan Lokal · Pairwise Leave-Two-Out</h3><p>Kemampuan peserta dihitung ulang dengan mengecualikan kedua butir dalam pasangan yang sedang diuji. Ini mengurangi kontaminasi estimasi kemampuan oleh respons pada pasangan tersebut.</p><p><b>Pasangan valid:</b> '+pairs.length+' · <b>Rerata Q3 mentah:</b> '+fmt(meanQ3)+' · <b>Max |Q3 terkoreksi|:</b> '+fmt(latest.local_dependence.max_abs_adjusted_q3)+'</p><div style="overflow:auto;max-height:360px"><table style="width:100%;font-size:12px"><thead><tr><th>Butir 1</th><th>Butir 2</th><th>Q3 mentah</th><th>Q3 terkoreksi</th></tr></thead><tbody>'+sorted.map(x=>'<tr><td>'+esc(x.item_1)+'</td><td>'+esc(x.item_2)+'</td><td>'+fmt(x.q3)+'</td><td>'+fmt(x.q3_adjusted)+'</td></tr>').join('')+'</tbody></table></div><p><b>Batasan:</b> diagnostik eksploratif, bukan uji signifikansi atau cutoff keputusan. Cutoff harus dikalibrasi dengan simulasi nol independen untuk desain tes dan estimator yang digunakan.</p></div>';
+      exportButton.disabled=false;status.textContent='Selesai: '+pairs.length+' pasangan dianalisis.';status.className='pesan ok';
+    }catch(err){status.textContent='Diagnostik gagal: '+(err?.message||String(err));status.className='pesan error';}
+    finally{button.disabled=false;}
   }
   const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
   async function runRepeated() {
@@ -399,7 +435,7 @@
     const mx=mean(x),my=mean(y);
     let num=0,dx=0,dy=0;
     for(let i=0;i<x.length;i++){const a=x[i]-mx,b=y[i]-my;num+=a*b;dx+=a*a;dy+=b*b;}
-    return dx>0&&dy>0?num/Math.sqrt(dx*dy):0;
+    return dx>0&&dy>0?num/Math.sqrt(dx*dy):null;
   }
   function residualDiagnostics(responses,estimatedItems) {
     const prior=priorWeights(),n=responses.length,k=estimatedItems.length;
