@@ -586,41 +586,72 @@
           await delay(15);
           const data=generateScenario(scenario.id,examinees);
           const est=estimateMML2PL(data.responses);
-          const diag=residualDiagnostics(data.responses,est.items);
+          // Residual diagnostics are interpretable only for a converged fit.
+          const diag=est.converged?residualDiagnostics(data.responses,est.items):null;
           if(est.converged)converged++;
           runs.push({repetition:rep+1,converged:est.converged,iterations:est.iterations,
-            log_likelihood:est.logLikelihood,mean_abs_q3:diag.mean_abs_q3,
-            max_abs_q3:diag.max_abs_q3,item_curve_rms:diag.item_curve_rms,
-            mean_estimated_a:mean(est.items.map(x=>x.a))});
+            log_likelihood:est.logLikelihood,
+            mean_abs_q3:diag?.mean_abs_q3??null,
+            max_abs_q3:diag?.max_abs_q3??null,
+            item_curve_rms:diag?.item_curve_rms??null,
+            mean_estimated_a:est.converged?mean(est.items.map(x=>x.a)):null});
         }
+        const finiteMean=key=>mean(runs.map(x=>x[key]).filter(Number.isFinite));
         results.push({scenario:scenario.id,role:scenario.role,label:scenario.label,examinees,repetitions,
           convergence_rate:converged/repetitions,converged_count:converged,
-          mean_iterations:mean(runs.map(x=>x.iterations)),
-          mean_abs_q3:mean(runs.map(x=>x.mean_abs_q3)),
-          max_abs_q3:mean(runs.map(x=>x.max_abs_q3)),
-          mean_item_curve_rms:mean(runs.map(x=>x.item_curve_rms)),
-          mean_estimated_a:mean(runs.map(x=>x.mean_estimated_a)),runs});
+          mean_iterations:finiteMean('iterations'),
+          mean_abs_q3:finiteMean('mean_abs_q3'),
+          max_abs_q3:finiteMean('max_abs_q3'),
+          mean_item_curve_rms:finiteMean('item_curve_rms'),
+          mean_estimated_a:finiteMean('mean_estimated_a'),runs});
       }
       const calibrationRuns=results[0].runs;
       const validationRuns=results[1].runs;
-      const cutoff=quantile(calibrationRuns.map(x=>x[primaryStatistic]),.95);
-      const validationExceed=validationRuns.filter(x=>x[primaryStatistic]>cutoff).length;
+      const calibrationStatistics=calibrationRuns.filter(x=>x.converged&&Number.isFinite(x[primaryStatistic])).map(x=>x[primaryStatistic]);
+      if(calibrationStatistics.length<20)throw new Error('Replikasi kalibrasi 2PL konvergen kurang dari 20; cutoff empiris tidak stabil dan simulasi dihentikan.');
+      const cutoff=quantile(calibrationStatistics,.95);
+      const summarizeExceedance=runs=>{
+        const valid=runs.filter(x=>x.converged&&Number.isFinite(x[primaryStatistic]));
+        const exceed=valid.filter(x=>x[primaryStatistic]>cutoff).length;
+        const operationalRate=exceed/runs.length,conditionalRate=valid.length?exceed/valid.length:null;
+        return {exceedance_count:exceed,valid_diagnostic_count:valid.length,
+          failed_or_unavailable_count:runs.length-valid.length,
+          operational_rate:operationalRate,conditional_rate:conditionalRate,
+          operational_wilson_95:wilsonInterval(exceed,runs.length),
+          conditional_wilson_95:wilsonInterval(exceed,valid.length),
+          operational_mcse:Math.sqrt(operationalRate*(1-operationalRate)/runs.length),
+          conditional_mcse:valid.length?Math.sqrt(conditionalRate*(1-conditionalRate)/valid.length):null};
+      };
+      const validationSummary=summarizeExceedance(validationRuns);
       results.forEach((s,i)=>{
-        s.primary_statistic=primaryStatistic;
-        s.empirical_null_cutoff_95=cutoff;
-        s.exceedance_count=s.runs.filter(x=>x[primaryStatistic]>cutoff).length;
-        s.empirical_detection_rate=s.exceedance_count/repetitions;
-        s.empirical_false_positive_rate=i===1?s.empirical_detection_rate:null;
+        const summary=summarizeExceedance(s.runs);
+        s.primary_statistic=primaryStatistic;s.empirical_null_cutoff_95=cutoff;
+        s.exceedance_count=summary.exceedance_count;
+        s.valid_diagnostic_count=summary.valid_diagnostic_count;
+        s.failed_or_unavailable_count=summary.failed_or_unavailable_count;
+        s.empirical_detection_rate=summary.operational_rate;
+        s.conditional_detection_rate=summary.conditional_rate;
+        s.operational_wilson_95=summary.operational_wilson_95;
+        s.conditional_wilson_95=summary.conditional_wilson_95;
+        s.operational_mcse=summary.operational_mcse;
+        s.conditional_mcse=summary.conditional_mcse;
+        s.empirical_false_positive_rate=i===1?summary.operational_rate:null;
       });
-      latest={schema:'pytago.irt.model-fit-monte-carlo.v3',source:'synthetic_only',
+      latest={schema:'pytago.irt.model-fit-monte-carlo.v4',source:'synthetic_only',
         estimator:'MML-EM 2PL',examinees,repetitions_per_condition:repetitions,total_fits:repetitions*scenarios.length,
         design:'independent_null_calibration_and_validation',
-        calibration:{method:'empirical_null_quantile',calibration_scenario:'2PL',validation_scenario:'independent_2PL',
+        calibration:{method:'empirical_null_quantile_of_converged_calibration_fits',calibration_scenario:'2PL',validation_scenario:'independent_2PL',
           primary_statistic:primaryStatistic,nominal_level:.05,cutoff_95:cutoff,
-          calibration_repetitions:repetitions,validation_repetitions:repetitions,
-          validation_false_positives:validationExceed,validation_false_positive_rate:validationExceed/repetitions,
-          note:'Cutoff ditentukan dari 100 replikasi 2PL kalibrasi, lalu false-positive diukur pada 100 replikasi 2PL independen. Hasil tetap pilot dan khusus untuk konfigurasi simulasi ini.'},
-        diagnostics_note:'Mean absolute Q3 dan item-curve RMS adalah diagnostik sekunder. Detection rates bersyarat pada mekanisme pembangkitan data sintetis yang digunakan.',
+          calibration_repetitions:repetitions,calibration_valid_diagnostics:calibrationStatistics.length,
+          validation_repetitions:repetitions,validation_false_positives:validationSummary.exceedance_count,
+          validation_false_positive_rate:validationSummary.operational_rate,
+          validation_conditional_false_positive_rate:validationSummary.conditional_rate,
+          validation_operational_wilson_95:validationSummary.operational_wilson_95,
+          validation_conditional_wilson_95:validationSummary.conditional_wilson_95,
+          validation_operational_mcse:validationSummary.operational_mcse,
+          validation_conditional_mcse:validationSummary.conditional_mcse,
+          note:'Cutoff dihitung dari replikasi 2PL kalibrasi yang konvergen; validasi memakai replikasi 2PL independen. Rate operasional memakai semua replikasi dan menganggap fit gagal sebagai kegagalan deteksi; rate kondisional hanya memakai fit konvergen.'},
+        diagnostics_note:'Statistik Q3 hanya dihitung untuk fit konvergen. Detection rate/power bersyarat pada generator, N=1.000, 20 butir, dan estimator; Wilson CI dan MCSE menunjukkan ketidakpastian Monte Carlo.',
         scenarios:results,generated_at:new Date().toISOString()};
       renderMisspecification(root,results,latest.calibration);
       exportButton.disabled=false;
