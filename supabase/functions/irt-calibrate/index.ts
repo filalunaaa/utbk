@@ -189,6 +189,57 @@ function maximizeItem(
   };
 }
 
+
+function invertInformationMatrix(matrix: number[][]) {
+  const n=matrix.length,a=matrix.map(row=>row.slice()),inverse=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
+  const scale=Math.max(...a.map((row,i)=>Math.abs(row[i])));if(!Number.isFinite(scale)||scale<=0)return null;
+  let minPivot=Number.POSITIVE_INFINITY;
+  for(let col=0;col<n;col++){
+    let pivotRow=col;for(let r=col+1;r<n;r++)if(Math.abs(a[r][col])>Math.abs(a[pivotRow][col]))pivotRow=r;
+    const pivot=Math.abs(a[pivotRow][col]);if(!Number.isFinite(pivot)||pivot<scale*1e-12)return null;
+    minPivot=Math.min(minPivot,pivot/scale);
+    if(pivotRow!==col){[a[col],a[pivotRow]]=[a[pivotRow],a[col]];[inverse[col],inverse[pivotRow]]=[inverse[pivotRow],inverse[col]];}
+    const divisor=a[col][col];for(let j=0;j<n;j++){a[col][j]/=divisor;inverse[col][j]/=divisor;}
+    for(let r=0;r<n;r++){if(r===col)continue;const factor=a[r][col];if(!factor)continue;for(let j=0;j<n;j++){a[r][j]-=factor*a[col][j];inverse[r][j]-=factor*inverse[col][j];}}
+  }
+  return {inverse,minPivot};
+}
+function estimateJointObservedSE(rows:Array<Array<number|null>>,items:Array<{a:number;b:number}>,prior:number[]) {
+  const itemCount=items.length,dimension=2*itemCount,work=rows.length*THETA_NODES.length*dimension*dimension;
+  if(!itemCount)return {status:"unavailable",reason:"no_items",items:[] as any[]};
+  if(dimension>80||work>80000000)return {status:"unavailable",reason:"computational_budget_exceeded",work,items:[] as any[]};
+  const information=Array.from({length:dimension},()=>Array(dimension).fill(0));
+  for(const row of rows){
+    const weights=posteriorForRow(row,items,prior),meanScore=new Float64Array(dimension);
+    const second=Array.from({length:dimension},()=>new Float64Array(dimension));
+    for(let q=0;q<THETA_NODES.length;q++){
+      const theta=THETA_NODES[q],weight=weights[q];if(weight<=0)continue;
+      const score=new Float64Array(dimension);
+      for(let j=0;j<itemCount;j++){
+        const response=row[j];if(response===null)continue;
+        const p=Math.min(1-1e-12,Math.max(1e-12,itemProbability(items[j],theta))),residual=response-p,x=2*j;
+        score[x]=residual;score[x+1]=residual*theta;
+        const h=weight*p*(1-p);
+        information[x][x]+=h;information[x][x+1]+=h*theta;information[x+1][x]+=h*theta;information[x+1][x+1]+=h*theta*theta;
+      }
+      for(let i=0;i<dimension;i++){const si=score[i];meanScore[i]+=weight*si;if(si===0)continue;for(let k=0;k<dimension;k++)second[i][k]+=weight*si*score[k];}
+    }
+    for(let i=0;i<dimension;i++)for(let k=0;k<dimension;k++)information[i][k]-=second[i][k]-meanScore[i]*meanScore[k];
+  }
+  for(let i=0;i<dimension;i++)for(let k=i+1;k<dimension;k++){const v=(information[i][k]+information[k][i])/2;information[i][k]=v;information[k][i]=v;}
+  const inverted=invertInformationMatrix(information);if(!inverted)return {status:"unavailable",reason:"joint_observed_information_singular",work,items:[] as any[]};
+  const covariance=inverted.inverse;
+  const estimates=items.map((item,j)=>{
+    const c=2*j,d=c+1;if(item.a<=.050001||item.a>=4.999999||Math.abs(item.a*item.b)>=19.999)return {se_a:null,se_b:null,status:"boundary_parameter"};
+    const varA=covariance[d][d],g0=-1/item.a,g1=-item.b/item.a;
+    const varB=g0*g0*covariance[c][c]+2*g0*g1*covariance[c][d]+g1*g1*covariance[d][d];
+    if(!Number.isFinite(varA)||!Number.isFinite(varB)||varA<=0||varB<=0)return {se_a:null,se_b:null,status:"non_positive_variance"};
+    return {se_a:Math.sqrt(varA),se_b:Math.sqrt(varB),status:"computed"};
+  });
+  return {status:estimates.every(x=>x.status==="computed")?"computed":"partial",method:"louis_identity_full_joint_observed_information",
+    parameterization:"intercept_slope",matrix_dimension:dimension,min_pivot_ratio:inverted.minPivot,work,items:estimates};
+}
+
 function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
   const prior = makePrior();
   const items = itemSummaries.map(() => ({ a: 1, b: 0 }));
@@ -266,6 +317,7 @@ function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
     }
   }
 
+  const standardErrors = converged ? estimateJointObservedSE(rows, items, prior) : { status: "not_computed_calibration_not_converged", items: [] as any[] };
   const diagnostics = items.map((item, index) => {
     const n = itemSummaries[index].n;
     const correct = itemSummaries[index].correct;
@@ -274,21 +326,22 @@ function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
     if (rate !== null && (rate < 0.05 || rate > 0.95)) warnings.push("proporsi_benar_ekstrem");
     if (item.a <= 0.051 || item.a >= 4.99) warnings.push("diskriminasi_mendekati_batas");
     if (item.b < -4.9 || item.b > 4.9) warnings.push("kesulitan_di_luar_rentang");
-    warnings.push("standard_error_belum_dihitung_full_joint_observed_information");
+    const se = standardErrors.items[index];
+    if (!se || se.status !== "computed") warnings.push("standard_error_tidak_tersedia" + (se?.status ? ":" + se.status : ""));
     return {
       itemId: itemSummaries[index].id,
       nomorSoal: itemSummaries[index].nomor_soal,
       a: Number(item.a.toFixed(6)),
       b: Number(item.b.toFixed(6)),
-      se_a: null,
-      se_b: null,
+      se_a: se?.se_a === null || se?.se_a === undefined ? null : Number(se.se_a.toFixed(6)),
+      se_b: se?.se_b === null || se?.se_b === undefined ? null : Number(se.se_b.toFixed(6)),
       n: itemSummaries[index].n,
       correct_rate: rate === null ? null : Number(rate.toFixed(6)),
       warnings,
     };
   });
 
-  return { converged, iterations, logLikelihood, diagnostics, failure };
+  return { converged, iterations, logLikelihood, diagnostics, failure, standardErrors };
 }
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -485,7 +538,10 @@ Deno.serve(async (req: Request) => {
       log_likelihood: result.logLikelihood,
       warnings,
       model_fit_assessment: "not_assessed",
-      standard_error_method: "not_computed_full_joint_observed_information",
+      standard_error_method: result.standardErrors.method || result.standardErrors.status,
+      standard_error_diagnostics: { status: result.standardErrors.status, reason: result.standardErrors.reason || null,
+        matrix_dimension: result.standardErrors.matrix_dimension || null, min_pivot_ratio: result.standardErrors.min_pivot_ratio || null,
+        computational_work: result.standardErrors.work || null },
       excluded_item_count: (questionRows || []).length - eligible.length,
       items: result.diagnostics,
     };
