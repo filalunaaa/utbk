@@ -892,7 +892,7 @@
     const url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=(latest.schema||'pytago-irt-results').replace(/[^a-z0-9.-]+/gi,'-')+'.json';a.click();URL.revokeObjectURL(url);
   }
-  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,getLatest:()=>latest});
+  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,runMisspecification:runMisspecification,getLatest:()=>latest});
   new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
   mount();
 })();
