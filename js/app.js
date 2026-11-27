@@ -2548,6 +2548,55 @@ function hasilRinci(soal, jawab, poin, mode) {
     <div class="legenda besar"><span><i class="seg-benar"></i>Benar ${benar}</span><span>Parsial ${parsial}</span><span><i class="seg-salah"></i>Salah ${salah}</span><span><i class="seg-kosong"></i>Kosong ${kosong}</span></div>
     <p class="label">Akurasi per mata pelajaran</p>${baris}`;
 }
+async function simpanHasilTryoutPaket(soal, jawab, poin, benar, mulai, durasi) {
+  const akun = AkunApp.sesi();
+  if (!akun || !akun.user_id) throw new Error('Sesi akun tidak tersedia; respons belum dapat disimpan.');
+  const paketId = sesi && sesi.paketTryoutId;
+  if (!paketId) return;
+
+  const jawabanPerSoal = {};
+  soal.forEach((s, i) => {
+    // Simpan jawaban mentah per ID butir. null dipertahankan sebagai missing,
+    // bukan diubah menjadi jawaban salah pada tahap pengumpulan data.
+    jawabanPerSoal[String(s.id)] = jawab[i] === undefined ? null : jawab[i];
+  });
+
+  const ringkas = { PK: { skor: 0, benar: 0 }, PM: { skor: 0, benar: 0 } };
+  let kosong = 0;
+  soal.forEach((s, i) => {
+    const kategori = String(s.mataPelajaran || '').toUpperCase();
+    const grup = kategori === 'PK' ? ringkas.PK : kategori === 'PM' ? ringkas.PM : null;
+    const nilai = skorJawaban(s, jawab[i]);
+    const tidakDijawab = jawab[i] === null || jawab[i] === undefined ||
+      (Array.isArray(jawab[i]) && jawab[i].length === 0) || jawab[i] === '';
+    if (tidakDijawab) kosong++;
+    if (grup) {
+      grup.skor += nilai;
+      if (jawabBenar(s, jawab[i])) grup.benar++;
+    }
+  });
+
+  await rest('tryout_hasil', {
+    method: 'POST',
+    prefer: 'return=minimal',
+    body: {
+      paket_id: paketId,
+      user_id: akun.user_id,
+      jawaban: jawabanPerSoal,
+      skor: poin,
+      jumlah_benar: benar,
+      jumlah_salah: Math.max(0, soal.length - benar - kosong),
+      skor_pk: ringkas.PK.skor,
+      skor_pm: ringkas.PM.skor,
+      benar_pk: ringkas.PK.benar,
+      benar_pm: ringkas.PM.benar,
+      waktu_mulai: new Date(mulai).toISOString(),
+      waktu_selesai: new Date().toISOString(),
+      status: 'selesai'
+    }
+  });
+}
+
 function selesai() {
   if (!sesi || !sesi.aktif) return;
   $('modal-ex').hidden = true;
@@ -2573,6 +2622,15 @@ function selesai() {
   $('waktu').textContent = mode === 'tryout' ? `Waktu pengerjaan: ${format(durasi)}` : '';
   hasilRinci(soal, jawab, poin, mode);
   renderLaporan();
+  if (paketTryoutPreview && !ADMIN) {
+    try {
+      await simpanHasilTryoutPaket(soal, jawab, poin, benar, sesi.mulai, durasi);
+      $('hasil-ket').textContent += ' · Respons tersimpan';
+    } catch (err) {
+      console.error('Respons Tryout gagal disimpan untuk kalibrasi IRT:', err);
+      $('hasil-ket').textContent += ' · Respons belum tersimpan ke server';
+    }
+  }
   tampil('hasil');
 }
 
