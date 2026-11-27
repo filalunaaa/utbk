@@ -9,12 +9,8 @@
   const isKompleks = s => ['kompleks','pg_kompleks'].includes(String(s.tipe||'').toLowerCase());
   const keyArray = s => Array.isArray(s.jawaban) ? s.jawaban.map(Number) : [Number(s.jawaban)];
   const score = (s, answer) => {
-    if (answer == null) return 0;
-    if (isIsian(s)) return Number(answer) === Number(s.jawaban) ? 1 : 0;
-    if (!isKompleks(s)) return Number(answer) === Number(s.jawaban) ? 1 : 0;
-    const key=keyArray(s), got=Array.isArray(answer)?answer.map(Number):[];
-    if (!key.length || got.some(x=>!key.includes(x))) return 0;
-    return Math.min(1,new Set(got).size/key.length);
+    if (typeof skorJawaban !== 'function') throw new Error('Mesin penilaian Pytago tidak tersedia.');
+    return skorJawaban(s, answer);
   };
   const wrongAnswer = s => {
     if (isIsian(s)) {
