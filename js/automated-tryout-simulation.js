@@ -55,15 +55,15 @@
     let root=document.getElementById('pytago-to-sim-panel');
     if(root){root.remove();return;}
     root=el('div',{id:'pytago-to-sim-panel'},`
-      <section role="dialog" aria-modal="true" aria-labelledby="pts-title" style="width:min(900px,100%);max-height:92vh;overflow:auto;background:var(--card,#fff);color:var(--text,#172033);border-radius:18px;padding:22px;box-shadow:0 18px 70px #0004">
+      <section role="dialog" aria-modal="true" aria-labelledby="pts-title" style="position:relative;z-index:1;width:min(900px,100%);max-height:none;overflow:visible;background:var(--card,#fff);color:var(--text,#172033);border-radius:18px;padding:22px;box-shadow:0 18px 70px #0004">
       <header style="display:flex;justify-content:space-between;gap:12px"><div><small style="letter-spacing:.1em;color:var(--muted,#667085)">PYTAGO · ADMIN TEST LAB</small><h2 id="pts-title" style="margin:6px 0">Automated Tryout Simulation</h2><p style="margin:0;color:var(--muted,#667085)">500 peserta virtual · respons sintetis · dry-run</p></div><button type="button" class="btn btn-secondary" data-close>Tutup</button></header>
       <div class="card" style="margin:16px 0"><p><strong>Mode aman:</strong> paket dan soal dibaca dari database; pengerjaan, jawaban, serta hasil dibuat di memori browser. Tidak ada POST ke tryout_hasil dan tidak ada akun peserta sintetis dibuat.</p><p style="font-size:12px;color:var(--muted,#667085)">Ini menguji pembacaan paket dan logika penilaian lokal, bukan beban server atau alur autentikasi peserta.</p></div>
-      <label for="pts-package">Pilih paket tryout</label><select id="pts-package" class="input" style="margin:8px 0 14px;width:100%"><option value="">Memuat paket...</option></select>
+      <label for="pts-package">Pilih paket tryout</label><select id="pts-package" class="input" style="position:relative;z-index:2147483001;display:block;margin:8px 0 14px;width:100%;min-height:44px"><option value="">Memuat paket...</option></select>
       <button type="button" class="btn btn-primary" id="pts-run">Jalankan 500 peserta virtual</button>
       <button type="button" class="btn btn-secondary" id="pts-export" disabled>Ekspor hasil JSON</button>
       <p id="pts-status" class="pesan" role="status" aria-live="polite">Pilih paket untuk memulai.</p><div id="pts-output"></div>
       </section>`);
-    root.style.cssText='position:fixed;inset:0;z-index:10040;background:#10182799;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+    root.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#10182799;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;overscroll-behavior:contain';
     root.addEventListener('click',e=>{if(e.target===root||e.target.closest('[data-close]'))root.remove();});
     document.body.appendChild(root);
     try{
