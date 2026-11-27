@@ -58,7 +58,7 @@
       <section role="dialog" aria-modal="true" aria-labelledby="pts-title" style="position:relative;z-index:1;width:min(900px,100%);max-height:none;overflow:visible;background:var(--card,#fff);color:var(--text,#172033);border-radius:18px;padding:22px;box-shadow:0 18px 70px #0004">
       <header style="display:flex;justify-content:space-between;gap:12px"><div><small style="letter-spacing:.1em;color:var(--muted,#667085)">PYTAGO · ADMIN TEST LAB</small><h2 id="pts-title" style="margin:6px 0">Automated Tryout Simulation</h2><p style="margin:0;color:var(--muted,#667085)">500 peserta virtual · respons sintetis · dry-run</p></div><button type="button" class="btn btn-secondary" data-close>Tutup</button></header>
       <div class="card" style="margin:16px 0"><p><strong>Mode aman:</strong> paket dan soal dibaca dari database; pengerjaan, jawaban, serta hasil dibuat di memori browser. Tidak ada POST ke tryout_hasil dan tidak ada akun peserta sintetis dibuat.</p><p style="font-size:12px;color:var(--muted,#667085)">Ini menguji pembacaan paket dan logika penilaian lokal, bukan beban server atau alur autentikasi peserta.</p></div>
-      <label for="pts-package">Pilih paket tryout</label><select id="pts-package" class="input" style="position:relative;z-index:2147483001;display:block;margin:8px 0 14px;width:100%;min-height:44px"><option value="">Memuat paket...</option></select>
+      <label id="pts-package-label">Pilih paket tryout</label><div id="pts-package-picker" style="position:relative;z-index:20;margin:8px 0 14px"><button type="button" id="pts-package-trigger" class="input" aria-haspopup="listbox" aria-expanded="false" style="display:flex;align-items:center;justify-content:space-between;width:100%;min-height:46px;text-align:left;cursor:pointer"><span id="pts-package-value">Memuat paket...</span><span aria-hidden="true">▾</span></button><div id="pts-package-options" role="listbox" aria-labelledby="pts-package-label" hidden style="position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:2147483002;max-height:260px;overflow-y:auto;padding:6px;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:0 14px 34px #0003"></div></div>
       <button type="button" class="btn btn-primary" id="pts-run">Jalankan 500 peserta virtual</button>
       <button type="button" class="btn btn-secondary" id="pts-export" disabled>Ekspor hasil JSON</button>
       <p id="pts-status" class="pesan" role="status" aria-live="polite">Pilih paket untuk memulai.</p><div id="pts-output"></div>
@@ -68,14 +68,20 @@
     document.body.appendChild(root);
     try{
       const packs=await rest('tryout_paket?select=id,nama,status&order=dibuat_pada.desc');
-      const select=root.querySelector('#pts-package');
-      select.innerHTML='<option value="">— Pilih paket —</option>'+packs.filter(p=>p.status==='published'||ADMIN).map(p=>'<option value="'+String(p.id).replace(/"/g,'&quot;')+'">'+String(p.nama||'Paket').replace(/[&<>"]/g,'')+(p.status==='published'?'':' · Draft')+'</option>').join('');
+      const options=root.querySelector('#pts-package-options');
+      const trigger=root.querySelector('#pts-package-trigger');
+      const value=root.querySelector('#pts-package-value');
+      const available=packs.filter(p=>p.status==='published'||ADMIN);
+      options.innerHTML=available.map(p=>'<button type="button" role="option" data-package-id="'+String(p.id).replace(/"/g,'&quot;')+'" style="display:block;width:100%;padding:11px 12px;border:0;border-radius:8px;background:transparent;color:var(--text);text-align:left;cursor:pointer">'+String(p.nama||'Paket').replace(/[&<>"]/g,'')+(p.status==='published'?'':' · Draft')+'</button>').join('') || '<p style="padding:10px;margin:0;color:var(--muted)">Belum ada paket tersedia.</p>';
+      trigger.addEventListener('click',()=>{const opened=!options.hidden;options.hidden=opened;trigger.setAttribute('aria-expanded',String(!opened));});
+      options.addEventListener('click',e=>{const choice=e.target.closest('[data-package-id]');if(!choice)return;root.dataset.packageId=choice.dataset.packageId;value.textContent=choice.textContent;options.hidden=true;trigger.setAttribute('aria-expanded','false');});
+      document.addEventListener('click',e=>{if(!root.contains(e.target)){options.hidden=true;trigger.setAttribute('aria-expanded','false');}},{once:false});
       root.querySelector('#pts-run').addEventListener('click',()=>run(root));
       root.querySelector('#pts-export').addEventListener('click',()=>exportResult(root));
     }catch(err){root.querySelector('#pts-status').textContent='Gagal memuat paket: '+err.message;}
   }
   async function run(root){
-    const id=root.querySelector('#pts-package').value;
+    const id=root.dataset.packageId || '';
     if(!id){root.querySelector('#pts-status').textContent='Pilih paket terlebih dahulu.';return;}
     const btn=root.querySelector('#pts-run');btn.disabled=true;
     try{
