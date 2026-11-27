@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   if (window.PytagoSyntheticEngine) return;
-  const CFG = { examinees:500, items:20, maxIterations:300, tolerance:1e-4, step:0.15 };
+  const CFG = { examinees:500, items:20, maxIterations:300, tolerance:1e-4, step:0.15, repetitions:30 };
   const NODES = Array.from({length:61}, (_,i) => -4.5 + i * CFG.step);
   const SQRT_2PI = Math.sqrt(2 * Math.PI);
   const randn = () => {
@@ -151,12 +151,13 @@
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0">'+
       '<div class="card"><small>Peserta</small><h2>500</h2><small>Data sintetis</small></div><div class="card"><small>Butir</small><h2>20</h2><small>PG dikotomis</small></div>'+
       '<div class="card"><small>Estimator</small><h2>MML-EM</h2><small>61 titik kuadratur</small></div><div class="card"><small>Iterasi maksimum</small><h2>300</h2><small>Toleransi 0,0001</small></div></div>'+
-      '<div style="display:flex;gap:10px;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan Parameter Recovery</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
       '<p id="pse-status" class="pesan" role="status" aria-live="polite">Siap. Estimator hanya menerima matriks respons, bukan θ atau parameter asli.</p><div id="pse-results"></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:18px">Terisolasi: tidak membaca/menulis Supabase dan tidak mengubah paket produksi. Ini uji pemulihan pada data yang dibangkitkan dari model 2PL, bukan validasi model-fit pada peserta nyata.</p></section>';
     document.body.appendChild(root);
     root.addEventListener('click',e=>{if(e.target===root||e.target.closest('[data-close]'))root.remove();});
     root.querySelector('#pse-run').addEventListener('click',run);
+    root.querySelector('#pse-repeat').addEventListener('click',runRepeated);
     root.querySelector('#pse-export').addEventListener('click',exportData);
   }
   function run() {
@@ -179,6 +180,83 @@
       }catch(err){status.textContent='Pengujian gagal: '+(err&&err.message?err.message:String(err));status.className='pesan error';}
       finally{button.disabled=false;}
     },30);
+  }
+  const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
+  async function runRepeated() {
+    const root=document.getElementById('pytago-synth-panel');
+    if(!root)return;
+    const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
+    const single=root.querySelector('#pse-run'),repeat=root.querySelector('#pse-repeat'),exportButton=root.querySelector('#pse-export');
+    single.disabled=true;repeat.disabled=true;exportButton.disabled=true;
+    out.innerHTML='';status.className='pesan';
+    const runs=[],allA=[],allB=[];
+    let convergedCount=0;
+    try {
+      for(let i=0;i<CFG.repetitions;i++){
+        status.textContent='Replikasi '+(i+1)+' dari '+CFG.repetitions+' · membangkitkan data dan menjalankan MML-EM...';
+        await delay(20);
+        const data=generate();
+        const estimated=estimateMML2PL(data.responses);
+        const recovery=evaluate(data,estimated);
+        if(estimated.converged)convergedCount++;
+        for(const item of recovery.fitted){allA.push(item.delta_a);allB.push(item.delta_b);}
+        runs.push({
+          repetition:i+1,
+          converged:estimated.converged,
+          iterations:estimated.iterations,
+          log_likelihood:estimated.logLikelihood,
+          theta_mean:recovery.summary.theta_mean,
+          theta_sd:recovery.summary.theta_sd,
+          a:recovery.summary.a,
+          b:recovery.summary.b,
+          items:recovery.fitted
+        });
+      }
+      const aggregate={
+        repetitions:CFG.repetitions,
+        converged_count:convergedCount,
+        convergence_rate:convergedCount/CFG.repetitions,
+        mean_iterations:mean(runs.map(x=>x.iterations)),
+        mean_log_likelihood:mean(runs.map(x=>x.log_likelihood)),
+        pooled_a:metric(allA),
+        pooled_b:metric(allB),
+        mean_run_mae_a:mean(runs.map(x=>x.a.mae)),
+        mean_run_mae_b:mean(runs.map(x=>x.b.mae))
+      };
+      latest={
+        schema:'pytago.parameter-recovery.repeated.v1',
+        source:'synthetic_only',
+        generated_at:new Date().toISOString(),
+        estimator:'MML-EM',
+        estimator_config:CFG,
+        aggregate:aggregate,
+        repetitions:runs
+      };
+      renderRepeated(root,aggregate,runs);
+      exportButton.disabled=false;
+      status.textContent='Selesai: '+convergedCount+'/'+CFG.repetitions+' replikasi konvergen.';
+      status.className=convergedCount===CFG.repetitions?'pesan ok':'pesan';
+    } catch(err) {
+      status.textContent='Pengujian berulang gagal: '+(err&&err.message?err.message:String(err));
+      status.className='pesan error';
+    } finally {
+      single.disabled=false;repeat.disabled=false;
+    }
+  }
+  function renderRepeated(root,s,runs) {
+    const card=(label,value,sub='')=>'<div class="card"><small>'+label+'</small><h3>'+value+'</h3><small>'+sub+'</small></div>';
+    const rows=runs.map(x=>'<tr><td>'+x.repetition+'</td><td>'+(x.converged?'Ya':'Tidak')+'</td><td>'+x.iterations+'</td><td>'+fmt(x.a.mae)+'</td><td>'+fmt(x.a.rmse)+'</td><td>'+fmt(x.a.bias)+'</td><td>'+fmt(x.b.mae)+'</td><td>'+fmt(x.b.rmse)+'</td><td>'+fmt(x.b.bias)+'</td><td>'+fmt(x.log_likelihood)+'</td></tr>').join('');
+    root.querySelector('#pse-results').innerHTML=
+      '<div class="card" style="margin:12px 0"><h3>Ringkasan 30 Replikasi Independen</h3><p>Setiap baris berasal dari dataset baru: 500 peserta sintetis × 20 butir. Metrik pooled dihitung dari seluruh selisih parameter pada seluruh replikasi.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px">'+
+      card('Tingkat konvergensi',fmt(s.convergence_rate*100)+'% ',s.converged_count+'/'+s.repetitions+' replikasi')+
+      card('Rerata iterasi',fmt(s.mean_iterations),'Per replikasi')+
+      card('Rerata log-likelihood',fmt(s.mean_log_likelihood),'Per replikasi')+
+      card('Parameter a · pooled MAE',fmt(s.pooled_a.mae),'RMSE '+fmt(s.pooled_a.rmse)+' · Bias '+fmt(s.pooled_a.bias))+
+      card('Parameter b · pooled MAE',fmt(s.pooled_b.mae),'RMSE '+fmt(s.pooled_b.rmse)+' · Bias '+fmt(s.pooled_b.bias))+
+      card('Rerata MAE a per replikasi',fmt(s.mean_run_mae_a),'Rerata dari 30 MAE')+
+      card('Rerata MAE b per replikasi',fmt(s.mean_run_mae_b),'Rerata dari 30 MAE')+
+      '</div></div><div class="card" style="overflow:auto"><h3>Diagnostik setiap replikasi</h3><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Replikasi</th><th>Konvergen</th><th>Iterasi</th><th>MAE a</th><th>RMSE a</th><th>Bias a</th><th>MAE b</th><th>RMSE b</th><th>Bias b</th><th>Log-likelihood</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<p style="font-size:12px;color:var(--muted,#667085);margin-top:10px">Interpretasi: gunakan pooled MAE/RMSE/bias untuk mengukur pemulihan keseluruhan; convergence rate untuk kestabilan numerik. Hasil ini hanya menguji data yang memang dibangkitkan dari 2PL, bukan kecocokan model pada data peserta nyata.</p>';
   }
   function render(root,result,est) {
     const s=result.summary;
