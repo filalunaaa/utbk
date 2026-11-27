@@ -1,0 +1,45 @@
+name: IRT Local-Dependence Null Pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: "Pilot repetitions (start small; e.g. 20)"
+        required: true
+        default: "20"
+      examinees:
+        description: "Examinees per replication"
+        required: true
+        default: "500"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: irt-local-dependence-pilot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run fixed-bank null pilot
+        run: node scripts/run-local-dependence-null-pilot.js
+        env:
+          SIM_SEED: "20261128"
+          SIM_REPS: ${{ inputs.repetitions }}
+          SIM_N: ${{ inputs.examinees }}
+      - name: Upload pilot result
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytago-local-dependence-null-pilot-v1
+          path: artifacts/pytago-local-dependence-null-pilot-v1.json
+          if-no-files-found: error
+          retention-days: 30
