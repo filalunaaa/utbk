@@ -2116,3 +2116,20 @@ body, body *, body *::before, body *::after{font-family:"Plus Jakarta Sans",syst
  .psp-item-actions{margin-top:12px}
  .psp-item-actions .btn{flex:1}
 }
+
+
+/* Konfirmasi jumlah soal sebelum membuka editor Panel Admin */
+dialog.admin-muat-dialog{width:min(440px,calc(100% - 32px));max-width:none;max-height:calc(100% - 32px);margin:auto;padding:0;border:1px solid var(--border);border-radius:18px;background:var(--card);color:var(--text);box-shadow:0 24px 72px rgba(15,23,42,.24)}
+dialog.admin-muat-dialog::backdrop{background:rgba(10,20,40,.54);backdrop-filter:blur(3px)}
+.admin-muat-isi{padding:24px}
+.admin-muat-eyebrow{display:inline-block;margin-bottom:8px;color:var(--primary);font-size:.72rem;font-weight:800;letter-spacing:.12em}
+.admin-muat-isi h2{margin-bottom:8px;font-size:1.28rem}
+.admin-muat-info{margin:16px 0 18px;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--primary-soft);color:var(--text);font-size:.88rem;font-weight:600}
+.admin-muat-label{display:block;margin-bottom:7px;font-size:.9rem;font-weight:700}
+.admin-muat-isi input{display:block;width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:1.05rem;font-weight:700}
+.admin-muat-isi input:focus{outline:3px solid color-mix(in srgb,var(--primary) 22%,transparent);border-color:var(--primary)}
+.admin-muat-isi input:disabled{opacity:.6}
+.admin-muat-catatan{margin:9px 0 4px;color:var(--muted);font-size:.78rem;line-height:1.5}
+.admin-muat-aksi{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:20px}
+.admin-muat-aksi .btn{min-height:42px}
+@media(max-width:420px){.admin-muat-isi{padding:20px}.admin-muat-aksi{display:grid;grid-template-columns:1fr 1fr}.admin-muat-aksi .btn{padding:9px 10px;font-size:.9rem}}
