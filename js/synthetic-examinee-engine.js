@@ -277,7 +277,7 @@
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0">'+
       '<div class="card"><small>Peserta</small><h2>500</h2><small>Data sintetis</small></div><div class="card"><small>Butir</small><h2>20</h2><small>PG dikotomis</small></div>'+
       '<div class="card"><small>Estimator</small><h2>MML-EM</h2><small>61 titik kuadratur</small></div><div class="card"><small>Iterasi maksimum</small><h2>300</h2><small>Toleransi 0,0001</small></div></div>'+
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-primary" id="pse-se-calibration">Uji Kalibrasi SE · 100 Replikasi</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
       '<p id="pse-status" class="pesan" role="status" aria-live="polite">Siap. Estimator hanya menerima matriks respons, bukan θ atau parameter asli.</p><div id="pse-results"></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:18px">Terisolasi: tidak membaca/menulis Supabase dan tidak mengubah paket produksi. Ini uji pemulihan pada data yang dibangkitkan dari model 2PL, bukan validasi model-fit pada peserta nyata.</p></section>';
     document.body.appendChild(root);
@@ -286,6 +286,7 @@
     root.querySelector('#pse-repeat').addEventListener('click',runRepeated);
     root.querySelector('#pse-sensitivity').addEventListener('click',runSampleSensitivity);
     root.querySelector('#pse-misspec').addEventListener('click',runMisspecification);
+    root.querySelector('#pse-se-calibration').addEventListener('click',runSECalibration);
     root.querySelector('#pse-export').addEventListener('click',exportData);
   }
   function run() {
@@ -496,6 +497,93 @@
       status.className=total===500?'pesan ok':'pesan';
     } catch(err) {
       status.textContent='Uji Monte Carlo model-fit gagal: '+(err&&err.message?err.message:String(err));
+      status.className='pesan error';
+    } finally {buttons.forEach(b=>b.disabled=false);}
+  }
+  function wilsonInterval(successes,total,z=1.96) {
+    if(!total)return {lower:null,upper:null};
+    const p=successes/total,den=1+z*z/total;
+    const center=(p+z*z/(2*total))/den;
+    const half=z*Math.sqrt(p*(1-p)/total+z*z/(4*total*total))/den;
+    return {lower:center-half,upper:center+half};
+  }
+  async function runSECalibration() {
+    const root=document.getElementById('pytago-synth-panel');if(!root)return;
+    const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
+    const buttons=['#pse-run','#pse-repeat','#pse-sensitivity','#pse-misspec','#pse-se-calibration'].map(sel=>root.querySelector(sel));
+    const exportButton=root.querySelector('#pse-export');
+    buttons.forEach(b=>b.disabled=true);exportButton.disabled=true;
+    out.innerHTML='';status.className='pesan';
+    const repetitions=100,examinees=500;
+    const fixedItems=Array.from({length:CFG.items},(_,i)=>({
+      id:'SE-'+String(i+1).padStart(2,'0'),
+      a:+(.65+Math.random()*1.25).toFixed(3),
+      b:+(-1.5+Math.random()*3).toFixed(3)
+    }));
+    const records=Array.from({length:CFG.items},()=>({a:[],b:[],seA:[],seB:[],coverA:0,coverB:0,validA:0,validB:0}));
+    const failures=[];
+    let converged=0,seAvailable=0;
+    try {
+      for(let rep=0;rep<repetitions;rep++){
+        status.textContent='Kalibrasi SE · replikasi '+(rep+1)+'/'+repetitions+' · 500 peserta × 20 butir. Perhitungan informasi bersama dapat memerlukan waktu.';
+        await delay(25);
+        const data=generate(examinees,fixedItems);
+        const est=estimateMML2PL(data.responses,{standardErrors:true});
+        if(!est.converged){failures.push({repetition:rep+1,reason:est.failure?.reason||'not_converged'});continue;}
+        converged++;
+        if(est.standard_errors?.status==='computed'||est.standard_errors?.status==='partial')seAvailable++;
+        for(let j=0;j<CFG.items;j++){
+          const truth=fixedItems[j],fit=est.items[j],se=est.standard_errors?.items?.[j];
+          const r=records[j];
+          if(se&&Number.isFinite(se.se_a)&&se.se_a>0){
+            const error=fit.a-truth.a;r.a.push(error);r.seA.push(se.se_a);r.validA++;
+            if(Math.abs(error)<=1.96*se.se_a)r.coverA++;
+          }
+          if(se&&Number.isFinite(se.se_b)&&se.se_b>0){
+            const error=fit.b-truth.b;r.b.push(error);r.seB.push(se.se_b);r.validB++;
+            if(Math.abs(error)<=1.96*se.se_b)r.coverB++;
+          }
+        }
+      }
+      const summarize=key=>{
+        const valid=records.flatMap(x=>x[key]);
+        const ses=records.flatMap(x=>x[key==='a'?'seA':'seB']);
+        const n=valid.length,avg=mean(ses),bias=mean(valid);
+        const empiricalSD=n?Math.sqrt(mean(valid.map(x=>(x-bias)*(x-bias)))):null;
+        return {valid_item_replications:n,mean_se:avg,empirical_sd:empiricalSD,
+          mean_se_to_empirical_sd:avg&&empiricalSD?avg/empiricalSD:null,
+          pooled_error_bias:bias,pooled_error_rmse:n?Math.sqrt(mean(valid.map(x=>x*x))):null};
+      };
+      const coverage=(param,coverKey,validKey)=>{
+        const total=records.reduce((sum,x)=>sum+x[validKey],0);
+        const covered=records.reduce((sum,x)=>sum+x[coverKey],0);
+        const ci=wilsonInterval(covered,total);
+        return {covered,total,rate:total?covered/total:null,wilson_95:ci};
+      };
+      const summaryA=summarize('a'),summaryB=summarize('b');
+      const coverageA=coverage('a','coverA','validA'),coverageB=coverage('b','coverB','validB');
+      latest={schema:'pytago.irt.standard-error-calibration.v1',source:'synthetic_only',
+        design:'fixed_20_item_parameters_across_100_independent_samples',estimator:'MML-EM 2PL',
+        examinees,repetitions_requested:repetitions,repetitions_converged:converged,
+        se_matrix_available_repetitions:seAvailable,true_items:fixedItems,
+        parameter_a:{...summaryA,coverage_95:coverageA},
+        parameter_b:{...summaryB,coverage_95:coverageB},
+        item_diagnostics:records.map((r,j)=>({item_id:fixedItems[j].id,
+          a:{valid:r.validA,coverage:r.validA?r.coverA/r.validA:null,mean_se:mean(r.seA)},
+          b:{valid:r.validB,coverage:r.validB?r.coverB/r.validB:null,mean_se:mean(r.seB)}})),
+        failed_repetitions:failures,generated_at:new Date().toISOString(),
+        interpretation:'Pilot Monte Carlo khusus kondisi sintetis 2PL. Coverage 95% dievaluasi dengan interval Wald; hasil tidak membuktikan validitas pada data peserta nyata.'};
+      const fmtCoverage=x=>x.rate===null?'—':fmt(x.rate*100)+'%';
+      const rows=[
+        ['Parameter a',summaryA,coverageA],
+        ['Parameter b',summaryB,coverageB]
+      ].map(([label,m,c])=>'<tr><td>'+label+'</td><td>'+fmtCoverage(c)+'</td><td>'+c.covered+'/'+c.total+'</td><td>'+fmt(c.wilson_95.lower*100)+'% – '+fmt(c.wilson_95.upper*100)+'%</td><td>'+fmt(m.mean_se)+'</td><td>'+fmt(m.empirical_sd)+'</td><td>'+fmt(m.mean_se_to_empirical_sd)+'</td><td>'+fmt(m.pooled_error_bias)+'</td></tr>').join('');
+      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Standard Error Calibration · Monte Carlo</h3><p>100 replikasi independen · 500 peserta per replikasi · 20 butir. Parameter butir ditahan tetap antarreplikasi agar variasi estimasi dapat dibandingkan pada parameter yang sama.</p><p><b>Konvergensi:</b> '+converged+'/100 · <b>SE tersedia:</b> '+seAvailable+'/100 · <b>Replikasi gagal:</b> '+failures.length+'</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Parameter</th><th>Coverage CI 95%</th><th>Jumlah tercakup</th><th>Wilson CI 95%</th><th>Mean SE</th><th>Empirical SD</th><th>Rasio SE/SD</th><th>Bias</th></tr></thead><tbody>'+rows+'</tbody></table></div></div><div class="card"><h3>Interpretasi dan batasan</h3><p>Coverage mendekati 95% dan rasio mean SE/empirical SD mendekati 1 merupakan indikasi kalibrasi yang baik. Interval Wilson menunjukkan ketidakpastian Monte Carlo pada estimasi coverage.</p><p>Pengujian ini hanya memeriksa data yang dibangkitkan dari 2PL dengan konfigurasi simulasi ini. Ia bukan bukti bahwa SE valid ketika model 2PL tidak cocok atau pada data peserta nyata.</p><p><b>Catatan:</b> hasil agregat dihitung dari estimasi butir-replikasi yang SE-nya berhasil tersedia. Replikasi gagal atau SE yang tidak tersedia tidak dihitung sebagai coverage.</p></div>';
+      exportButton.disabled=false;
+      status.textContent='Selesai: '+converged+'/100 estimasi konvergen; SE tersedia pada '+seAvailable+'/100 replikasi.';
+      status.className=converged===100&&seAvailable===100?'pesan ok':'pesan';
+    } catch(err) {
+      status.textContent='Uji kalibrasi SE gagal: '+(err&&err.message?err.message:String(err));
       status.className='pesan error';
     } finally {buttons.forEach(b=>b.disabled=false);}
   }
