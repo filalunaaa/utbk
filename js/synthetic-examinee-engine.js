@@ -277,7 +277,7 @@
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0">'+
       '<div class="card"><small>Peserta</small><h2>500</h2><small>Data sintetis</small></div><div class="card"><small>Butir</small><h2>20</h2><small>PG dikotomis</small></div>'+
       '<div class="card"><small>Estimator</small><h2>MML-EM</h2><small>61 titik kuadratur</small></div><div class="card"><small>Iterasi maksimum</small><h2>300</h2><small>Toleransi 0,0001</small></div></div>'+
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-primary" id="pse-se-calibration">Uji Kalibrasi SE · 100 Replikasi</button><button type="button" class="btn btn-primary" id="pse-local-dependence" disabled>Diagnostik Ketergantungan Lokal</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-primary" id="pse-se-calibration">Uji Kalibrasi SE · 100 Replikasi</button><button type="button" class="btn btn-primary" id="pse-local-dependence" disabled>Diagnostik Ketergantungan Lokal</button><button type="button" class="btn btn-primary" id="pse-local-null">Validasi Null Ketergantungan Lokal · 100 Replikasi</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
       '<p id="pse-status" class="pesan" role="status" aria-live="polite">Siap. Estimator hanya menerima matriks respons, bukan θ atau parameter asli.</p><div id="pse-results"></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:18px">Terisolasi: tidak membaca/menulis Supabase dan tidak mengubah paket produksi. Ini uji pemulihan pada data yang dibangkitkan dari model 2PL, bukan validasi model-fit pada peserta nyata.</p></section>';
     document.body.appendChild(root);
@@ -288,6 +288,7 @@
     root.querySelector('#pse-misspec').addEventListener('click',runMisspecification);
     root.querySelector('#pse-se-calibration').addEventListener('click',runSECalibration);
     root.querySelector('#pse-local-dependence').addEventListener('click',runLocalDependenceDiagnostic);
+    root.querySelector('#pse-local-null').addEventListener('click',runLocalDependenceNullValidation);
     root.querySelector('#pse-export').addEventListener('click',exportData);
   }
   function run() {
@@ -312,6 +313,52 @@
       finally{button.disabled=false;}
     },30);
   }
+  // Efficient leave-two-out posterior-predictive pair statistic.
+  // Item likelihood contributions are cached so each pair only removes two terms.
+  function computePosteriorPredictivePairwise(responses,estimated) {
+    const prior=priorWeights(),n=responses.length,k=estimated.length;
+    const itemProb=estimated.map(item=>NODES.map(t=>clamp(prob(item,t),1e-12,1-1e-12)));
+    const logP=itemProb.map(ps=>ps.map(Math.log));
+    const logQ=itemProb.map(ps=>ps.map(p=>Math.log1p(-p)));
+    const sums=Array.from({length:k},()=>Array.from({length:k},()=>({adjusted:0,varJ:0,varM:0,valid:0})));
+    for(let r=0;r<n;r++){
+      const row=responses[r],contrib=Array.from({length:k},(_,j)=>{
+        const y=row[j];return y===null?null:(y===1?logP[j]:logQ[j]);
+      });
+      const baseLogs=NODES.map((_,q)=>{
+        let value=Math.log(prior[q]);
+        for(let j=0;j<k;j++)if(contrib[j])value+=contrib[j][q];
+        return value;
+      });
+      for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
+        if(row[j]===null||row[m]===null)continue;
+        const logs=NODES.map((_,q)=>baseLogs[q]-contrib[j][q]-contrib[m][q]);
+        const norm=logSumExp(logs);
+        let pj=0,pm=0,pjpm=0;
+        for(let q=0;q<NODES.length;q++){
+          const w=Math.exp(logs[q]-norm),a=itemProb[j][q],b=itemProb[m][q];
+          pj+=w*a;pm+=w*b;pjpm+=w*a*b;
+        }
+        const posteriorCov=pjpm-pj*pm;
+        const predictiveVarJ=pj*(1-pj),predictiveVarM=pm*(1-pm);
+        const adjusted=(row[j]-pj)*(row[m]-pm)-posteriorCov;
+        if(Number.isFinite(adjusted)&&predictiveVarJ>0&&predictiveVarM>0){
+          const acc=sums[j][m];acc.adjusted+=adjusted;acc.varJ+=predictiveVarJ;acc.varM+=predictiveVarM;acc.valid++;
+        }
+      }
+    }
+    const pairs=[];
+    for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
+      const x=sums[j][m];if(!x.valid)continue;
+      const covariance=x.adjusted/x.valid,scale=Math.sqrt((x.varJ/x.valid)*(x.varM/x.valid));
+      pairs.push({item_1:estimated[j].id||('Item '+(j+1)),item_2:estimated[m].id||('Item '+(m+1)),
+        adjusted_covariance:covariance,standardized_statistic:scale>0?covariance/scale:null,valid_n:x.valid});
+    }
+    const values=pairs.map(x=>x.standardized_statistic).filter(Number.isFinite);
+    return {pairs,mean_adjusted_covariance:mean(pairs.map(x=>x.adjusted_covariance)),
+      mean_abs_standardized_statistic:mean(values.map(Math.abs)),
+      max_abs_standardized_statistic:values.length?Math.max(...values.map(Math.abs)):null};
+  }
   async function runLocalDependenceDiagnostic() {
     const root=document.getElementById('pytago-synth-panel');if(!root||!latest?.responses)return;
     const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
@@ -319,43 +366,81 @@
     const estimated=latest.estimated_items;
     if(!estimated||!latest.responses.length){status.textContent='Jalankan satu replikasi MML-EM terlebih dahulu.';return;}
     button.disabled=true;exportButton.disabled=true;status.className='pesan';out.innerHTML='';
-    const prior=priorWeights(),pairs=[],n=latest.responses.length,k=estimated.length;
     try {
-      for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
-        let observedAdjusted=0,varJ=0,varM=0,valid=0;
-        for(let r=0;r<n;r++){
-          const row=latest.responses[r].slice();row[j]=null;row[m]=null;
-          const post=posterior(row,estimated,prior);
-          let pj=0,pm=0,pjpm=0,pj2=0,pm2=0;
-          for(let q=0;q<NODES.length;q++){
-            const w=post[q],a=prob(estimated[j],NODES[q]),b=prob(estimated[m],NODES[q]);
-            pj+=w*a;pm+=w*b;pjpm+=w*a*b;pj2+=w*a*a;pm2+=w*b*b;
-          }
-          const posteriorCov=pjpm-pj*pm;
-          const predictiveVarJ=pj-pj2+pj2-pj*pj;
-          const predictiveVarM=pm-pm2+pm2-pm*pm;
-          const adjusted=(latest.responses[r][j]-pj)*(latest.responses[r][m]-pm)-posteriorCov;
-          if(Number.isFinite(adjusted)&&predictiveVarJ>0&&predictiveVarM>0){
-            observedAdjusted+=adjusted;varJ+=predictiveVarJ;varM+=predictiveVarM;valid++;
-          }
-        }
-        if(valid){
-          const meanAdjusted=observedAdjusted/valid;
-          const scale=Math.sqrt((varJ/valid)*(varM/valid));
-          pairs.push({item_1:estimated[j].id||('Item '+(j+1)),item_2:estimated[m].id||('Item '+(m+1)),
-            adjusted_covariance:meanAdjusted,standardized_statistic:scale>0?meanAdjusted/scale:null,valid_n:valid});
-        }
-        if(pairs.length%5===0){status.textContent='Posterior-predictive: '+pairs.length+'/'+(k*(k-1)/2)+' pasangan.';await delay(10);}
-      }
-      const sorted=pairs.slice().sort((a,b)=>Math.abs(b.standardized_statistic||0)-Math.abs(a.standardized_statistic||0));
+      const diagnostic=computePosteriorPredictivePairwise(latest.responses,estimated);
+      const sorted=diagnostic.pairs.slice().sort((a,b)=>Math.abs(b.standardized_statistic||0)-Math.abs(a.standardized_statistic||0));
       latest.local_dependence={method:'pairwise_leave_two_out_posterior_predictive_covariance_adjustment',
-        pairs:pairs,mean_adjusted_covariance:mean(pairs.map(x=>x.adjusted_covariance)),
-        max_abs_standardized_statistic:Math.max(...pairs.map(x=>Math.abs(x.standardized_statistic||0))),
-        note:'Statistik eksploratif; distribusi nol, cutoff, dan tingkat kesalahan belum dikalibrasi.'};
-      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Ketergantungan Lokal · Posterior-Predictive Pairwise Diagnostic</h3><p>Untuk setiap pasangan, sistem menghitung posterior kemampuan dari butir lain, lalu mengintegrasikan probabilitas respons pada seluruh titik kuadratur. Kovarians prediktif yang memang diharapkan akibat ketidakpastian kemampuan dikurangkan dari hasil kali residual teramati.</p><p><b>Pasangan valid:</b> '+pairs.length+' · <b>Rerata kovarians residual terkoreksi:</b> '+fmt(latest.local_dependence.mean_adjusted_covariance)+' · <b>Max |statistik terstandar|:</b> '+fmt(latest.local_dependence.max_abs_standardized_statistic)+'</p><div style="overflow:auto;max-height:360px"><table style="width:100%;font-size:12px"><thead><tr><th>Butir 1</th><th>Butir 2</th><th>Kovarians terkoreksi</th><th>Statistik terstandar</th><th>N</th></tr></thead><tbody>'+sorted.map(x=>'<tr><td>'+esc(x.item_1)+'</td><td>'+esc(x.item_2)+'</td><td>'+fmt(x.adjusted_covariance)+'</td><td>'+fmt(x.standardized_statistic)+'</td><td>'+x.valid_n+'</td></tr>').join('')+'</tbody></table></div><p><b>Batasan:</b> ini statistik eksploratif, bukan Q3 dan bukan uji signifikansi. Statistik terstandar bukan Z-score. Cutoff keputusan memerlukan simulasi nol independen dan validasi ukuran kesalahan.</p></div>';
-      exportButton.disabled=false;status.textContent='Selesai: '+pairs.length+' pasangan dianalisis.';status.className='pesan ok';
+        ...diagnostic,note:'Statistik eksploratif; distribusi nol, cutoff, dan tingkat kesalahan belum dikalibrasi.'};
+      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Ketergantungan Lokal · Posterior-Predictive Pairwise Diagnostic</h3><p>Untuk setiap pasangan, sistem menghitung posterior kemampuan dari butir lain, lalu mengintegrasikan probabilitas respons pada seluruh titik kuadratur. Kovarians prediktif yang memang diharapkan akibat ketidakpastian kemampuan dikurangkan dari hasil kali residual teramati.</p><p><b>Pasangan valid:</b> '+diagnostic.pairs.length+' · <b>Rerata kovarians residual terkoreksi:</b> '+fmt(diagnostic.mean_adjusted_covariance)+' · <b>Max |statistik terstandar|:</b> '+fmt(diagnostic.max_abs_standardized_statistic)+'</p><div style="overflow:auto;max-height:360px"><table style="width:100%;font-size:12px"><thead><tr><th>Butir 1</th><th>Butir 2</th><th>Kovarians terkoreksi</th><th>Statistik terstandar</th><th>N</th></tr></thead><tbody>'+sorted.map(x=>'<tr><td>'+esc(x.item_1)+'</td><td>'+esc(x.item_2)+'</td><td>'+fmt(x.adjusted_covariance)+'</td><td>'+fmt(x.standardized_statistic)+'</td><td>'+x.valid_n+'</td></tr>').join('')+'</tbody></table></div><p><b>Batasan:</b> ini statistik eksploratif, bukan Q3 dan bukan uji signifikansi. Statistik terstandar bukan Z-score. Cutoff keputusan memerlukan simulasi nol independen dan validasi tingkat kesalahan.</p></div>';
+      exportButton.disabled=false;status.textContent='Selesai: '+diagnostic.pairs.length+' pasangan dianalisis.';status.className='pesan ok';
     }catch(err){status.textContent='Diagnostik gagal: '+(err?.message||String(err));status.className='pesan error';}
     finally{button.disabled=false;}
+  }
+  async function runLocalDependenceNullValidation() {
+    const root=document.getElementById('pytago-synth-panel');if(!root)return;
+    const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
+    const button=root.querySelector('#pse-local-null'),exportButton=root.querySelector('#pse-export');
+    const controls=['#pse-run','#pse-repeat','#pse-sensitivity','#pse-misspec','#pse-se-calibration','#pse-local-dependence','#pse-local-null'].map(sel=>root.querySelector(sel)).filter(Boolean);
+    controls.forEach(x=>x.disabled=true);exportButton.disabled=true;out.innerHTML='';status.className='pesan';
+    const repetitions=100,examinees=500;
+    const fixedItems=Array.from({length:CFG.items},(_,i)=>({id:'LD0-'+String(i+1).padStart(2,'0'),
+      a:+(.65+Math.random()*1.25).toFixed(3),b:+(-1.5+Math.random()*3).toFixed(3)}));
+    const runs=[],failures=[];
+    try {
+      for(let rep=0;rep<repetitions;rep++){
+        status.textContent='Validasi null ketergantungan lokal · replikasi '+(rep+1)+'/'+repetitions+' · 500 peserta × 20 butir.';
+        await delay(20);
+        const data=generate(examinees,fixedItems);
+        const est=estimateMML2PL(data.responses);
+        if(!est.converged){
+          failures.push({repetition:rep+1,reason:est.failure?.reason||'not_converged'});
+          runs.push({repetition:rep+1,converged:false,iterations:est.iterations});
+          continue;
+        }
+        const diag=computePosteriorPredictivePairwise(data.responses,est.items);
+        runs.push({repetition:rep+1,converged:true,iterations:est.iterations,
+          mean_adjusted_covariance:diag.mean_adjusted_covariance,
+          mean_abs_standardized_statistic:diag.mean_abs_standardized_statistic,
+          max_abs_standardized_statistic:diag.max_abs_standardized_statistic,
+          valid_pairs:diag.pairs.length});
+      }
+      const valid=runs.filter(x=>x.converged);
+      const maxStats=valid.map(x=>x.max_abs_standardized_statistic).filter(Number.isFinite);
+      const meanCov=valid.map(x=>x.mean_adjusted_covariance).filter(Number.isFinite);
+      const meanAbs=valid.map(x=>x.mean_abs_standardized_statistic).filter(Number.isFinite);
+      const sampleSD=xs=>xs.length>1?Math.sqrt(xs.reduce((sum,x)=>sum+(x-mean(xs))**2,0)/(xs.length-1)):null;
+      const summary={
+        requested_repetitions:repetitions,successful_repetitions:valid.length,failed_repetitions:failures.length,
+        convergence_rate:valid.length/repetitions,mean_iterations:mean(valid.map(x=>x.iterations)),
+        mean_of_replication_mean_covariance:mean(meanCov),sd_of_replication_mean_covariance:sampleSD(meanCov),
+        empirical_95_interval_mean_covariance:meanCov.length?[quantile(meanCov,.025),quantile(meanCov,.975)]:null,
+        mean_of_replication_mean_abs_statistic:mean(meanAbs),
+        mean_max_abs_statistic:mean(maxStats),sd_max_abs_statistic:sampleSD(maxStats),
+        empirical_null_quantile_90_max_abs:quantile(maxStats,.90),
+        empirical_null_quantile_95_max_abs:quantile(maxStats,.95),
+        empirical_null_quantile_99_max_abs:quantile(maxStats,.99),
+        observed_max_max_abs_statistic:maxStats.length?Math.max(...maxStats):null
+      };
+      latest={schema:'pytago.irt.local-dependence-null-monte-carlo.v1',source:'synthetic_only',
+        estimator:'MML-EM 2PL',design:'fixed_20_item_parameters_across_100_independent_samples',
+        data_generating_model:'unidimensional_2PL_with_conditional_local_independence',
+        examinees,repetitions_requested:repetitions,true_items:fixedItems,summary,runs,failed_runs:failures,
+        interpretation:'Null-distribution pilot only. Quantiles are descriptive calibration candidates, not validated operational cutoffs. No false-positive rate is estimated because an independent validation set has not yet been run.',
+        generated_at:new Date().toISOString()};
+      const rows=[
+        ['Rerata kovarians residual',fmt(summary.mean_of_replication_mean_covariance),fmt(summary.sd_of_replication_mean_covariance)],
+        ['Rerata mean |statistik|',fmt(summary.mean_of_replication_mean_abs_statistic),'—'],
+        ['Rerata maksimum |statistik|',fmt(summary.mean_max_abs_statistic),fmt(summary.sd_max_abs_statistic)],
+        ['Kuantil 90% maksimum',fmt(summary.empirical_null_quantile_90_max_abs),'—'],
+        ['Kuantil 95% maksimum',fmt(summary.empirical_null_quantile_95_max_abs),'—'],
+        ['Kuantil 99% maksimum',fmt(summary.empirical_null_quantile_99_max_abs),'—']
+      ].map(x=>'<tr><td>'+x[0]+'</td><td>'+x[1]+'</td><td>'+x[2]+'</td></tr>').join('');
+      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Posterior-Predictive Pairwise Diagnostic · Null Monte Carlo</h3><p>100 replikasi independen · 500 peserta × 20 butir. Seluruh respons dibangkitkan dari model 2PL unidimensional dengan independensi lokal bersyarat. Parameter 20 butir ditahan tetap antarreplikasi; peserta dan respons dibangkitkan ulang.</p><p><b>Konvergensi:</b> '+valid.length+'/100 · <b>Gagal:</b> '+failures.length+'/100 · <b>Rerata iterasi:</b> '+fmt(summary.mean_iterations)+'</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th>Statistik ringkasan</th><th>Estimasi</th><th>SD antarreplikasi</th></tr></thead><tbody>'+rows+'</tbody></table></div><p><b>Interval empiris 95% rerata kovarians per replikasi:</b> '+(summary.empirical_95_interval_mean_covariance?fmt(summary.empirical_95_interval_mean_covariance[0])+' sampai '+fmt(summary.empirical_95_interval_mean_covariance[1]):'—')+'</p></div><div class="card"><h3>Interpretasi dan batasan</h3><p>Distribusi maksimum |statistik terstandar| menggambarkan perilaku diagnostik ketika asumsi independensi lokal benar pada kondisi simulasi ini. Kuantil 95% adalah kandidat ambang kalibrasi, bukan cutoff produksi.</p><p>Karena belum ada kumpulan validasi independen, pengujian ini belum mengukur false-positive rate secara independen. Tahap berikutnya—jika hasil stabil—adalah mengunci kandidat cutoff dari sebagian replikasi dan mengukurnya pada replikasi 2PL baru.</p><p>Statistik terstandar tetap bukan Z-score. Seluruh kesimpulan hanya berlaku untuk konfigurasi N=500, 20 butir, distribusi parameter yang digunakan, kuadratur dan implementasi estimator ini.</p></div><div class="card" style="overflow:auto"><h3>Hasil per replikasi</h3><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Rerata kovarians</th><th>Mean |statistik|</th><th>Max |statistik|</th><th>Pasangan valid</th></tr></thead><tbody>'+runs.map(x=>'<tr><td>'+x.repetition+'</td><td>'+(x.converged?'Ya':'Tidak')+'</td><td>'+x.iterations+'</td><td>'+fmt(x.mean_adjusted_covariance)+'</td><td>'+fmt(x.mean_abs_standardized_statistic)+'</td><td>'+fmt(x.max_abs_standardized_statistic)+'</td><td>'+(x.valid_pairs??'—')+'</td></tr>').join('')+'</tbody></table></div>';
+      exportButton.disabled=false;
+      status.textContent='Selesai: '+valid.length+'/100 replikasi konvergen. Distribusi null berhasil dihitung; belum ada validasi false-positive independen.';
+      status.className=valid.length===100?'pesan ok':'pesan';
+    }catch(err){status.textContent='Validasi null gagal: '+(err?.message||String(err));status.className='pesan error';}
+    finally{controls.forEach(x=>x.disabled=false);}
   }
   const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
   async function runRepeated() {
