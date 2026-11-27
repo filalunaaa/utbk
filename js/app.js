@@ -2012,9 +2012,12 @@ function buatEditorSoalLive() {
   el.hidden = true;
   el.innerHTML = '<section class="editor-soal-live-panel" role="dialog" aria-modal="true" aria-labelledby="esl-judul">' +
     '<header class="esl-head"><div><span class="esl-eyebrow">PANEL ADMIN</span><h2 id="esl-judul">Edit soal aktif</h2><p id="esl-meta" class="muted"></p></div><button type="button" class="btn btn-secondary btn-kecil" data-esl-tutup aria-label="Tutup editor">Tutup</button></header>' +
-    '<form id="esl-form" novalidate><label class="esl-label" for="esl-soal">Pertanyaan</label><textarea id="esl-soal" class="input esl-area" rows="5" required></textarea>' +
+    '<form id="esl-form" novalidate><label class="esl-label" for="esl-soal">Pertanyaan (HTML/LaTeX)</label><textarea id="esl-soal" class="input esl-area" rows="5" required></textarea>' +
+    '<div class="esl-live-preview"><div class="esl-label">Pratinjau pertanyaan</div><div id="esl-soal-preview" class="teks-soal"></div></div>' +
+    '<div id="esl-grafik-editor"></div>' +
     '<div id="esl-opsi-wrap"></div><div id="esl-kunci-wrap"></div>' +
-    '<label class="esl-label" for="esl-pembahasan">Pembahasan</label><textarea id="esl-pembahasan" class="input esl-area" rows="6" required></textarea>' +
+    '<label class="esl-label" for="esl-pembahasan">Pembahasan (HTML/LaTeX)</label><textarea id="esl-pembahasan" class="input esl-area" rows="6" required></textarea>' +
+    '<div class="esl-live-preview"><div class="esl-label">Pratinjau pembahasan</div><div id="esl-pembahasan-preview" class="feedback"></div></div>' +
     '<p class="esl-hint">Format HTML dan LaTeX tetap didukung. Periksa kembali kunci dan pembahasan sebelum menyimpan.</p>' +
     '<p id="esl-pesan" class="esl-pesan" role="status" aria-live="polite"></p>' +
     '<footer class="esl-actions"><button type="button" class="btn btn-secondary" data-esl-batal>Batal</button><button type="submit" class="btn btn-primary" id="esl-simpan">Simpan untuk semua pengguna</button></footer></form></section>';
@@ -2023,9 +2026,18 @@ function buatEditorSoalLive() {
     if (e.target === el || e.target.closest('[data-esl-tutup],[data-esl-batal]')) tutupEditorSoalLive();
   });
   el.querySelector('#esl-form').addEventListener('submit', simpanEditorSoalLive);
+  el.querySelector('#esl-soal').addEventListener('input', renderEditorSoalLivePreview);
+  el.querySelector('#esl-pembahasan').addEventListener('input', renderEditorSoalLivePreview);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !el.hidden) tutupEditorSoalLive();
   });
+}
+function renderEditorSoalLivePreview() {
+  const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
+  if (soal) soal.innerHTML = konten($('esl-soal').value, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null);
+  if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan').value);
+  const root = $('editor-soal-live');
+  if (root) rumus(root);
 }
 function renderTombolEditSoal(s) {
   const baris = document.querySelector('#kuis .baris-info');
