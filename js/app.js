@@ -2158,13 +2158,6 @@ function bukaEditorSoalDariLaporan(id) {
   bukaEditorSoalLive();
 }
 
-function renderEditorSoalLivePreview() {
-  const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
-  if (soal) soal.innerHTML = konten($('esl-soal').value, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null);
-  if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan').value);
-  const root = $('editor-soal-live');
-  if (root) rumus(root);
-}
 function bukaEditorSoalLive() {
   if (!ADMIN) return;
 
