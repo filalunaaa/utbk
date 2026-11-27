@@ -704,6 +704,7 @@ body[data-hal="kuis"] .container{padding-bottom:40px}
 .nomor-rev button{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
 .nomor-rev button.benar{border-color:var(--benar);color:var(--benar);background:var(--benar-soft)}
 .nomor-rev button.salah{border-color:var(--salah);color:var(--salah);background:var(--salah-soft)}
+.nomor-rev button.parsial{border-color:var(--warning);color:#8a5a00;background:var(--warning-soft)}
 .nomor-rev button.kosong{color:var(--muted)}
 .nomor-rev button.aktif{background:var(--primary);border-color:var(--primary);color:#fff}
 .rev-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
