@@ -510,7 +510,8 @@ const DefaultSoal = {
 };
 // Muat soal bawaan terbaru dan segarkan tampilan (dipakai semua pengguna saat aplikasi dibuka)
 async function segarkanSoalBawaan(paksa = false) {
-  if (modeAdmin || (AkunApp.sesi() && !paksa)) return;
+  const sedangLogin = /access_token=/.test(location.hash) || sessionStorage.getItem('pytago_google_login_pending') === '1';
+  if (modeAdmin || (!paksa && (AkunApp.sesi() || sedangLogin))) return;
   try { await DefaultSoal.muat(); }
   catch (e) { console.warn('Soal bawaan dari server tidak terambil, memakai cache/cadangan:', e); return; }
   buatDatalist();
