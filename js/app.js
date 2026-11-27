@@ -2060,13 +2060,46 @@ function buatEditorSoalLive() {
     if (e.key === 'Escape' && !el.hidden) tutupEditorSoalLive();
   });
 }
+// Render pratinjau editor secara berurutan agar MathJax tidak saling bertabrakan.
 function renderEditorSoalLivePreview() {
-  const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
-  const visualLama = (soalPaketTarget && soalPaketTarget.soal.visual) || (soalLaporanTarget && soalLaporanTarget.visual) || (soalEditorTarget && soalEditorTarget.visual) || null;
-  if (soal) soal.innerHTML = konten($('esl-soal-editor').querySelector('.editor-area').innerHTML, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null, visualLama);
-  if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan-editor').querySelector('.editor-area').innerHTML);
-  const root = $('editor-soal-live');
-  if (root) rumus(root);
+  const token = (renderEditorSoalLivePreview.token || 0) + 1;
+  renderEditorSoalLivePreview.token = token;
+  const jalankan = async () => {
+    // Lewati antrean lama yang belum mulai; cukup render isi editor paling baru.
+    if (token !== renderEditorSoalLivePreview.token) return;
+    const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
+    const areaSoal = $('esl-soal-editor')?.querySelector('.editor-area');
+    const areaPembahasan = $('esl-pembahasan-editor')?.querySelector('.editor-area');
+    if (!areaSoal || !areaPembahasan) return;
+
+    // MathJax harus melepas referensi hasil render lama sebelum innerHTML diganti.
+    if (window.MathJax && typeof window.MathJax.typesetClear === 'function') {
+      window.MathJax.typesetClear([soal, pembahasan].filter(Boolean));
+    }
+
+    const visualLama = (soalPaketTarget && soalPaketTarget.soal.visual) || (soalLaporanTarget && soalLaporanTarget.visual) || (soalEditorTarget && soalEditorTarget.visual) || null;
+    if (soal) soal.innerHTML = konten(areaSoal.innerHTML, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null, visualLama);
+    if (pembahasan) pembahasan.innerHTML = konten(areaPembahasan.innerHTML);
+
+    const root = $('editor-soal-live');
+    if (root && window.NalarineGraph) window.NalarineGraph.renderAll(root);
+
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+      try {
+        if (window.MathJax.startup && window.MathJax.startup.promise) await window.MathJax.startup.promise;
+        // Jika ada ketikan baru selama MathJax startup, jangan render snapshot lama.
+        if (token !== renderEditorSoalLivePreview.token) return;
+        await window.MathJax.typesetPromise([soal, pembahasan].filter(Boolean));
+      } catch (err) {
+        console.warn('MathJax gagal merender pratinjau editor:', err);
+      }
+    } else if (root) {
+      antreanMathJax.add(root);
+    }
+  };
+
+  const antrean = renderEditorSoalLivePreview.antrean || Promise.resolve();
+  renderEditorSoalLivePreview.antrean = antrean.catch(() => {}).then(jalankan);
 }
 function renderTombolEditSoal(s) {
   const baris = document.querySelector('#kuis .baris-info');
