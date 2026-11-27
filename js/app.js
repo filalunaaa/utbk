@@ -3640,7 +3640,7 @@ async function bukaKonfirmasiMuatAdmin() {
   try {
     const total = await DefaultSoal.hitung();
     input.max = String(total);
-    input.min = '0';
+    input.min = String(total > 0 ? 1 : 0);
     input.value = String(Math.min(total, 100));
     input.disabled = false;
     tombolMuat.disabled = false;
@@ -3672,8 +3672,9 @@ $('btn-konfirmasi-admin-muat').addEventListener('click', async () => {
   const jumlah = Number(input.value);
   const total = Number(input.max);
   const status = $('admin-muat-status');
-  if (input.value.trim() === '' || !Number.isInteger(jumlah) || jumlah < 0 || jumlah > total) {
-    status.textContent = 'Masukkan jumlah antara 0 dan ' + total.toLocaleString('id-ID') + '.';
+  const minimum = total > 0 ? 1 : 0;
+  if (input.value.trim() === '' || !Number.isInteger(jumlah) || jumlah < minimum || jumlah > total) {
+    status.textContent = 'Masukkan jumlah antara ' + minimum.toLocaleString('id-ID') + ' dan ' + total.toLocaleString('id-ID') + '.';
     status.className = 'pesan err';
     input.focus();
     return;
