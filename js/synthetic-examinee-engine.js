@@ -151,7 +151,7 @@
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0">'+
       '<div class="card"><small>Peserta</small><h2>500</h2><small>Data sintetis</small></div><div class="card"><small>Butir</small><h2>20</h2><small>PG dikotomis</small></div>'+
       '<div class="card"><small>Estimator</small><h2>MML-EM</h2><small>61 titik kuadratur</small></div><div class="card"><small>Iterasi maksimum</small><h2>300</h2><small>Toleransi 0,0001</small></div></div>'+
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-primary" id="pse-misspec">Uji Model Misspecification</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
       '<p id="pse-status" class="pesan" role="status" aria-live="polite">Siap. Estimator hanya menerima matriks respons, bukan θ atau parameter asli.</p><div id="pse-results"></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:18px">Terisolasi: tidak membaca/menulis Supabase dan tidak mengubah paket produksi. Ini uji pemulihan pada data yang dibangkitkan dari model 2PL, bukan validasi model-fit pada peserta nyata.</p></section>';
     document.body.appendChild(root);
@@ -159,6 +159,7 @@
     root.querySelector('#pse-run').addEventListener('click',run);
     root.querySelector('#pse-repeat').addEventListener('click',runRepeated);
     root.querySelector('#pse-sensitivity').addEventListener('click',runSampleSensitivity);
+    root.querySelector('#pse-misspec').addEventListener('click',runMisspecification);
     root.querySelector('#pse-export').addEventListener('click',exportData);
   }
   function run() {
@@ -243,6 +244,120 @@
     } finally {
       single.disabled=false;repeat.disabled=false;
     }
+  }
+  function generateScenario(kind,examinees=1000) {
+    const theta=Array.from({length:examinees},randn);
+    const theta2=kind==='2D'?Array.from({length:examinees},randn):null;
+    const items=Array.from({length:CFG.items},(_,i)=>{
+      const a=kind==='1PL'?1:+(.65+Math.random()*1.25).toFixed(3);
+      const b=+(-1.5+Math.random()*3).toFixed(3);
+      return {id:'SYN-'+String(i+1).padStart(2,'0'),a,b,
+        c:kind==='3PL'?.15:0,
+        a2:kind==='2D'?(Math.random()<.5?-1:1)*a*(.45+Math.random()*.35):0};
+    });
+    const responses=theta.map((t,r)=>items.map(it=>{
+      let p;
+      if(kind==='3PL')p=it.c+(1-it.c)*logistic(it.a*(t-it.b));
+      else if(kind==='2D')p=logistic(it.a*t+it.a2*theta2[r]-it.a*it.b);
+      else p=logistic(it.a*(t-it.b));
+      return Math.random()<p?1:0;
+    }));
+    return {examinees,theta,theta2,items,responses};
+  }
+  function eapTheta(row,items,prior) {
+    const post=posterior(row,items,prior);
+    return mean(post.map((w,q)=>w*NODES[q]));
+  }
+  function correlation(x,y) {
+    const mx=mean(x),my=mean(y);
+    let num=0,dx=0,dy=0;
+    for(let i=0;i<x.length;i++){const a=x[i]-mx,b=y[i]-my;num+=a*b;dx+=a*a;dy+=b*b;}
+    return dx>0&&dy>0?num/Math.sqrt(dx*dy):0;
+  }
+  function residualDiagnostics(responses,estimatedItems) {
+    const prior=priorWeights(),n=responses.length,k=estimatedItems.length;
+    const scores=responses.map(row=>eapTheta(row,estimatedItems,prior));
+    const order=scores.map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+    const bins=Array.from({length:5},()=>[]);
+    order.forEach((x,i)=>bins[Math.min(4,Math.floor(i*5/n))].push(x.i));
+    const residuals=Array.from({length:k},()=>Array(n).fill(0));
+    let curveSq=0,curveCount=0;
+    for(let j=0;j<k;j++){
+      for(let r=0;r<n;r++)residuals[j][r]=responses[r][j]-prob(estimatedItems[j],scores[r]);
+      for(const group of bins){
+        if(!group.length)continue;
+        const observed=mean(group.map(r=>responses[r][j]));
+        const expected=mean(group.map(r=>prob(estimatedItems[j],scores[r])));
+        curveSq+=(observed-expected)*(observed-expected);curveCount++;
+      }
+    }
+    const absQ3=[];
+    for(let j=0;j<k;j++)for(let m=j+1;m<k;m++)absQ3.push(Math.abs(correlation(residuals[j],residuals[m])));
+    return {mean_abs_q3:mean(absQ3),max_abs_q3:Math.max(...absQ3),
+      item_curve_rms:Math.sqrt(curveSq/Math.max(1,curveCount))};
+  }
+  async function runMisspecification() {
+    const root=document.getElementById('pytago-synth-panel');if(!root)return;
+    const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
+    const buttons=['#pse-run','#pse-repeat','#pse-sensitivity','#pse-misspec'].map(sel=>root.querySelector(sel));
+    const exportButton=root.querySelector('#pse-export');
+    buttons.forEach(b=>b.disabled=true);exportButton.disabled=true;
+    out.innerHTML='';status.className='pesan';
+    const scenarios=[
+      {id:'2PL',label:'2PL · kontrol sesuai model'},
+      {id:'1PL',label:'1PL / Rasch · diskriminasi sama'},
+      {id:'3PL',label:'3PL · peluang tebakan 0,15'},
+      {id:'2D',label:'2D · trait kedua / multidimensi'}
+    ];
+    const repetitions=15,examinees=1000,results=[];
+    try {
+      for(const scenario of scenarios){
+        const runs=[],allQ3=[],allCurve=[],allA=[];
+        let converged=0;
+        for(let rep=0;rep<repetitions;rep++){
+          status.textContent=scenario.label+' · replikasi '+(rep+1)+'/'+repetitions+' · N='+examinees;
+          await delay(20);
+          const data=generateScenario(scenario.id,examinees);
+          // Only the response matrix enters the 2PL estimator.
+          const est=estimateMML2PL(data.responses);
+          const diag=residualDiagnostics(data.responses,est.items);
+          if(est.converged)converged++;
+          allQ3.push(diag.mean_abs_q3);allCurve.push(diag.item_curve_rms);
+          allA.push(...est.items.map(x=>x.a));
+          runs.push({repetition:rep+1,converged:est.converged,iterations:est.iterations,
+            log_likelihood:est.logLikelihood,mean_abs_q3:diag.mean_abs_q3,
+            max_abs_q3:diag.max_abs_q3,item_curve_rms:diag.item_curve_rms,
+            mean_estimated_a:mean(est.items.map(x=>x.a))});
+        }
+        results.push({
+          scenario:scenario.id,label:scenario.label,examinees,repetitions,
+          convergence_rate:converged/repetitions,converged_count:converged,
+          mean_iterations:mean(runs.map(x=>x.iterations)),
+          mean_abs_q3:mean(allQ3),max_abs_q3:Math.max(...runs.map(x=>x.max_abs_q3)),
+          mean_item_curve_rms:mean(allCurve),
+          mean_estimated_a:mean(allA),sd_estimated_a:Math.sqrt(mean(allA.map(x=>(x-mean(allA))**2))),
+          runs
+        });
+      }
+      latest={schema:'pytago.irt.model-misspecification.v1',source:'synthetic_only',
+        estimator:'MML-EM 2PL',examinees,repetitions_per_scenario:repetitions,
+        diagnostics_note:'Exploratory residual diagnostics only; not formal M2/C2 or calibrated item-fit tests.',
+        scenarios:results,generated_at:new Date().toISOString()};
+      renderMisspecification(root,results);
+      exportButton.disabled=false;
+      status.textContent='Selesai: '+results.reduce((s,x)=>s+x.converged_count,0)+'/'+(scenarios.length*repetitions)+' estimasi konvergen.';
+      status.className=results.every(x=>x.convergence_rate===1)?'pesan ok':'pesan';
+    } catch(err) {
+      status.textContent='Uji misspecification gagal: '+(err&&err.message?err.message:String(err));
+      status.className='pesan error';
+    } finally {buttons.forEach(b=>b.disabled=false);}
+  }
+  function renderMisspecification(root,results) {
+    const rows=results.map(s=>'<tr><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+fmt(s.mean_item_curve_rms)+'</td><td>'+fmt(s.mean_estimated_a)+'</td></tr>').join('');
+    root.querySelector('#pse-results').innerHTML=
+      '<div class="card" style="margin:12px 0"><h3>Model Misspecification Test · 2PL estimator</h3><p>Empat kondisi pembangkitan, masing-masing 15 replikasi × 1.000 peserta × 20 butir. Semua respons diestimasi menggunakan model 2PL.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Model pembangkit</th><th>Konvergensi</th><th>Rerata iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva item</th><th>Rerata a estimasi</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Cara membaca hasil</h3><p>2PL adalah kontrol positif. 1PL menguji apakah data dengan diskriminasi seragam menghasilkan estimasi 2PL yang relatif seragam. 3PL menambahkan lower asymptote c=0,15. Kondisi 2D membangkitkan respons dari dua trait laten tetapi tetap dipaksa diestimasi sebagai satu trait.</p><p>Mean |Q3| dan Max |Q3| merangkum korelasi residual antarbutir setelah mengondisikan secara aproksimatif pada skor EAP. RMS kurva item merangkum selisih proporsi observasi dan prediksi dalam lima kelompok theta EAP. Nilai ini bersifat eksploratif, bukan cutoff keputusan formal.</p><p><b>Penting:</b> konvergensi 2PL pada data 1PL/3PL/2D tidak membuktikan model 2PL cocok. Untuk keputusan model-fit formal, tahap berikutnya tetap memerlukan statistik fit terkalibrasi, misalnya M2/C2 atau item-fit dengan prosedur bootstrap/Monte Carlo.</p></div>'+
+      results.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>'+esc(s.label)+' · diagnostik 15 replikasi</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.mean_abs_q3)+'</td><td>'+fmt(r.max_abs_q3)+'</td><td>'+fmt(r.item_curve_rms)+'</td></tr>').join('')+'</tbody></table></div>').join('');
   }
   async function runSampleSensitivity() {
     const root=document.getElementById('pytago-synth-panel');
