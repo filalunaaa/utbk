@@ -1,13 +1,8 @@
 name: IRT Monte Carlo Power Analysis
 
 on:
-  push:
-    branches:
-      - audit/power-analysis-monte-carlo
-    paths:
-      - "js/synthetic-examinee-engine.js"
-      - "scripts/run-irt-monte-carlo.js"
-      - ".github/workflows/irt-monte-carlo.yml"
+  # The branch is already covered by its pull_request event. Keeping a push
+  # trigger as well caused the same expensive simulation to run twice.
   pull_request:
     branches:
       - main
@@ -16,6 +11,11 @@ on:
 
 permissions:
   contents: read
+
+# Never spend runner time on duplicate Monte-carlo executions for one PR.
+concurrency:
+  group: irt-monte-carlo-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   monte-carlo:
