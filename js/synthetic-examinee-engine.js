@@ -54,22 +54,68 @@
     const norm=logSumExp(logs);
     return logs.map(v=>Math.exp(v-norm));
   }
+  function expectedCompleteLogLikelihood(rc,tc,intercept,slope) {
+    let qValue=0;
+    for(let q=0;q<NODES.length;q++){
+      const n=tc[q],r=rc[q];
+      if(n<=1e-12)continue;
+      const eta=intercept+slope*NODES[q];
+      const p=clamp(logistic(eta),1e-12,1-1e-12);
+      qValue+=r*Math.log(p)+(n-r)*Math.log1p(-p);
+    }
+    return qValue;
+  }
   function maximizeItem(rc,tc,initial) {
     let slope=initial.a, intercept=-initial.a*initial.b;
-    for(let it=0;it<60;it++){
-      let g0=0,g1=0,i00=1e-7,i01=0,i11=1e-7;
+    let converged=false, iterations=0, projectedGradient=Infinity;
+    for(let it=0;it<80;it++){
+      let g0=0,g1=0,i00=1e-8,i01=0,i11=1e-8;
       for(let q=0;q<NODES.length;q++){
         const n=tc[q]; if(n<=1e-12)continue;
         const t=NODES[q],p=logistic(intercept+slope*t),w=Math.max(1e-12,p*(1-p));
-        const r=rc[q]-n*p; g0+=r; g1+=r*t;
-        const info=n*w; i00+=info; i01+=info*t; i11+=info*t*t;
+        const residual=rc[q]-n*p;
+        g0+=residual;g1+=residual*t;
+        const info=n*w;i00+=info;i01+=info*t;i11+=info*t*t;
       }
-      const d=solve2(i00,i01,i01,i11,g0,g1); if(!d)break;
-      const ni=clamp(intercept+d[0],-20,20), ns=clamp(slope+d[1],.05,5);
-      const change=Math.max(Math.abs(ni-intercept),Math.abs(ns-slope));
-      intercept=ni;slope=ns;if(change<1e-7)break;
+      const pg0=(intercept>=20-1e-10&&g0>0)||(intercept<=-20+1e-10&&g0<0)?0:g0;
+      const pg1=(slope>=5-1e-10&&g1>0)||(slope<=.05+1e-10&&g1<0)?0:g1;
+      projectedGradient=Math.max(Math.abs(pg0),Math.abs(pg1));
+      if(projectedGradient<1e-6){converged=true;iterations=it;break;}
+      const delta=solve2(i00,i01,i01,i11,g0,g1);
+      if(!delta)return {a:slope,b:-intercept/slope,converged:false,iterations:it,reason:'singular_information'};
+      const currentQ=expectedCompleteLogLikelihood(rc,tc,intercept,slope);
+      let accepted=false,scale=1;
+      for(let ls=0;ls<24;ls++,scale*=.5){
+        const ni=clamp(intercept+scale*delta[0],-20,20);
+        const ns=clamp(slope+scale*delta[1],.05,5);
+        if(ni===intercept&&ns===slope)continue;
+        const candidateQ=expectedCompleteLogLikelihood(rc,tc,ni,ns);
+        if(Number.isFinite(candidateQ)&&candidateQ>=currentQ-1e-10){
+          intercept=ni;slope=ns;accepted=true;break;
+        }
+      }
+      iterations=it+1;
+      if(!accepted){
+        // A stalled Newton step is acceptable only when the constrained
+        // score is already negligible; otherwise this M-step has failed.
+        if(projectedGradient<1e-5){converged=true;break;}
+        return {a:slope,b:-intercept/slope,converged:false,iterations,reason:'line_search_failed'};
+      }
     }
-    return {a:slope,b:-intercept/slope};
+    if(!converged){
+      let g0=0,g1=0;
+      for(let q=0;q<NODES.length;q++){
+        const n=tc[q];if(n<=1e-12)continue;
+        const t=NODES[q],p=logistic(intercept+slope*t),r=rc[q]-n*p;
+        g0+=r;g1+=r*t;
+      }
+      const pg0=(intercept>=20-1e-10&&g0>0)||(intercept<=-20+1e-10&&g0<0)?0:g0;
+      const pg1=(slope>=5-1e-10&&g1>0)||(slope<=.05+1e-10&&g1<0)?0:g1;
+      projectedGradient=Math.max(Math.abs(pg0),Math.abs(pg1));
+      converged=projectedGradient<1e-5;
+    }
+    return {a:slope,b:-intercept/slope,converged,iterations,projectedGradient,
+      atBoundary:intercept<=-20+1e-8||intercept>=20-1e-8||slope<=.05+1e-8||slope>=5-1e-8};
   }
   function logLikelihood(rows,items,prior) {
     let ll=0;
@@ -90,7 +136,7 @@
   function estimateMML2PL(responses) {
     const rows=responses.map(r=>r.slice()), count=rows[0]?rows[0].length:0;
     const prior=priorWeights(), items=Array.from({length:count},()=>({a:1,b:0}));
-    let converged=false,iterations=0,ll=-Infinity;
+    let converged=false,iterations=0,ll=logLikelihood(rows,items,prior),failure=null;
     const history=[];
     for(let iteration=1;iteration<=CFG.maxIterations;iteration++){
       const posts=rows.map(row=>posterior(row,items,prior));
@@ -104,16 +150,29 @@
         }
         return maximizeItem(rc,tc,current);
       });
-      let maxChange=0;
-      for(let j=0;j<count;j++){
-        maxChange=Math.max(maxChange,Math.abs(next[j].a-items[j].a),Math.abs(next[j].b-items[j].b));
-        items[j]=next[j];
+      const failed=next.findIndex(x=>!x.converged);
+      if(failed>=0){failure={stage:'m_step',item_index:failed,reason:next[failed].reason||'inner_optimizer_not_converged'};break;}
+      const previousItems=items.map(x=>({...x}));
+      const maxChange=items.reduce((m,x,j)=>Math.max(m,Math.abs(next[j].a-x.a),Math.abs(next[j].b-x.b)),0);
+      for(let j=0;j<count;j++)items[j]={a:next[j].a,b:next[j].b};
+      const nextLL=logLikelihood(rows,items,prior);
+      const llDrop=nextLL-ll;
+      if(!Number.isFinite(nextLL)||llDrop < -1e-7){
+        for(let j=0;j<count;j++)items[j]=previousItems[j];
+        failure={stage:'em',reason:'observed_log_likelihood_decreased',log_likelihood_change:llDrop};
+        break;
       }
-      ll=logLikelihood(rows,items,prior);iterations=iteration;
-      if(iteration===1||iteration%10===0)history.push({iteration:iteration,logLikelihood:ll,maxParameterChange:maxChange});
-      if(maxChange<CFG.tolerance){converged=true;break;}
+      ll=nextLL;iterations=iteration;
+      const perResponseLLChange=Math.abs(llDrop)/Math.max(1,rows.length);
+      history.push({iteration,logLikelihood:ll,logLikelihoodChange:llDrop,
+        perResponseLogLikelihoodChange:perResponseLLChange,maxParameterChange:maxChange,
+        allMStepsConverged:true});
+      if(maxChange<CFG.tolerance&&perResponseLLChange<CFG.tolerance){
+        converged=true;break;
+      }
     }
-    return {items:items,converged:converged,iterations:iterations,logLikelihood:ll,history:history};
+    return {items:items,converged:converged,iterations:iterations,logLikelihood:ll,
+      history:history,failure:failure};
   }
   function metric(errors) {
     return {bias:mean(errors),mae:mean(errors.map(Math.abs)),
