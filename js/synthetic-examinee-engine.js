@@ -710,7 +710,7 @@
     if(!latest)return;
     const blob=new Blob([JSON.stringify(latest,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download='pytago-irt-model-fit-monte-carlo.json';a.click();URL.revokeObjectURL(url);
+    a.href=url;a.download=(latest.schema||'pytago-irt-results').replace(/[^a-z0-9.-]+/gi,'-')+'.json';a.click();URL.revokeObjectURL(url);
   }
   window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,getLatest:()=>latest});
   new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
