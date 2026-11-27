@@ -75,7 +75,7 @@
       options.innerHTML=available.map(p=>'<button type="button" role="option" data-package-id="'+String(p.id).replace(/"/g,'&quot;')+'" style="display:block;width:100%;padding:11px 12px;border:0;border-radius:8px;background:transparent;color:var(--text);text-align:left;cursor:pointer">'+String(p.nama||'Paket').replace(/[&<>"]/g,'')+(p.status==='published'?'':' · Draft')+'</button>').join('') || '<p style="padding:10px;margin:0;color:var(--muted)">Belum ada paket tersedia.</p>';
       trigger.addEventListener('click',()=>{const opened=!options.hidden;options.hidden=opened;trigger.setAttribute('aria-expanded',String(!opened));});
       options.addEventListener('click',e=>{const choice=e.target.closest('[data-package-id]');if(!choice)return;root.dataset.packageId=choice.dataset.packageId;value.textContent=choice.textContent;options.hidden=true;trigger.setAttribute('aria-expanded','false');});
-      document.addEventListener('click',e=>{if(!root.contains(e.target)){options.hidden=true;trigger.setAttribute('aria-expanded','false');}},{once:false});
+      root.addEventListener('click',e=>{if(!e.target.closest('#pts-package-picker')){options.hidden=true;trigger.setAttribute('aria-expanded','false');}});
       root.querySelector('#pts-run').addEventListener('click',()=>run(root));
       root.querySelector('#pts-export').addEventListener('click',()=>exportResult(root));
     }catch(err){root.querySelector('#pts-status').textContent='Gagal memuat paket: '+err.message;}
