@@ -2116,6 +2116,13 @@ function bukaEditorSoalDariLaporan(id) {
   bukaEditorSoalLive();
 }
 
+function renderEditorSoalLivePreview() {
+  const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
+  if (soal) soal.innerHTML = konten($('esl-soal').value, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null);
+  if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan').value);
+  const root = $('editor-soal-live');
+  if (root) rumus(root);
+}
 function bukaEditorSoalLive() {
   if (!ADMIN) return;
 
@@ -2132,6 +2139,11 @@ function bukaEditorSoalLive() {
   $('esl-meta').textContent = String(s.id) + ' · ' + namaMapel(s.mataPelajaran) + ' · ' + s.topik + ' · ' + tipeSoal(s);
   $('esl-soal').value = s.soal || '';
   $('esl-pembahasan').value = s.pembahasan || '';
+  if (window.NalarineGraph) {
+    window.NalarineGraph.initEditor($('esl-grafik-editor'));
+    window.NalarineGraph.setEditorValue(s.grafik || null);
+  }
+  renderEditorSoalLivePreview();
 
   const tipe = tipeSoal(s);
   const jumlahOpsi = tipe === 'kompleks'
@@ -2245,7 +2257,8 @@ async function simpanEditorSoalLive(e) {
     soal: sanitize(soal),
     opsi: opsi.map(sanitize),
     jawaban,
-    pembahasan: sanitize(pembahasan)
+    pembahasan: sanitize(pembahasan),
+    grafik: window.NalarineGraph ? window.NalarineGraph.getEditorValue() : (lama.grafik || null)
   };
 
   tombol.disabled = true;
