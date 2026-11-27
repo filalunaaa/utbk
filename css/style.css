@@ -2156,3 +2156,15 @@ dialog.admin-muat-dialog::backdrop{background:rgba(10,20,40,.54);backdrop-filter
 .ng-data-table td{color:var(--text)}
 .ng-data-table tbody tr:nth-child(even){background:var(--bg)}
 .ng-visual-title{font-weight:750;color:var(--text);margin:0 0 10px}
+
+
+/* Kartu paket tryout: indikator tingkat kesulitan */
+.tryout-paket{overflow:hidden}
+.tryout-paket-strip{height:5px;margin:-18px -18px 2px;background:var(--tryout-level-color,#d6a62e)}
+.tryout-paket.tingkat-mudah{--tryout-level-color:#239b62;--tryout-level-soft:rgba(35,155,98,.12)}
+.tryout-paket.tingkat-sedang{--tryout-level-color:#d6a62e;--tryout-level-soft:rgba(214,166,46,.15)}
+.tryout-paket.tingkat-sulit{--tryout-level-color:#d94b4b;--tryout-level-soft:rgba(217,75,75,.12)}
+.tryout-paket-atas{flex-wrap:wrap}
+.tryout-difficulty{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:var(--tryout-level-soft);color:var(--tryout-level-color);font-size:.7rem;font-weight:800;letter-spacing:.01em}
+.tryout-paket h3{margin-top:1px}
+.tryout-paket-deskripsi{font-weight:750;color:var(--text);min-height:0}
