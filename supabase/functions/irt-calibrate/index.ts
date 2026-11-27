@@ -70,17 +70,36 @@ function posteriorForRow(
   return logs.map((value) => Math.exp(value - norm));
 }
 
+function expectedCompleteLogLikelihood(
+  responseCounts: number[],
+  totalCounts: number[],
+  intercept: number,
+  slope: number,
+) {
+  let value = 0;
+  for (let q = 0; q < THETA_NODES.length; q++) {
+    const n = totalCounts[q];
+    const r = responseCounts[q];
+    if (n <= 1e-12) continue;
+    const p = Math.min(1 - 1e-12, Math.max(1e-12, sigmoid(intercept + slope * THETA_NODES[q])));
+    value += r * Math.log(p) + (n - r) * Math.log1p(-p);
+  }
+  return value;
+}
+
 function maximizeItem(
   responseCounts: number[],
   totalCounts: number[],
   initial: { a: number; b: number },
-) {
+): { a: number; b: number; converged: boolean; iterations: number; reason?: string } {
   let slope = initial.a;
   let intercept = -initial.a * initial.b;
+  let converged = false;
+  let iterations = 0;
+  let projectedGradient = Number.POSITIVE_INFINITY;
 
-  for (let iteration = 0; iteration < 60; iteration++) {
-    let g0 = 0, g1 = 0, i00 = 1e-7, i01 = 0, i11 = 1e-7;
-
+  for (let iteration = 0; iteration < 80; iteration++) {
+    let g0 = 0, g1 = 0, i00 = 1e-8, i01 = 0, i11 = 1e-8;
     for (let q = 0; q < THETA_NODES.length; q++) {
       const n = totalCounts[q];
       if (n <= 1e-12) continue;
@@ -96,18 +115,78 @@ function maximizeItem(
       i11 += info * theta * theta;
     }
 
-    const delta = solve2(i00, i01, i01, i11, g0, g1);
-    if (!delta) break;
+    const projectedG0 =
+      (intercept >= 20 - 1e-10 && g0 > 0) ||
+      (intercept <= -20 + 1e-10 && g0 < 0) ? 0 : g0;
+    const projectedG1 =
+      (slope >= 5 - 1e-10 && g1 > 0) ||
+      (slope <= 0.05 + 1e-10 && g1 < 0) ? 0 : g1;
+    projectedGradient = Math.max(Math.abs(projectedG0), Math.abs(projectedG1));
+    if (projectedGradient < 1e-6) {
+      converged = true;
+      iterations = iteration;
+      break;
+    }
 
-    const nextIntercept = Math.max(-20, Math.min(20, intercept + delta[0]));
-    const nextSlope = Math.max(0.05, Math.min(5, slope + delta[1]));
-    const change = Math.max(Math.abs(nextIntercept - intercept), Math.abs(nextSlope - slope));
-    intercept = nextIntercept;
-    slope = nextSlope;
-    if (change < 1e-7) break;
+    const delta = solve2(i00, i01, i01, i11, g0, g1);
+    if (!delta) {
+      return { a: slope, b: -intercept / slope, converged: false, iterations: iteration, reason: "singular_information" };
+    }
+
+    const currentQ = expectedCompleteLogLikelihood(responseCounts, totalCounts, intercept, slope);
+    let accepted = false;
+    let scale = 1;
+    for (let lineSearch = 0; lineSearch < 24; lineSearch++, scale *= 0.5) {
+      const nextIntercept = Math.max(-20, Math.min(20, intercept + scale * delta[0]));
+      const nextSlope = Math.max(0.05, Math.min(5, slope + scale * delta[1]));
+      if (nextIntercept === intercept && nextSlope === slope) continue;
+      const candidateQ = expectedCompleteLogLikelihood(responseCounts, totalCounts, nextIntercept, nextSlope);
+      if (Number.isFinite(candidateQ) && candidateQ >= currentQ - 1e-10) {
+        intercept = nextIntercept;
+        slope = nextSlope;
+        accepted = true;
+        break;
+      }
+    }
+
+    iterations = iteration + 1;
+    if (!accepted) {
+      if (projectedGradient < 1e-5) {
+        converged = true;
+        break;
+      }
+      return { a: slope, b: -intercept / slope, converged: false, iterations, reason: "line_search_failed" };
+    }
   }
 
-  return { a: slope, b: -intercept / slope, intercept, slope };
+  if (!converged) {
+    let g0 = 0, g1 = 0;
+    for (let q = 0; q < THETA_NODES.length; q++) {
+      const n = totalCounts[q];
+      if (n <= 1e-12) continue;
+      const theta = THETA_NODES[q];
+      const p = sigmoid(intercept + slope * theta);
+      const residual = responseCounts[q] - n * p;
+      g0 += residual;
+      g1 += residual * theta;
+    }
+    const projectedG0 =
+      (intercept >= 20 - 1e-10 && g0 > 0) ||
+      (intercept <= -20 + 1e-10 && g0 < 0) ? 0 : g0;
+    const projectedG1 =
+      (slope >= 5 - 1e-10 && g1 > 0) ||
+      (slope <= 0.05 + 1e-10 && g1 < 0) ? 0 : g1;
+    projectedGradient = Math.max(Math.abs(projectedG0), Math.abs(projectedG1));
+    converged = projectedGradient < 1e-5;
+  }
+
+  return {
+    a: slope,
+    b: -intercept / slope,
+    converged,
+    iterations,
+    ...(converged ? {} : { reason: "inner_optimizer_not_converged" }),
+  };
 }
 
 function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
@@ -116,13 +195,30 @@ function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
   let converged = false;
   let logLikelihood = Number.NEGATIVE_INFINITY;
   let iterations = 0;
+  let failure: string | null = null;
+
+  const calculateLogLikelihood = (parameters: Array<{ a: number; b: number }>) =>
+    rows.reduce((sum, row) => {
+      const logs = THETA_NODES.map((theta, q) => {
+        let value = Math.log(prior[q]);
+        for (let i = 0; i < parameters.length; i++) {
+          const response = row[i];
+          if (response === null) continue;
+          const p = Math.min(1 - 1e-12, Math.max(1e-12, itemProbability(parameters[i], theta)));
+          value += response === 1 ? Math.log(p) : Math.log1p(-p);
+        }
+        return value;
+      });
+      return sum + logSumExp(logs);
+    }, 0);
+
+  logLikelihood = calculateLogLikelihood(items);
 
   for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     const posteriorRows = rows.map((row) => posteriorForRow(row, items, prior));
     const nextItems = items.map((current, itemIndex) => {
       const responseCounts = Array(THETA_NODES.length).fill(0);
       const totalCounts = Array(THETA_NODES.length).fill(0);
-
       for (let r = 0; r < rows.length; r++) {
         const response = rows[r][itemIndex];
         if (response === null) continue;
@@ -132,33 +228,39 @@ function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
           if (response === 1) responseCounts[q] += weight;
         }
       }
-      const estimate = maximizeItem(responseCounts, totalCounts, current);
-      return { a: estimate.a, b: estimate.b };
+      return maximizeItem(responseCounts, totalCounts, current);
     });
 
-    let maxChange = 0;
-    for (let i = 0; i < items.length; i++) {
-      maxChange = Math.max(maxChange, Math.abs(nextItems[i].a - items[i].a), Math.abs(nextItems[i].b - items[i].b));
-      items[i] = nextItems[i];
+    const failedIndex = nextItems.findIndex((estimate) => !estimate.converged);
+    if (failedIndex >= 0) {
+      failure = "M-step butir ke-" + (failedIndex + 1) + " gagal: " +
+        (nextItems[failedIndex].reason || "optimasi internal tidak konvergen");
+      break;
     }
 
-    const ll = rows.reduce((sum, row) => {
-      const logs = THETA_NODES.map((theta, q) => {
-        let value = Math.log(prior[q]);
-        for (let i = 0; i < items.length; i++) {
-          const response = row[i];
-          if (response === null) continue;
-          const p = Math.min(1 - 1e-12, Math.max(1e-12, itemProbability(items[i], theta)));
-          value += response === 1 ? Math.log(p) : Math.log1p(-p);
-        }
-        return value;
-      });
-      return sum + logSumExp(logs);
-    }, 0);
+    const previousItems = items.map((item) => ({ ...item }));
+    let maxChange = 0;
+    for (let i = 0; i < items.length; i++) {
+      maxChange = Math.max(
+        maxChange,
+        Math.abs(nextItems[i].a - items[i].a),
+        Math.abs(nextItems[i].b - items[i].b),
+      );
+      items[i] = { a: nextItems[i].a, b: nextItems[i].b };
+    }
+
+    const nextLogLikelihood = calculateLogLikelihood(items);
+    const logLikelihoodChange = nextLogLikelihood - logLikelihood;
+    if (!Number.isFinite(nextLogLikelihood) || logLikelihoodChange < -1e-7) {
+      for (let i = 0; i < items.length; i++) items[i] = previousItems[i];
+      failure = "Log-likelihood observasi menurun; pembaruan EM dibatalkan.";
+      break;
+    }
 
     iterations = iteration;
-    logLikelihood = ll;
-    if (maxChange < TOLERANCE) {
+    logLikelihood = nextLogLikelihood;
+    const perResponseChange = Math.abs(logLikelihoodChange) / Math.max(1, rows.length);
+    if (maxChange < TOLERANCE && perResponseChange < TOLERANCE) {
       converged = true;
       break;
     }
@@ -168,7 +270,6 @@ function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
     const n = itemSummaries[index].n;
     const correct = itemSummaries[index].correct;
     const rate = n ? correct / n : null;
-    
     const warnings: string[] = [];
     if (rate !== null && (rate < 0.05 || rate > 0.95)) warnings.push("proporsi_benar_ekstrem");
     if (item.a <= 0.051 || item.a >= 4.99) warnings.push("diskriminasi_mendekati_batas");
@@ -187,9 +288,8 @@ function calibrate2PL(rows: Array<Array<number | null>>, itemSummaries: any[]) {
     };
   });
 
-  return { converged, iterations, logLikelihood, diagnostics };
+  return { converged, iterations, logLikelihood, diagnostics, failure };
 }
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Gunakan POST." }, 405);
@@ -364,7 +464,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const result = calibrate2PL(responseRows, itemSummaries);
-    if (!result.converged) throw new Error("Algoritma EM belum mencapai konvergensi.");
+    if (!result.converged) throw new Error(result.failure || "Algoritma EM belum mencapai konvergensi.");
 
     const warnings = result.diagnostics.flatMap((item: any) =>
       item.warnings.map((warning: string) => ({ nomor_soal: item.nomorSoal, warning }))
