@@ -27,16 +27,16 @@
   }
   const prob=(item,t)=>logistic(item.a*(t-item.b));
 
-  function generate() {
-    const theta=Array.from({length:CFG.examinees},randn);
-    const items=Array.from({length:CFG.items},(_,i)=>({
+  function generate(examinees=CFG.examinees, fixedItems=null) {
+    const theta=Array.from({length:examinees},randn);
+    const items=fixedItems||Array.from({length:CFG.items},(_,i)=>({
       id:'SYN-'+String(i+1).padStart(2,'0'),
       a:+(.65+Math.random()*1.25).toFixed(3),
       b:+(-1.5+Math.random()*3).toFixed(3)
     }));
     const responses=theta.map(t=>items.map(it=>Math.random()<prob(it,t)?1:0));
     return {schema:'pytago.parameter-recovery.v2',source:'synthetic_only',
-      generated_at:new Date().toISOString(),examinees:CFG.examinees,
+      generated_at:new Date().toISOString(),examinees:examinees,
       true_theta:theta,true_items:items,responses};
   }
 
@@ -151,13 +151,14 @@
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0">'+
       '<div class="card"><small>Peserta</small><h2>500</h2><small>Data sintetis</small></div><div class="card"><small>Butir</small><h2>20</h2><small>PG dikotomis</small></div>'+
       '<div class="card"><small>Estimator</small><h2>MML-EM</h2><small>61 titik kuadratur</small></div><div class="card"><small>Iterasi maksimum</small><h2>300</h2><small>Toleransi 0,0001</small></div></div>'+
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"><button type="button" class="btn btn-primary" id="pse-run">Jalankan 1 Replikasi</button><button type="button" class="btn btn-primary" id="pse-repeat">Jalankan 30 Replikasi</button><button type="button" class="btn btn-primary" id="pse-sensitivity">Uji Ukuran Sampel · 300/500/1.000</button><button type="button" class="btn btn-secondary" id="pse-export" disabled>Ekspor JSON</button></div>'+
       '<p id="pse-status" class="pesan" role="status" aria-live="polite">Siap. Estimator hanya menerima matriks respons, bukan θ atau parameter asli.</p><div id="pse-results"></div>'+
       '<p style="font-size:12px;color:var(--muted,#667085);margin-top:18px">Terisolasi: tidak membaca/menulis Supabase dan tidak mengubah paket produksi. Ini uji pemulihan pada data yang dibangkitkan dari model 2PL, bukan validasi model-fit pada peserta nyata.</p></section>';
     document.body.appendChild(root);
     root.addEventListener('click',e=>{if(e.target===root||e.target.closest('[data-close]'))root.remove();});
     root.querySelector('#pse-run').addEventListener('click',run);
     root.querySelector('#pse-repeat').addEventListener('click',runRepeated);
+    root.querySelector('#pse-sensitivity').addEventListener('click',runSampleSensitivity);
     root.querySelector('#pse-export').addEventListener('click',exportData);
   }
   function run() {
@@ -242,6 +243,91 @@
     } finally {
       single.disabled=false;repeat.disabled=false;
     }
+  }
+  async function runSampleSensitivity() {
+    const root=document.getElementById('pytago-synth-panel');
+    if(!root)return;
+    const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
+    const buttons=['#pse-run','#pse-repeat','#pse-sensitivity'].map(sel=>root.querySelector(sel));
+    const exportButton=root.querySelector('#pse-export');
+    buttons.forEach(b=>b.disabled=true);exportButton.disabled=true;
+    out.innerHTML='';status.className='pesan';
+    const sampleSizes=[300,500,1000],repetitions=CFG.repetitions;
+    const results=Object.fromEntries(sampleSizes.map(n=>[n,{runs:[],allA:[],allB:[],converged:0}]));
+    try {
+      for(let rep=0;rep<repetitions;rep++){
+        status.textContent='Replikasi '+(rep+1)+'/'+repetitions+' · membangkitkan satu populasi 1.000 peserta untuk desain sampel bertingkat...';
+        await delay(25);
+        const population=generate(1000);
+        for(const n of sampleSizes){
+          status.textContent='Replikasi '+(rep+1)+'/'+repetitions+' · mengestimasi ukuran sampel '+n+' ('+(sampleSizes.indexOf(n)+1)+'/3)...';
+          await delay(15);
+          const data={
+            examinees:n,
+            true_theta:population.true_theta.slice(0,n),
+            true_items:population.true_items,
+            responses:population.responses.slice(0,n)
+          };
+          // The estimator receives responses only. Ground truth is reserved for evaluation.
+          const estimated=estimateMML2PL(data.responses);
+          const recovery=evaluate(data,estimated),bucket=results[n];
+          if(estimated.converged)bucket.converged++;
+          for(const item of recovery.fitted){bucket.allA.push(item.delta_a);bucket.allB.push(item.delta_b);}
+          bucket.runs.push({
+            repetition:rep+1,
+            converged:estimated.converged,
+            iterations:estimated.iterations,
+            log_likelihood:estimated.logLikelihood,
+            theta_mean:recovery.summary.theta_mean,
+            theta_sd:recovery.summary.theta_sd,
+            a:recovery.summary.a,
+            b:recovery.summary.b
+          });
+        }
+      }
+      const summaries=sampleSizes.map(n=>{
+        const x=results[n];
+        return {
+          examinees:n,
+          repetitions:repetitions,
+          converged_count:x.converged,
+          convergence_rate:x.converged/repetitions,
+          mean_iterations:mean(x.runs.map(r=>r.iterations)),
+          mean_log_likelihood:mean(x.runs.map(r=>r.log_likelihood)),
+          pooled_a:metric(x.allA),
+          pooled_b:metric(x.allB),
+          mean_run_mae_a:mean(x.runs.map(r=>r.a.mae)),
+          mean_run_mae_b:mean(x.runs.map(r=>r.b.mae)),
+          runs:x.runs
+        };
+      });
+      latest={
+        schema:'pytago.irt.sample-size-sensitivity.v1',
+        source:'synthetic_only',
+        design:'paired_nested_samples_same_item_parameters_and_population_per_replication',
+        generated_at:new Date().toISOString(),
+        estimator:'MML-EM',
+        estimator_config:CFG,
+        sample_sizes:summaries
+      };
+      renderSampleSensitivity(root,summaries);
+      exportButton.disabled=false;
+      const totalConverged=summaries.reduce((sum,x)=>sum+x.converged_count,0);
+      status.textContent='Selesai: '+totalConverged+'/'+(sampleSizes.length*repetitions)+' estimasi konvergen.';
+      status.className=totalConverged===sampleSizes.length*repetitions?'pesan ok':'pesan';
+    } catch(err) {
+      status.textContent='Uji ukuran sampel gagal: '+(err&&err.message?err.message:String(err));
+      status.className='pesan error';
+    } finally {
+      buttons.forEach(b=>b.disabled=false);
+    }
+  }
+  function renderSampleSensitivity(root,summaries) {
+    const rows=summaries.map(s=>'<tr><td>'+s.examinees+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.pooled_a.mae)+'</td><td>'+fmt(s.pooled_a.rmse)+'</td><td>'+fmt(s.pooled_a.bias)+'</td><td>'+fmt(s.pooled_b.mae)+'</td><td>'+fmt(s.pooled_b.rmse)+'</td><td>'+fmt(s.pooled_b.bias)+'</td><td>'+fmt(s.mean_log_likelihood)+'</td></tr>').join('');
+    root.querySelector('#pse-results').innerHTML=
+      '<div class="card" style="margin:12px 0"><h3>Sample Size Sensitivity Test · 30 Replikasi</h3><p>Setiap replikasi membangkitkan satu populasi 1.000 peserta dan satu set 20 parameter butir. Sampel 300 dan 500 menggunakan peserta awal dari populasi yang sama (nested/paired design), sehingga parameter butir tetap identik dalam satu replikasi.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>N peserta</th><th>Konvergensi</th><th>Rerata iterasi</th><th>MAE a</th><th>RMSE a</th><th>Bias a</th><th>MAE b</th><th>RMSE b</th><th>Bias b</th><th>Rerata log-likelihood</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Interpretasi metodologis</h3><p>Bandingkan MAE, RMSE, bias, dan tingkat konvergensi antarukuran sampel. Log-likelihood ditampilkan sebagai diagnostik, tetapi nilainya tidak boleh dibandingkan sebagai ukuran kualitas lintas N secara langsung karena jumlah respons berbeda.</p><p>Data sintetis dibangkitkan dari 2PL. Hasil ini menguji pemulihan parameter ketika asumsi model benar, bukan model-fit pada respons peserta nyata.</p></div>'+
+      summaries.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>Diagnostik N = '+s.examinees+'</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>MAE a</th><th>MAE b</th><th>Bias a</th><th>Bias b</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.a.mae)+'</td><td>'+fmt(r.b.mae)+'</td><td>'+fmt(r.a.bias)+'</td><td>'+fmt(r.b.bias)+'</td></tr>').join('')+'</tbody></table></div>').join('');
   }
   function renderRepeated(root,s,runs) {
     const card=(label,value,sub='')=>'<div class="card"><small>'+label+'</small><h3>'+value+'</h3><small>'+sub+'</small></div>';
