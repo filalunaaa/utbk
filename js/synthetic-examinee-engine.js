@@ -322,26 +322,37 @@
     const prior=priorWeights(),pairs=[],n=latest.responses.length,k=estimated.length;
     try {
       for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
-        const rj=[],rm=[];
+        let observedAdjusted=0,varJ=0,varM=0,valid=0;
         for(let r=0;r<n;r++){
           const row=latest.responses[r].slice();row[j]=null;row[m]=null;
           const post=posterior(row,estimated,prior);
-          const theta=mean(post.map((w,q)=>w*NODES[q]));
-          rj.push(latest.responses[r][j]-prob(estimated[j],theta));
-          rm.push(latest.responses[r][m]-prob(estimated[m],theta));
+          let pj=0,pm=0,pjpm=0,pj2=0,pm2=0;
+          for(let q=0;q<NODES.length;q++){
+            const w=post[q],a=prob(estimated[j],NODES[q]),b=prob(estimated[m],NODES[q]);
+            pj+=w*a;pm+=w*b;pjpm+=w*a*b;pj2+=w*a*a;pm2+=w*b*b;
+          }
+          const posteriorCov=pjpm-pj*pm;
+          const predictiveVarJ=pj-pj2+pj2-pj*pj;
+          const predictiveVarM=pm-pm2+pm2-pm*pm;
+          const adjusted=(latest.responses[r][j]-pj)*(latest.responses[r][m]-pm)-posteriorCov;
+          if(Number.isFinite(adjusted)&&predictiveVarJ>0&&predictiveVarM>0){
+            observedAdjusted+=adjusted;varJ+=predictiveVarJ;varM+=predictiveVarM;valid++;
+          }
         }
-        const q3=correlation(rj,rm);
-        if(Number.isFinite(q3))pairs.push({item_1:estimated[j].id||('Item '+(j+1)),item_2:estimated[m].id||('Item '+(m+1)),q3});
-        if(pairs.length%5===0){status.textContent='Leave-two-out: '+pairs.length+'/'+(k*(k-1)/2)+' pasangan.';await delay(10);}
+        if(valid){
+          const meanAdjusted=observedAdjusted/valid;
+          const scale=Math.sqrt((varJ/valid)*(varM/valid));
+          pairs.push({item_1:estimated[j].id||('Item '+(j+1)),item_2:estimated[m].id||('Item '+(m+1)),
+            adjusted_covariance:meanAdjusted,standardized_statistic:scale>0?meanAdjusted/scale:null,valid_n:valid});
+        }
+        if(pairs.length%5===0){status.textContent='Posterior-predictive: '+pairs.length+'/'+(k*(k-1)/2)+' pasangan.';await delay(10);}
       }
-      const meanQ3=mean(pairs.map(x=>x.q3));
-      const adjusted=pairs.map(x=>({...x,q3_adjusted:x.q3-meanQ3}));
-      const sorted=adjusted.slice().sort((a,b)=>Math.abs(b.q3_adjusted)-Math.abs(a.q3_adjusted));
-      latest.local_dependence={method:'pairwise_leave_two_items_out_eap',pairs:adjusted,mean_raw_q3:meanQ3,
-        mean_adjusted_q3:mean(adjusted.map(x=>x.q3_adjusted)),
-        max_abs_adjusted_q3:Math.max(...adjusted.map(x=>Math.abs(x.q3_adjusted))),
-        note:'Eksploratif; cutoff dan tingkat kesalahan belum dikalibrasi.'};
-      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Ketergantungan Lokal · Pairwise Leave-Two-Out</h3><p>Kemampuan peserta dihitung ulang dengan mengecualikan kedua butir dalam pasangan yang sedang diuji. Ini mengurangi kontaminasi estimasi kemampuan oleh respons pada pasangan tersebut.</p><p><b>Pasangan valid:</b> '+pairs.length+' · <b>Rerata Q3 mentah:</b> '+fmt(meanQ3)+' · <b>Max |Q3 terkoreksi|:</b> '+fmt(latest.local_dependence.max_abs_adjusted_q3)+'</p><div style="overflow:auto;max-height:360px"><table style="width:100%;font-size:12px"><thead><tr><th>Butir 1</th><th>Butir 2</th><th>Q3 mentah</th><th>Q3 terkoreksi</th></tr></thead><tbody>'+sorted.map(x=>'<tr><td>'+esc(x.item_1)+'</td><td>'+esc(x.item_2)+'</td><td>'+fmt(x.q3)+'</td><td>'+fmt(x.q3_adjusted)+'</td></tr>').join('')+'</tbody></table></div><p><b>Batasan:</b> diagnostik eksploratif, bukan uji signifikansi atau cutoff keputusan. Cutoff harus dikalibrasi dengan simulasi nol independen untuk desain tes dan estimator yang digunakan.</p></div>';
+      const sorted=pairs.slice().sort((a,b)=>Math.abs(b.standardized_statistic||0)-Math.abs(a.standardized_statistic||0));
+      latest.local_dependence={method:'pairwise_leave_two_out_posterior_predictive_covariance_adjustment',
+        pairs:pairs,mean_adjusted_covariance:mean(pairs.map(x=>x.adjusted_covariance)),
+        max_abs_standardized_statistic:Math.max(...pairs.map(x=>Math.abs(x.standardized_statistic||0))),
+        note:'Statistik eksploratif; distribusi nol, cutoff, dan tingkat kesalahan belum dikalibrasi.'};
+      out.innerHTML='<div class="card" style="margin:12px 0"><h3>Ketergantungan Lokal · Posterior-Predictive Pairwise Diagnostic</h3><p>Untuk setiap pasangan, sistem menghitung posterior kemampuan dari butir lain, lalu mengintegrasikan probabilitas respons pada seluruh titik kuadratur. Kovarians prediktif yang memang diharapkan akibat ketidakpastian kemampuan dikurangkan dari hasil kali residual teramati.</p><p><b>Pasangan valid:</b> '+pairs.length+' · <b>Rerata kovarians residual terkoreksi:</b> '+fmt(latest.local_dependence.mean_adjusted_covariance)+' · <b>Max |statistik terstandar|:</b> '+fmt(latest.local_dependence.max_abs_standardized_statistic)+'</p><div style="overflow:auto;max-height:360px"><table style="width:100%;font-size:12px"><thead><tr><th>Butir 1</th><th>Butir 2</th><th>Kovarians terkoreksi</th><th>Statistik terstandar</th><th>N</th></tr></thead><tbody>'+sorted.map(x=>'<tr><td>'+esc(x.item_1)+'</td><td>'+esc(x.item_2)+'</td><td>'+fmt(x.adjusted_covariance)+'</td><td>'+fmt(x.standardized_statistic)+'</td><td>'+x.valid_n+'</td></tr>').join('')+'</tbody></table></div><p><b>Batasan:</b> ini statistik eksploratif, bukan Q3 dan bukan uji signifikansi. Statistik terstandar bukan Z-score. Cutoff keputusan memerlukan simulasi nol independen dan validasi ukuran kesalahan.</p></div>';
       exportButton.disabled=false;status.textContent='Selesai: '+pairs.length+' pasangan dianalisis.';status.className='pesan ok';
     }catch(err){status.textContent='Diagnostik gagal: '+(err?.message||String(err));status.className='pesan error';}
     finally{button.disabled=false;}
