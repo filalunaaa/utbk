@@ -509,7 +509,7 @@
     const theta2=kind==='2D'?Array.from({length:examinees},randn):null;
     const items=Array.from({length:CFG.items},(_,i)=>{
       const baseA=+.65+Math.random()*1.25;
-      const a=kind==='1PL'?1:+(kind==='2D'?baseA:baseA).toFixed(3);
+      const a=kind==='1PL'?1:+baseA.toFixed(3);
       const b=+(-1.5+Math.random()*3).toFixed(3);
       return {id:'SYN-'+String(i+1).padStart(2,'0'),a,b,
         c:kind==='3PL'?(options.guessing??.15):0,
@@ -665,7 +665,7 @@
       renderMisspecification(root,results,calibrations);
       exportButton.disabled=false;
       const totalConverged=results.reduce((sum,x)=>sum+x.converged_count,0);
-      status.textContent='Selesai: '+totalConverged+'/'+totalFits+' estimasi konvergen · 3 ukuran sampel · 21 kondisi.';
+      status.textContent='Selesai: '+totalConverged+'/'+totalFits+' estimasi konvergen · 3 ukuran sampel · 27 kondisi.';
       status.className=totalConverged===totalFits?'pesan ok':'pesan';
     } catch(err) {
       status.textContent='Uji Monte Carlo model-fit gagal: '+(err&&err.message?err.message:String(err));
@@ -769,7 +769,7 @@
       '<div class="card" style="margin:8px 0"><b>N='+n+'</b><p>Cutoff Max |Q3|: '+fmt(x.cutoff_95)+' · valid calibration '+x.calibration_valid_diagnostics+'/'+x.calibration_repetitions+'</p><p>False positive operasional: '+x.validation_false_positives+'/'+x.validation_repetitions+' ('+fmt(x.validation_false_positive_rate*100)+'%) · Wilson 95% '+fmt(x.validation_operational_wilson_95.lower*100)+'–'+fmt(x.validation_operational_wilson_95.upper*100)+'%</p><p>False positive kondisional: '+fmt(x.validation_conditional_false_positive_rate*100)+'% · MCSE '+fmt(x.validation_conditional_mcse*100)+' percentage points</p></div>'
     ).join('');
     root.querySelector('#pse-results').innerHTML=
-      '<div class="card" style="margin:12px 0"><h3>Power Analysis · desain multi-N</h3><p>21 kondisi × 100 replikasi = 2.100 estimasi MML-EM 2PL. Ukuran sampel 500, 1.000, dan 2.000; 20 butir. Cutoff null dikalibrasi dan divalidasi secara independen pada setiap ukuran sampel.</p><p>Alternatif: Rasch/1PL; 3PL dengan c=0,05, 0,15, 0,25; dan 2D dengan loading sekunder 0,25, 0,45, 0,70.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>N</th><th>Kondisi</th><th>Konvergensi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>Detection rate</th><th>Wilson 95%</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Power Analysis · desain multi-N</h3><p>27 kondisi × 100 replikasi = 2.700 estimasi MML-EM 2PL. Ukuran sampel 500, 1.000, dan 2.000; 20 butir. Cutoff null dikalibrasi dan divalidasi secara independen pada setiap ukuran sampel.</p><p>Alternatif: Rasch/1PL; 3PL dengan c=0,05, 0,15, 0,25; dan 2D dengan loading sekunder 0,25, 0,45, 0,70.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>N</th><th>Kondisi</th><th>Konvergensi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>Detection rate</th><th>Wilson 95%</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
       '<div class="card" style="margin:12px 0"><h3>Kalibrasi false-positive per ukuran sampel</h3>'+calibrationCards+'</div>'+
       '<div class="card" style="margin:12px 0"><h3>Batas interpretasi</h3><p>Rate operasional menghitung kegagalan konvergensi sebagai kegagalan deteksi; rate kondisional hanya memakai fit konvergen. Wilson CI/MCSE mengukur ketidakpastian Monte Carlo dari replikasi pengujian, tetapi belum memasukkan ketidakpastian cutoff yang berasal dari 100 replikasi kalibrasi.</p><p>Hasil ini adalah estimasi power sintetis untuk generator dan parameter yang ditentukan, bukan power universal atau bukti validitas pada data peserta Pytago. Untuk laporan final, jumlah replikasi dan kalibrasi cutoff perlu ditingkatkan.</p></div>';
   }
