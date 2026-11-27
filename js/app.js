@@ -17,7 +17,16 @@ const Penyimpanan = {
     const d = this.ambil();
     d.total++;
     d.benar = bulatSkor((d.benar || 0) + skor);
-    [['mapel', soal.mataPelajaran], ['topik', namaTopikResmi(soal)]].forEach(([k, nama]) => {
+    // Mapel tetap dihitung untuk semua soal, tetapi statistik topik hanya
+    // menerima soal yang benar-benar terhubung ke taksonomi resmi.
+    const agregasi = [['mapel', soal.mataPelajaran]];
+    const topikTax = topikTaxById(soal.topikId) || topikTaxById(soal.subtopikId) ||
+      cariTopikTax(soal.mataPelajaran, soal.topik);
+    if (topikTax && topikTax.topik && topikTax.topik.nama) {
+      agregasi.push(['topik', topikTax.topik.nama]);
+    }
+    agregasi.forEach(([k, nama]) => {
+      if (!nama) return;
       d[k][nama] = d[k][nama] || { total: 0, benar: 0 };
       d[k][nama].total++;
       d[k][nama].benar = bulatSkor((d[k][nama].benar || 0) + skor);
@@ -5006,7 +5015,8 @@ function renderBeranda() {
   gambarGrafik();
   renderBerita();
 
-  const topik = Object.entries(d.topik).filter(([, x]) => x.total >= 3)
+  const topikTerdaftar = (nama) => Object.keys(TAKSONOMI).some((mapel) => !!cariTopikTax(mapel, nama));
+  const topik = Object.entries(d.topik).filter(([nama, x]) => x.total >= 3 && topikTerdaftar(nama))
     .map(([nama, x]) => ({ nama, total: x.total, pct: Math.round((x.benar / x.total) * 100) }))
     .sort((a, b) => a.pct - b.pct || b.total - a.total);
   const kp = $('kartu-perkuat');
