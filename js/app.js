@@ -2055,7 +2055,8 @@ function buatEditorSoalLive() {
 }
 function renderEditorSoalLivePreview() {
   const soal = $('esl-soal-preview'), pembahasan = $('esl-pembahasan-preview');
-  if (soal) soal.innerHTML = konten($('esl-soal').value, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null);
+  const visualLama = (soalPaketTarget && soalPaketTarget.soal.visual) || (soalLaporanTarget && soalLaporanTarget.visual) || (soalEditorTarget && soalEditorTarget.visual) || null;
+  if (soal) soal.innerHTML = konten($('esl-soal').value, null, 'Gambar soal', window.NalarineGraph ? window.NalarineGraph.getEditorValue() : null, visualLama);
   if (pembahasan) pembahasan.innerHTML = konten($('esl-pembahasan').value);
   const root = $('editor-soal-live');
   if (root) rumus(root);
