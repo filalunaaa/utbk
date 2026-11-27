@@ -645,7 +645,8 @@
           scenario.exceedance_count=summary.exceedance_count;
           scenario.valid_diagnostic_count=summary.valid_diagnostic_count;
           scenario.failed_or_unavailable_count=summary.failed_or_unavailable_count;
-          scenario.empirical_detection_rate=scenario.role==='benchmark'?null:summary.operational_rate;\n          scenario.benchmark_exceedance_rate=scenario.role==='benchmark'?summary.operational_rate:null;
+          scenario.empirical_detection_rate=scenario.role==='benchmark'?null:summary.operational_rate;
+          scenario.benchmark_exceedance_rate=scenario.role==='benchmark'?summary.operational_rate:null;
           scenario.conditional_detection_rate=summary.conditional_rate;
           scenario.operational_wilson_95=summary.operational_wilson_95;
           scenario.conditional_wilson_95=summary.conditional_wilson_95;
