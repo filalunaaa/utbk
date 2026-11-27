@@ -1154,6 +1154,15 @@ async function renderDaftarTryout() {
   // Paket yang sudah diterbitkan dapat dilihat publik; login tetap diwajibkan saat memulai tryout.
   try {
     const paket = await rest('tryout_paket?select=id,nama,deskripsi,kategori,durasi_menit,jumlah_soal,status,dibuat_pada&order=dibuat_pada.desc');
+    let ringkasanIRT = {};
+    if (ADMIN) {
+      try {
+        const rowsIRT = await rest('tryout_irt_ringkasan?select=paket_id,irt_model,irt_status,irt_sample_size,jumlah_soal,parameter_belum_lengkap,jumlah_respons_selesai');
+        (Array.isArray(rowsIRT) ? rowsIRT : []).forEach((r) => { ringkasanIRT[String(r.paket_id)] = r; });
+      } catch (errIRT) {
+        console.warn('Ringkasan kalibrasi IRT belum dapat dimuat:', errIRT);
+      }
+    }
     if (!Array.isArray(paket) || !paket.length) {
       wadah.innerHTML = '<div class="card tryout-empty"><h3>Belum ada paket yang tersedia</h3><p class="muted">Paket tryout yang sudah diterbitkan akan muncul di sini.</p></div>';
       return;
@@ -1171,12 +1180,24 @@ async function renderDaftarTryout() {
       const namaPaket = String(p.nama || 'Tryout');
       const nomorPaket = namaPaket.match(/\d+/)?.[0] || '';
       const deskripsiPaket = 'Paket Tryout ' + kategoriNama + (nomorPaket ? ' ' + nomorPaket : '');
+      const irt = ringkasanIRT[String(p.id)];
+      const statusIRTLabel = irt ? ({
+        belum_dikalibrasi: 'Belum dikalibrasi',
+        mengumpulkan_data: 'Mengumpulkan respons',
+        siap_dikalibrasi: 'Siap dikalibrasi',
+        sedang_dikalibrasi: 'Sedang dikalibrasi',
+        terkalibrasi: 'Terkalibrasi',
+        perlu_tinjauan: 'Perlu tinjauan',
+        gagal: 'Kalibrasi gagal'
+      })[irt.irt_status] || 'Status belum diketahui' : 'Ringkasan belum tersedia';
+      const infoIRT = ADMIN ? `<p class="muted" style="font-size:12px;margin:8px 0 0">IRT ${esc(irt && irt.irt_model || '2PL')} · ${esc(statusIRTLabel)} · ${Number(irt && irt.jumlah_respons_selesai || 0)} respons · ${Number(irt && irt.parameter_belum_lengkap || 0)} butir belum terkalibrasi</p>` : '';
       return `<article class="card tryout-paket tingkat-${tingkat}" data-paket-id="${esc(p.id)}" data-paket-nama="${esc(p.nama || "Paket Tryout")}" data-paket-durasi="${Number(p.durasi_menit) || 20}" data-paket-jumlah="${Number(p.jumlah_soal) || 0}" role="group" aria-label="Paket ${esc(p.nama || "Tryout")}">
         <div class="tryout-paket-strip" aria-hidden="true"></div>
         <div class="tryout-paket-atas"><span class="tryout-paket-kategori">${kategori}</span>${status}</div>
         <h3>${esc(namaPaket)}</h3>
         <div class="tryout-paket-level"><span class="tryout-difficulty ${tingkat}">${labelTingkat}</span></div>
         <p class="tryout-paket-deskripsi">${esc(deskripsiPaket)}</p>
+        ${infoIRT}
         <div class="tryout-paket-meta">
           <span><strong>${Number(p.jumlah_soal) || 0}</strong><small>Soal</small></span>
           <span><strong>${Number(p.durasi_menit) || 0}</strong><small>Menit</small></span>
