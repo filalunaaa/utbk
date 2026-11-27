@@ -1329,9 +1329,11 @@ function bukaEditorSoalPaket(row) {
 }
 async function mulaiTryoutPaket(id, nama, durasi) {
   if (!AkunApp.sesi()) return alert('Silakan masuk terlebih dahulu untuk mengikuti Tryout.');
-  if (!ADMIN) return alert('Sesi Tryout untuk peserta belum diaktifkan. Saat ini paket Draft hanya dapat diuji oleh admin.');
   const menit = Math.max(1, Number(durasi) || 20);
-  if (!confirm('Mulai "' + nama + '"?\\n\\nDurasi: ' + menit + ' menit.\\nSoal akan dibuka dalam mode simulasi admin.')) return;
+  const konfirmasi = ADMIN
+    ? 'Mulai "' + nama + '"?\\n\\nDurasi: ' + menit + ' menit.\\nSoal akan dibuka dalam mode simulasi admin.'
+    : 'Mulai "' + nama + '"?\\n\\nDurasi: ' + menit + ' menit.\\nPastikan kamu siap sebelum memulai.';
+  if (!confirm(konfirmasi)) return;
   try {
     const rows = await rest('tryout_soal?select=id,nomor_soal,kategori,tipe_soal,data&paket_id=eq.' + encodeURIComponent(id) + '&order=nomor_soal.asc');
     if (!Array.isArray(rows) || !rows.length) throw new Error('Soal dalam paket belum tersedia.');
