@@ -4685,7 +4685,11 @@ function batalSesi() {
 function akhiriDenganKonfirmasi() {
   if (sesi.mode === 'tryout' && PengaturanApp.ambil().konfirmAkhiri !== false) {
     const k = sesi.jawab.filter((j) => j === null || j === undefined).length;
-    if (k) return konfirmUjian('Akhiri Mode Ngebut?', `Masih ada ${k} soal yang belum dijawab. Soal kosong tidak dihitung benar.`, [{ label: 'Kembali mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri sekarang', fn: selesai }]);
+    if (k) {
+      const judul = sesi.paketTryoutId ? 'Akhiri tryout?' : 'Akhiri Mode Ngebut?';
+      const konteks = sesi.paketTryoutId ? 'tryout ini' : 'Mode Ngebut ini';
+      return konfirmUjian(judul, `Masih ada ${k} soal yang belum dijawab di ${konteks}. Soal kosong tidak dihitung benar. Kamu bisa kembali untuk memeriksa jawaban atau mengakhiri sekarang.`, [{ label: 'Kembali mengerjakan', kelas: 'btn-primary' }, { label: 'Akhiri sekarang', fn: selesai }]);
+    }
   }
   selesai();
 }
