@@ -7,11 +7,12 @@ on:
     paths:
       - '.github/workflows/irt-local-dependence-pilot.yml'
       - 'scripts/run-local-dependence-null-pilot.js'
+      - 'scripts/run-local-dependence-testlet-pilot.js'
       - 'js/synthetic-examinee-engine.js'
   workflow_dispatch:
     inputs:
       repetitions:
-        description: "Pilot repetitions (start small; e.g. 20)"
+        description: "Replications per calibration/validation condition (start with 20)"
         required: true
         default: "20"
       examinees:
@@ -37,8 +38,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Run fixed-bank null pilot
-        run: node scripts/run-local-dependence-null-pilot.js
+      - name: Run fixed-bank null and testlet-alternative pilot
+        run: node scripts/run-local-dependence-testlet-pilot.js
         env:
           SIM_SEED: "20261128"
           SIM_REPS: ${{ inputs.repetitions || '20' }}
@@ -46,7 +47,7 @@ jobs:
       - name: Upload pilot result
         uses: actions/upload-artifact@v4
         with:
-          name: pytago-local-dependence-null-pilot-v1
-          path: artifacts/pytago-local-dependence-null-pilot-v1.json
+          name: pytago-local-dependence-testlet-pilot-v1
+          path: artifacts/pytago-local-dependence-testlet-pilot-v1.json
           if-no-files-found: error
           retention-days: 30
