@@ -2,7 +2,7 @@
 
 Tanggal: 28 November 2026  
 Branch: `audit/power-analysis-monte-carlo`  
-Status: **null pilot awal berhasil; eksperimen testlet alternatif ditambahkan dan menunggu hasil Actions.**
+Status: **pilot testlet 20 replikasi berhasil; validasi lanjutan 200 replikasi per kondisi dijadwalkan melalui push workflow.**
 
 ## Tujuan
 
@@ -28,15 +28,15 @@ Statistik ini **bukan Yen Q3**, bukan Z-score, dan belum merupakan uji signifika
 Workflow **IRT Local-Dependence Null Pilot** sekarang menjalankan runner testlet:
 
 ```bash
-SIM_SEED=20261128 SIM_REPS=20 SIM_N=500 SIM_STRENGTHS=0.35,0.70 node scripts/run-local-dependence-testlet-pilot.js
+SIM_SEED=20261128 SIM_REPS=200 SIM_N=500 SIM_STRENGTHS=0.35,0.70 node scripts/run-local-dependence-testlet-pilot.js
 ```
 
-Setiap kondisi menggunakan 20 replikasi secara default: 20 kalibrasi null, 20 validasi null, dan 20 untuk masing-masing kekuatan alternatif. Artefak:
+Pilot awal memakai 20 replikasi per kondisi dan menunjukkan 20% false-positive pada validasi null (4/20; Wilson 95% CI 8,1–41,6%), dengan detection 40% pada tau=0,35 (8/20; CI 21,9–61,3%) dan 65% pada tau=0,70 (13/20; CI 43,3–81,9%). Semua fit konvergen. Angka ini sangat tidak presisi dan cutoff dari hanya 20 replikasi kalibrasi belum stabil. Default workflow dinaikkan menjadi 200 replikasi per kondisi: 200 kalibrasi null, 200 validasi null, dan 200 untuk setiap kekuatan alternatif (800 fit total). Artefak:
 `artifacts/pytago-local-dependence-testlet-pilot-v1.json`.
 
 ## Interpretasi dan batasan
 
-- Dengan 20 replikasi per kondisi, kuantil 95% dan error rates sangat kasar. Ini hanya uji kelayakan alur dan arah sensitivitas, bukan estimasi final.
+- Pilot 20 replikasi hanya uji kelayakan alur dan arah sensitivitas, bukan estimasi final. Eksperimen 200 replikasi memperbaiki resolusi, tetapi tetap merupakan validasi menengah; kalibrasi cutoff masih memiliki ketidakpastian Monte Carlo.
 - Cutoff empiris dari 20 replikasi memiliki resolusi ekor yang rendah; jangan gunakan untuk keputusan peserta atau produksi.
 - Wilson CI yang dilaporkan hanya menggambarkan ketidakpastian binomial bersyarat pada cutoff yang terpilih; belum memasukkan ketidakpastian cutoff.
 - Alternatif testlet ini hanya satu bentuk local dependence. Ia tidak mewakili semua pola dependensi, multidimensionalitas, atau 3PL.
@@ -44,7 +44,7 @@ Setiap kondisi menggunakan 20 replikasi secara default: 20 kalibrasi null, 20 va
 
 ## Tahap berikutnya
 
-1. Periksa konvergensi, runtime, false-positive validation, dan pola detection menurut `tau`.
+1. Periksa hasil eksperimen 200 replikasi: konvergensi, runtime, false-positive validation, dan pola detection menurut `tau`.
 2. Jika pilot stabil, naikkan replikasi kalibrasi dan validasi secara terpisah (misalnya ratusan hingga ribuan).
 3. Uji variasi ukuran testlet, jumlah butir per testlet, dan struktur dependensi.
 4. Laporkan ketidakpastian cutoff melalui bootstrap/outer simulation atau beberapa kalibrasi independen.
