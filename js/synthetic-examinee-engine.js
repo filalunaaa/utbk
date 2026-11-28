@@ -259,15 +259,7 @@
   }
   let latest=null;
   const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  function mount() {
-    if(document.getElementById('pytago-synth-launcher'))return;
-    let admin=false;try{admin=typeof ADMIN!=='undefined'&&ADMIN===true;}catch(_){}
-    if(!admin)return;
-    const b=document.createElement('button');b.id='pytago-synth-launcher';b.type='button';
-    b.textContent='Laboratorium IRT';b.setAttribute('aria-label','Buka Laboratorium IRT');
-    b.style.cssText='position:fixed;right:18px;bottom:18px;z-index:10020;border:0;border-radius:999px;padding:12px 18px;background:#243b72;color:#fff;font:600 13px inherit;box-shadow:0 5px 22px #0002;cursor:pointer';
-    b.addEventListener('click',openPanel);document.body.appendChild(b);
-  }
+  // Launcher mengambang dinonaktifkan; mesin tetap tersedia untuk penggunaan internal.
   function openPanel() {
     if(document.getElementById('pytago-synth-panel'))return;
     const root=document.createElement('div');root.id='pytago-synth-panel';
@@ -845,6 +837,5 @@
     a.href=url;a.download=(latest.schema||'pytago-irt-results').replace(/[^a-z0-9.-]+/gi,'-')+'.json';a.click();URL.revokeObjectURL(url);
   }
   window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,getLatest:()=>latest});
-  new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
-  mount();
+  // Tidak memasang tombol mengambang di halaman.
 })();
