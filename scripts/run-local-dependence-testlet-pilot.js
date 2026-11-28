@@ -4,7 +4,7 @@ const path = require('node:path');
 
 global.window = global;
 global.ADMIN = false;
-global.document = { documentElement: {} };
+global.document = { documentElement: {}, getElementById() { return null; } };
 global.MutationObserver = class { constructor() {} observe() {} };
 
 let seed = Number(process.env.SIM_SEED || 20261128) >>> 0;
