@@ -45,12 +45,7 @@
     return {schema:'pytago.tryout-simulation.v1',source:'synthetic',persisted:false,generated_at:new Date().toISOString(),package:{id:window.__pytagoSimPackage.id,name:window.__pytagoSimPackage.name},participants_count:N,theta_distribution:{type:'normal',mean:0,sd:1},simulation:'local-dry-run-no-http-submissions',participants,summary:{mean_score:+(scores.reduce((a,b)=>a+b,0)/N).toFixed(3),min_score:Math.min(...scores),max_score:Math.max(...scores),mean_theta:+(participants.reduce((a,p)=>a+p.theta,0)/N).toFixed(3)},item_stats:itemStats};
   };
   const el=(tag,attrs={},html='')=>{const n=document.createElement(tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));n.innerHTML=html;return n;};
-  function mount(){
-    if(!ADMIN || document.getElementById('pytago-to-sim-launcher'))return;
-    const b=el('button',{id:'pytago-to-sim-launcher',type:'button'},'Simulasi Peserta TO');
-    b.style.cssText='position:fixed;right:18px;bottom:72px;z-index:10020;border:0;border-radius:999px;padding:12px 18px;background:#155e55;color:white;font:600 13px inherit;box-shadow:0 5px 22px #0002;cursor:pointer';
-    b.addEventListener('click',open);document.body.appendChild(b);
-  }
+  // Launcher mengambang dinonaktifkan; simulator tetap tersedia untuk penggunaan internal.
   async function open(){
     let root=document.getElementById('pytago-to-sim-panel');
     if(root){root.remove();return;}
@@ -105,5 +100,5 @@
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pytago-tryout-simulation-500.json';a.click();URL.revokeObjectURL(url);
   }
   window.PytagoTryoutSimulator=Object.freeze({participants: N,mode:'local-dry-run',simulate});
-  const observer=new MutationObserver(mount);observer.observe(document.documentElement,{childList:true,subtree:true});mount();
+  // Tidak memasang tombol mengambang di halaman.
 })();
