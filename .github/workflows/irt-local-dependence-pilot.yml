@@ -8,6 +8,7 @@ on:
       - '.github/workflows/irt-local-dependence-pilot.yml'
       - 'scripts/run-local-dependence-null-pilot.js'
       - 'scripts/run-local-dependence-testlet-pilot.js'
+      - 'scripts/run-yen-q3-testlet-validation.js'
       - 'js/synthetic-examinee-engine.js'
   workflow_dispatch:
     inputs:
@@ -19,6 +20,10 @@ on:
         description: "Examinees per replication"
         required: true
         default: "500"
+      q3_repetitions:
+        description: "Yen Q3 calibration/validation replications per condition"
+        required: true
+        default: "100"
 
 permissions:
   contents: read
@@ -44,10 +49,18 @@ jobs:
           SIM_SEED: "20261128"
           SIM_REPS: ${{ inputs.repetitions || '200' }}
           SIM_N: ${{ inputs.examinees || '500' }}
-      - name: Upload pilot result
+      - name: Run explicit Yen Q3 raw and centered validation
+        run: node scripts/run-yen-q3-testlet-validation.js
+        env:
+          SIM_SEED: "20261129"
+          SIM_REPS: ${{ inputs.q3_repetitions || '100' }}
+          SIM_N: ${{ inputs.examinees || '500' }}
+      - name: Upload local-dependence and Yen Q3 results
         uses: actions/upload-artifact@v4
         with:
-          name: pytago-local-dependence-testlet-pilot-v1
-          path: artifacts/pytago-local-dependence-testlet-pilot-v1.json
+          name: pytago-irt-local-dependence-validation-v2
+          path: |
+            artifacts/pytago-local-dependence-testlet-pilot-v1.json
+            artifacts/pytago-yen-q3-testlet-validation-v1.json
           if-no-files-found: error
           retention-days: 30
