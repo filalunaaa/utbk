@@ -625,6 +625,50 @@
     for(let i=0;i<x.length;i++){const a=x[i]-mx,b=y[i]-my;num+=a*b;dx+=a*a;dy+=b*b;}
     return dx>0&&dy>0?num/Math.sqrt(dx*dy):null;
   }
+  // Yen-style Q3: Pearson correlations of item residuals (X_ij - P_ij(theta_hat)).
+  // theta_hat is EAP from the fitted unidimensional 2PL; adjusted Q3 subtracts
+  // the grand mean of all off-diagonal raw Q3 correlations.
+  function computeYenQ3(responses,estimatedItems) {
+    if(!Array.isArray(responses)||!responses.length||!Array.isArray(estimatedItems)||estimatedItems.length<2)
+      throw new Error('Yen Q3 requires a non-empty response matrix and at least two fitted items.');
+    const k=estimatedItems.length,n=responses.length,prior=priorWeights();
+    if(responses.some(row=>!Array.isArray(row)||row.length!==k))
+      throw new Error('Response matrix dimensions do not match fitted item parameters.');
+    const theta=responses.map(row=>eapTheta(row,estimatedItems,prior));
+    const residuals=Array.from({length:k},()=>Array(n).fill(null));
+    for(let j=0;j<k;j++)for(let r=0;r<n;r++){
+      const y=responses[r][j];
+      if(y===null||y===undefined)continue;
+      if(y!==0&&y!==1)throw new Error('Yen Q3 supports dichotomous responses coded 0/1 or null.');
+      residuals[j][r]=y-prob(estimatedItems[j],theta[r]);
+    }
+    const pairs=[];
+    for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
+      const x=[],y=[];
+      for(let r=0;r<n;r++)if(residuals[j][r]!==null&&residuals[m][r]!==null){
+        x.push(residuals[j][r]);y.push(residuals[m][r]);
+      }
+      const raw=correlation(x,y);
+      if(raw!==null)pairs.push({item_1:estimatedItems[j].id||('Item '+(j+1)),
+        item_2:estimatedItems[m].id||('Item '+(m+1)),raw_q3:raw,valid_n:x.length});
+    }
+    if(!pairs.length)throw new Error('No valid item pairs for Yen Q3.');
+    const meanRaw=mean(pairs.map(x=>x.raw_q3));
+    const adjustedPairs=pairs.map(x=>({...x,adjusted_q3:x.raw_q3-meanRaw}));
+    const rawValues=pairs.map(x=>x.raw_q3),adjustedValues=adjustedPairs.map(x=>x.adjusted_q3);
+    return {
+      method:'yen_q3_eap_pearson_residual_correlation',
+      residual_definition:'observed_response_minus_2pl_probability_at_person_eap_theta',
+      theta_estimator:'EAP using fitted unidimensional 2PL and N(0,1) quadrature prior',
+      centering:'adjusted_q3 = raw_q3 - grand_mean_of_all_off_diagonal_raw_q3_pairs',
+      examinees:n,item_count:k,pair_count:pairs.length,
+      mean_raw_q3:meanRaw,mean_adjusted_q3:mean(adjustedValues),
+      max_abs_raw_q3:Math.max(...rawValues.map(Math.abs)),
+      max_abs_adjusted_q3:Math.max(...adjustedValues.map(Math.abs)),
+      pairs:adjustedPairs
+    };
+  }
+
   function residualDiagnostics(responses,estimatedItems) {
     const prior=priorWeights(),n=responses.length,k=estimatedItems.length;
     const scores=responses.map(row=>eapTheta(row,estimatedItems,prior));
@@ -983,7 +1027,7 @@
     const url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=(latest.schema||'pytago-irt-results').replace(/[^a-z0-9.-]+/gi,'-')+'.json';a.click();URL.revokeObjectURL(url);
   }
-  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,runMisspecification:runMisspecification,runLocalDependenceNullValidation:runLocalDependenceNullValidation,runLocalDependenceAlternativePilot:runLocalDependenceAlternativePilot,getLatest:()=>latest});
+  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,computeYenQ3:computeYenQ3,runMisspecification:runMisspecification,runLocalDependenceNullValidation:runLocalDependenceNullValidation,runLocalDependenceAlternativePilot:runLocalDependenceAlternativePilot,getLatest:()=>latest});
   new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
   mount();
 })();
