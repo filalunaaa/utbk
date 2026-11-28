@@ -1,6 +1,13 @@
 name: IRT Local-Dependence Null Pilot
 
 on:
+  push:
+    branches:
+      - audit/power-analysis-monte-carlo
+    paths:
+      - '.github/workflows/irt-local-dependence-pilot.yml'
+      - 'scripts/run-local-dependence-null-pilot.js'
+      - 'js/synthetic-examinee-engine.js'
   workflow_dispatch:
     inputs:
       repetitions:
@@ -34,8 +41,8 @@ jobs:
         run: node scripts/run-local-dependence-null-pilot.js
         env:
           SIM_SEED: "20261128"
-          SIM_REPS: ${{ inputs.repetitions }}
-          SIM_N: ${{ inputs.examinees }}
+          SIM_REPS: ${{ inputs.repetitions || '20' }}
+          SIM_N: ${{ inputs.examinees || '500' }}
       - name: Upload pilot result
         uses: actions/upload-artifact@v4
         with:
