@@ -1,4 +1,4 @@
-name: IRT Local-Dependence Null Pilot
+name: IRT Local-Dependence Testlet Validation
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
       repetitions:
         description: "Replications per calibration/validation condition (start with 20)"
         required: true
-        default: "20"
+        default: "200"
       examinees:
         description: "Examinees per replication"
         required: true
@@ -42,7 +42,7 @@ jobs:
         run: node scripts/run-local-dependence-testlet-pilot.js
         env:
           SIM_SEED: "20261128"
-          SIM_REPS: ${{ inputs.repetitions || '20' }}
+          SIM_REPS: ${{ inputs.repetitions || '200' }}
           SIM_N: ${{ inputs.examinees || '500' }}
       - name: Upload pilot result
         uses: actions/upload-artifact@v4
