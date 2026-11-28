@@ -442,6 +442,97 @@
     }catch(err){status.textContent='Validasi null gagal: '+(err?.message||String(err));status.className='pesan error';}
     finally{controls.forEach(x=>x.disabled=false);}
   }
+
+  // Controlled testlet alternative pilot. Each four-item testlet shares a
+  // person-level N(0,1) effect; tau=0 is the local-independence null.
+  async function runLocalDependenceAlternativePilot(options={}) {
+    const repetitions=Math.max(4,Math.floor(options.repetitions??20));
+    const examinees=Math.max(100,Math.floor(options.examinees??500));
+    const strengths=(options.strengths||[0.35,0.70]).map(Number);
+    if(!strengths.length||strengths.some(x=>!Number.isFinite(x)||x<=0||x>1.5))
+      throw new Error('Testlet strengths must be finite values in (0, 1.5].');
+    const fixedItems=Array.from({length:CFG.items},(_,i)=>({
+      id:'LD1-'+String(i+1).padStart(2,'0'),
+      a:+(.65+Math.random()*1.25).toFixed(3),
+      b:+(-1.5+Math.random()*3).toFixed(3)
+    }));
+    const groups=Array.from({length:Math.ceil(CFG.items/4)},(_,g)=>
+      Array.from({length:4},(_,j)=>g*4+j).filter(i=>i<CFG.items));
+    const generateCondition=(tau)=>{
+      const theta=Array.from({length:examinees},randn);
+      const responses=theta.map(t=>{
+        const testlet=groups.map(()=>randn());
+        return fixedItems.map((item,j)=>{
+          const group=Math.floor(j/4);
+          const p=logistic(item.a*(t-item.b)+tau*testlet[group]);
+          return Math.random()<p?1:0;
+        });
+      });
+      return {responses};
+    };
+    const fitOne=async(tau)=>{
+      const data=generateCondition(tau);
+      const est=estimateMML2PL(data.responses);
+      if(!est.converged)return {converged:false,iterations:est.iterations,
+        failure:est.failure?.reason||'not_converged'};
+      const diagnostic=computePosteriorPredictivePairwise(data.responses,est.items);
+      return {converged:true,iterations:est.iterations,
+        max_abs_statistic:diagnostic.max_abs_standardized_statistic,
+        mean_abs_statistic:diagnostic.mean_abs_standardized_statistic};
+    };
+    const calibration=[],nullValidation=[],alternatives={};
+    for(let rep=0;rep<repetitions;rep++){
+      calibration.push({replication:rep+1,...await fitOne(0)});
+    }
+    const cutoff=quantile(calibration.filter(x=>x.converged).map(x=>x.max_abs_statistic).filter(Number.isFinite),.95);
+    if(!Number.isFinite(cutoff))throw new Error('Calibration did not produce a finite null cutoff.');
+    for(let rep=0;rep<repetitions;rep++)
+      nullValidation.push({replication:rep+1,...await fitOne(0)});
+    for(const tau of strengths){
+      const key=String(tau);
+      alternatives[key]=[];
+      for(let rep=0;rep<repetitions;rep++)
+        alternatives[key].push({replication:rep+1,...await fitOne(tau)});
+    }
+    const wilson=(success,total)=>{
+      if(!total)return null;
+      const z=1.959963984540054,p=success/total,z2=z*z,den=1+z2/total;
+      const center=(p+z2/(2*total))/den;
+      const half=z*Math.sqrt((p*(1-p)/total)+z2/(4*total*total))/den;
+      return [Math.max(0,center-half),Math.min(1,center+half)];
+    };
+    const summarize=(runs)=>{
+      const valid=runs.filter(x=>x.converged&&Number.isFinite(x.max_abs_statistic));
+      const detected=valid.filter(x=>x.max_abs_statistic>cutoff).length;
+      const operational=runs.filter(x=>x.converged&&Number.isFinite(x.max_abs_statistic)&&x.max_abs_statistic>cutoff).length;
+      return {requested:runs.length,converged:valid.length,failed:runs.length-valid.length,
+        convergence_rate:valid.length/runs.length,exceedances:detected,
+        detection_rate_conditional:valid.length?detected/valid.length:null,
+        detection_rate_operational:operational/runs.length,
+        wilson_95_conditional:valid.length?wilson(detected,valid.length):null,
+        mean_max_abs_statistic:mean(valid.map(x=>x.max_abs_statistic)),
+        median_max_abs_statistic:quantile(valid.map(x=>x.max_abs_statistic),.5)};
+    };
+    const calibrationValid=calibration.filter(x=>x.converged&&Number.isFinite(x.max_abs_statistic));
+    const result={
+      schema:'pytago.irt.local-dependence-testlet-pilot.v1',
+      source:'synthetic_only',
+      design:'fixed_20_item_bank_independent_calibration_and_validation_with_person_testlet_random_effect',
+      estimator:'MML-EM 2PL unidimensional (deliberately omits testlet effect)',
+      examinees,item_count:fixedItems.length,testlet_groups:groups.map(g=>g.map(i=>fixedItems[i].id)),
+      testlet_effect:'u_person,testlet ~ N(0,1); linear predictor adds tau*u to items in same four-item testlet',
+      strengths,cutoff_method:'empirical 95th percentile of calibration null max absolute statistic',
+      calibration:{...summarize(calibration),quantile_95:cutoff,
+        max_abs_statistics:calibrationValid.map(x=>x.max_abs_statistic)},
+      null_validation:summarize(nullValidation),
+      alternatives:Object.fromEntries(Object.entries(alternatives).map(([tau,runs])=>[tau,summarize(runs)])),
+      runs:{calibration,null_validation:nullValidation,alternatives},
+      true_items:fixedItems,generated_at:new Date().toISOString(),
+      interpretation:'Exploratory pilot only. Small calibration/validation counts make cutoff and rates imprecise. The diagnostic is not Yen Q3 or a validated significance test; testlet effects are an intentionally controlled alternative.'
+    };
+    latest=result;
+    return result;
+  }
   const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
   async function runRepeated() {
     const root=document.getElementById('pytago-synth-panel');
