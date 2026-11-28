@@ -376,13 +376,13 @@
     }catch(err){status.textContent='Diagnostik gagal: '+(err?.message||String(err));status.className='pesan error';}
     finally{button.disabled=false;}
   }
-  async function runLocalDependenceNullValidation() {
+  async function runLocalDependenceNullValidation(options={}) {
     const root=document.getElementById('pytago-synth-panel');if(!root)return;
     const status=root.querySelector('#pse-status'),out=root.querySelector('#pse-results');
     const button=root.querySelector('#pse-local-null'),exportButton=root.querySelector('#pse-export');
     const controls=['#pse-run','#pse-repeat','#pse-sensitivity','#pse-misspec','#pse-se-calibration','#pse-local-dependence','#pse-local-null'].map(sel=>root.querySelector(sel)).filter(Boolean);
     controls.forEach(x=>x.disabled=true);exportButton.disabled=true;out.innerHTML='';status.className='pesan';
-    const repetitions=100,examinees=500;
+    const repetitions=Math.max(2,Math.floor(options.repetitions??100)),examinees=Math.max(100,Math.floor(options.examinees??500));
     const fixedItems=Array.from({length:CFG.items},(_,i)=>({id:'LD0-'+String(i+1).padStart(2,'0'),
       a:+(.65+Math.random()*1.25).toFixed(3),b:+(-1.5+Math.random()*3).toFixed(3)}));
     const runs=[],failures=[];
@@ -441,6 +441,97 @@
       status.className=valid.length===100?'pesan ok':'pesan';
     }catch(err){status.textContent='Validasi null gagal: '+(err?.message||String(err));status.className='pesan error';}
     finally{controls.forEach(x=>x.disabled=false);}
+  }
+
+  // Controlled testlet alternative pilot. Each four-item testlet shares a
+  // person-level N(0,1) effect; tau=0 is the local-independence null.
+  async function runLocalDependenceAlternativePilot(options={}) {
+    const repetitions=Math.max(4,Math.floor(options.repetitions??20));
+    const examinees=Math.max(100,Math.floor(options.examinees??500));
+    const strengths=(options.strengths||[0.35,0.70]).map(Number);
+    if(!strengths.length||strengths.some(x=>!Number.isFinite(x)||x<=0||x>1.5))
+      throw new Error('Testlet strengths must be finite values in (0, 1.5].');
+    const fixedItems=Array.from({length:CFG.items},(_,i)=>({
+      id:'LD1-'+String(i+1).padStart(2,'0'),
+      a:+(.65+Math.random()*1.25).toFixed(3),
+      b:+(-1.5+Math.random()*3).toFixed(3)
+    }));
+    const groups=Array.from({length:Math.ceil(CFG.items/4)},(_,g)=>
+      Array.from({length:4},(_,j)=>g*4+j).filter(i=>i<CFG.items));
+    const generateCondition=(tau)=>{
+      const theta=Array.from({length:examinees},randn);
+      const responses=theta.map(t=>{
+        const testlet=groups.map(()=>randn());
+        return fixedItems.map((item,j)=>{
+          const group=Math.floor(j/4);
+          const p=logistic(item.a*(t-item.b)+tau*testlet[group]);
+          return Math.random()<p?1:0;
+        });
+      });
+      return {responses};
+    };
+    const fitOne=async(tau)=>{
+      const data=generateCondition(tau);
+      const est=estimateMML2PL(data.responses);
+      if(!est.converged)return {converged:false,iterations:est.iterations,
+        failure:est.failure?.reason||'not_converged'};
+      const diagnostic=computePosteriorPredictivePairwise(data.responses,est.items);
+      return {converged:true,iterations:est.iterations,
+        max_abs_statistic:diagnostic.max_abs_standardized_statistic,
+        mean_abs_statistic:diagnostic.mean_abs_standardized_statistic};
+    };
+    const calibration=[],nullValidation=[],alternatives={};
+    for(let rep=0;rep<repetitions;rep++){
+      calibration.push({replication:rep+1,...await fitOne(0)});
+    }
+    const cutoff=quantile(calibration.filter(x=>x.converged).map(x=>x.max_abs_statistic).filter(Number.isFinite),.95);
+    if(!Number.isFinite(cutoff))throw new Error('Calibration did not produce a finite null cutoff.');
+    for(let rep=0;rep<repetitions;rep++)
+      nullValidation.push({replication:rep+1,...await fitOne(0)});
+    for(const tau of strengths){
+      const key=String(tau);
+      alternatives[key]=[];
+      for(let rep=0;rep<repetitions;rep++)
+        alternatives[key].push({replication:rep+1,...await fitOne(tau)});
+    }
+    const wilson=(success,total)=>{
+      if(!total)return null;
+      const z=1.959963984540054,p=success/total,z2=z*z,den=1+z2/total;
+      const center=(p+z2/(2*total))/den;
+      const half=z*Math.sqrt((p*(1-p)/total)+z2/(4*total*total))/den;
+      return [Math.max(0,center-half),Math.min(1,center+half)];
+    };
+    const summarize=(runs)=>{
+      const valid=runs.filter(x=>x.converged&&Number.isFinite(x.max_abs_statistic));
+      const detected=valid.filter(x=>x.max_abs_statistic>cutoff).length;
+      const operational=runs.filter(x=>x.converged&&Number.isFinite(x.max_abs_statistic)&&x.max_abs_statistic>cutoff).length;
+      return {requested:runs.length,converged:valid.length,failed:runs.length-valid.length,
+        convergence_rate:valid.length/runs.length,exceedances:detected,
+        detection_rate_conditional:valid.length?detected/valid.length:null,
+        detection_rate_operational:operational/runs.length,
+        wilson_95_conditional:valid.length?wilson(detected,valid.length):null,
+        mean_max_abs_statistic:mean(valid.map(x=>x.max_abs_statistic)),
+        median_max_abs_statistic:quantile(valid.map(x=>x.max_abs_statistic),.5)};
+    };
+    const calibrationValid=calibration.filter(x=>x.converged&&Number.isFinite(x.max_abs_statistic));
+    const result={
+      schema:'pytago.irt.local-dependence-testlet-pilot.v1',
+      source:'synthetic_only',
+      design:'fixed_20_item_bank_independent_calibration_and_validation_with_person_testlet_random_effect',
+      estimator:'MML-EM 2PL unidimensional (deliberately omits testlet effect)',
+      examinees,item_count:fixedItems.length,testlet_groups:groups.map(g=>g.map(i=>fixedItems[i].id)),
+      testlet_effect:'u_person,testlet ~ N(0,1); linear predictor adds tau*u to items in same four-item testlet',
+      strengths,cutoff_method:'empirical 95th percentile of calibration null max absolute statistic',
+      calibration:{...summarize(calibration),quantile_95:cutoff,
+        max_abs_statistics:calibrationValid.map(x=>x.max_abs_statistic)},
+      null_validation:summarize(nullValidation),
+      alternatives:Object.fromEntries(Object.entries(alternatives).map(([tau,runs])=>[tau,summarize(runs)])),
+      runs:{calibration,null_validation:nullValidation,alternatives},
+      true_items:fixedItems,generated_at:new Date().toISOString(),
+      interpretation:'Exploratory pilot only. Small calibration/validation counts make cutoff and rates imprecise. The diagnostic is not Yen Q3 or a validated significance test; testlet effects are an intentionally controlled alternative.'
+    };
+    latest=result;
+    return result;
   }
   const delay = ms => new Promise(resolve=>setTimeout(resolve,ms));
   async function runRepeated() {
@@ -504,15 +595,16 @@
       single.disabled=false;repeat.disabled=false;
     }
   }
-  function generateScenario(kind,examinees=1000) {
+  function generateScenario(kind,examinees=1000,options={}) {
     const theta=Array.from({length:examinees},randn);
     const theta2=kind==='2D'?Array.from({length:examinees},randn):null;
     const items=Array.from({length:CFG.items},(_,i)=>{
-      const a=kind==='1PL'?1:+(.65+Math.random()*1.25).toFixed(3);
+      const baseA=+.65+Math.random()*1.25;
+      const a=kind==='1PL'?1:+baseA.toFixed(3);
       const b=+(-1.5+Math.random()*3).toFixed(3);
       return {id:'SYN-'+String(i+1).padStart(2,'0'),a,b,
-        c:kind==='3PL'?.15:0,
-        a2:kind==='2D'?(Math.random()<.5?-1:1)*a*(.45+Math.random()*.35):0};
+        c:kind==='3PL'?(options.guessing??.15):0,
+        a2:kind==='2D'?(Math.random()<.5?-1:1)*a*(options.secondary_loading??.45):0};
     });
     const responses=theta.map((t,r)=>items.map(it=>{
       let p;
@@ -533,6 +625,50 @@
     for(let i=0;i<x.length;i++){const a=x[i]-mx,b=y[i]-my;num+=a*b;dx+=a*a;dy+=b*b;}
     return dx>0&&dy>0?num/Math.sqrt(dx*dy):null;
   }
+  // Yen-style Q3: Pearson correlations of item residuals (X_ij - P_ij(theta_hat)).
+  // theta_hat is EAP from the fitted unidimensional 2PL; adjusted Q3 subtracts
+  // the grand mean of all off-diagonal raw Q3 correlations.
+  function computeYenQ3(responses,estimatedItems) {
+    if(!Array.isArray(responses)||!responses.length||!Array.isArray(estimatedItems)||estimatedItems.length<2)
+      throw new Error('Yen Q3 requires a non-empty response matrix and at least two fitted items.');
+    const k=estimatedItems.length,n=responses.length,prior=priorWeights();
+    if(responses.some(row=>!Array.isArray(row)||row.length!==k))
+      throw new Error('Response matrix dimensions do not match fitted item parameters.');
+    const theta=responses.map(row=>eapTheta(row,estimatedItems,prior));
+    const residuals=Array.from({length:k},()=>Array(n).fill(null));
+    for(let j=0;j<k;j++)for(let r=0;r<n;r++){
+      const y=responses[r][j];
+      if(y===null||y===undefined)continue;
+      if(y!==0&&y!==1)throw new Error('Yen Q3 supports dichotomous responses coded 0/1 or null.');
+      residuals[j][r]=y-prob(estimatedItems[j],theta[r]);
+    }
+    const pairs=[];
+    for(let j=0;j<k;j++)for(let m=j+1;m<k;m++){
+      const x=[],y=[];
+      for(let r=0;r<n;r++)if(residuals[j][r]!==null&&residuals[m][r]!==null){
+        x.push(residuals[j][r]);y.push(residuals[m][r]);
+      }
+      const raw=correlation(x,y);
+      if(raw!==null)pairs.push({item_1:estimatedItems[j].id||('Item '+(j+1)),
+        item_2:estimatedItems[m].id||('Item '+(m+1)),raw_q3:raw,valid_n:x.length});
+    }
+    if(!pairs.length)throw new Error('No valid item pairs for Yen Q3.');
+    const meanRaw=mean(pairs.map(x=>x.raw_q3));
+    const adjustedPairs=pairs.map(x=>({...x,adjusted_q3:x.raw_q3-meanRaw}));
+    const rawValues=pairs.map(x=>x.raw_q3),adjustedValues=adjustedPairs.map(x=>x.adjusted_q3);
+    return {
+      method:'yen_q3_eap_pearson_residual_correlation',
+      residual_definition:'observed_response_minus_2pl_probability_at_person_eap_theta',
+      theta_estimator:'EAP using fitted unidimensional 2PL and N(0,1) quadrature prior',
+      centering:'adjusted_q3 = raw_q3 - grand_mean_of_all_off_diagonal_raw_q3_pairs',
+      examinees:n,item_count:k,pair_count:pairs.length,
+      mean_raw_q3:meanRaw,mean_adjusted_q3:mean(adjustedValues),
+      max_abs_raw_q3:Math.max(...rawValues.map(Math.abs)),
+      max_abs_adjusted_q3:Math.max(...adjustedValues.map(Math.abs)),
+      pairs:adjustedPairs
+    };
+  }
+
   function residualDiagnostics(responses,estimatedItems) {
     const prior=priorWeights(),n=responses.length,k=estimatedItems.length;
     const scores=responses.map(row=>eapTheta(row,estimatedItems,prior));
@@ -568,65 +704,105 @@
     const exportButton=root.querySelector('#pse-export');
     buttons.forEach(b=>b.disabled=true);exportButton.disabled=true;
     out.innerHTML='';status.className='pesan';
-    const scenarios=[
-      {id:'2PL',role:'kalibrasi',label:'2PL · data untuk menentukan cutoff'},
-      {id:'2PL',role:'validasi_nol',label:'2PL · data baru untuk menguji false positive'},
-      {id:'1PL',role:'misspecification',label:'1PL / Rasch · diskriminasi sama'},
-      {id:'3PL',role:'misspecification',label:'3PL · peluang tebakan 0,15'},
-      {id:'2D',role:'misspecification',label:'2D · trait kedua / multidimensi'}
-    ];
-    const repetitions=100,examinees=1000,results=[];
+    const sampleSizes=[500,1000,2000],repetitions=100,results=[];
     const primaryStatistic='max_abs_q3';
+    const conditions=[
+      {id:'2PL',role:'kalibrasi',label:'2PL null · kalibrasi'},
+      {id:'2PL',role:'validasi_nol',label:'2PL null · validasi'},
+      {id:'1PL',role:'benchmark',label:'Rasch benchmark · equal discrimination'},
+      {id:'3PL',role:'misspecification',label:'3PL · c=0,05',options:{guessing:.05}},
+      {id:'3PL',role:'misspecification',label:'3PL · c=0,15',options:{guessing:.15}},
+      {id:'3PL',role:'misspecification',label:'3PL · c=0,25',options:{guessing:.25}},
+      {id:'2D',role:'misspecification',label:'2D · loading sekunder 0,25',options:{secondary_loading:.25}},
+      {id:'2D',role:'misspecification',label:'2D · loading sekunder 0,45',options:{secondary_loading:.45}},
+      {id:'2D',role:'misspecification',label:'2D · loading sekunder 0,70',options:{secondary_loading:.70}}
+    ];
+    const totalFits=sampleSizes.length*conditions.length*repetitions;
     try {
-      for(const scenario of scenarios){
-        const runs=[];let converged=0;
-        for(let rep=0;rep<repetitions;rep++){
-          const completed=results.reduce((s,x)=>s+x.runs.length,0)+rep+1;
-          status.textContent=scenario.label+' · replikasi '+(rep+1)+'/'+repetitions+' · total '+completed+'/500';
-          await delay(15);
-          const data=generateScenario(scenario.id,examinees);
-          const est=estimateMML2PL(data.responses);
-          const diag=residualDiagnostics(data.responses,est.items);
-          if(est.converged)converged++;
-          runs.push({repetition:rep+1,converged:est.converged,iterations:est.iterations,
-            log_likelihood:est.logLikelihood,mean_abs_q3:diag.mean_abs_q3,
-            max_abs_q3:diag.max_abs_q3,item_curve_rms:diag.item_curve_rms,
-            mean_estimated_a:mean(est.items.map(x=>x.a))});
+      for(const n of sampleSizes){
+        for(const condition of conditions){
+          const runs=[];let converged=0;
+          for(let rep=0;rep<repetitions;rep++){
+            const completed=results.reduce((sum,x)=>sum+x.runs.length,0)+rep+1;
+            status.textContent='N='+n+' · '+condition.label+' · replikasi '+(rep+1)+'/'+repetitions+' · '+completed+'/'+totalFits;
+            await delay(10);
+            const data=generateScenario(condition.id,n,condition.options||{});
+            const est=estimateMML2PL(data.responses);
+            const diag=est.converged?residualDiagnostics(data.responses,est.items):null;
+            if(est.converged)converged++;
+            runs.push({repetition:rep+1,converged:est.converged,iterations:est.iterations,
+              log_likelihood:est.logLikelihood,
+              mean_abs_q3:diag?.mean_abs_q3??null,max_abs_q3:diag?.max_abs_q3??null,
+              item_curve_rms:diag?.item_curve_rms??null});
+          }
+          const finiteMean=key=>mean(runs.map(x=>x[key]).filter(Number.isFinite));
+          results.push({scenario:condition.id,role:condition.role,label:condition.label,
+            examinees:n,repetitions,options:condition.options||{},
+            convergence_rate:converged/repetitions,converged_count:converged,
+            mean_iterations:finiteMean('iterations'),mean_abs_q3:finiteMean('mean_abs_q3'),
+            max_abs_q3:finiteMean('max_abs_q3'),mean_item_curve_rms:finiteMean('item_curve_rms'),runs});
         }
-        results.push({scenario:scenario.id,role:scenario.role,label:scenario.label,examinees,repetitions,
-          convergence_rate:converged/repetitions,converged_count:converged,
-          mean_iterations:mean(runs.map(x=>x.iterations)),
-          mean_abs_q3:mean(runs.map(x=>x.mean_abs_q3)),
-          max_abs_q3:mean(runs.map(x=>x.max_abs_q3)),
-          mean_item_curve_rms:mean(runs.map(x=>x.item_curve_rms)),
-          mean_estimated_a:mean(runs.map(x=>x.mean_estimated_a)),runs});
       }
-      const calibrationRuns=results[0].runs;
-      const validationRuns=results[1].runs;
-      const cutoff=quantile(calibrationRuns.map(x=>x[primaryStatistic]),.95);
-      const validationExceed=validationRuns.filter(x=>x[primaryStatistic]>cutoff).length;
-      results.forEach((s,i)=>{
-        s.primary_statistic=primaryStatistic;
-        s.empirical_null_cutoff_95=cutoff;
-        s.exceedance_count=s.runs.filter(x=>x[primaryStatistic]>cutoff).length;
-        s.empirical_detection_rate=s.exceedance_count/repetitions;
-        s.empirical_false_positive_rate=i===1?s.empirical_detection_rate:null;
-      });
-      latest={schema:'pytago.irt.model-fit-monte-carlo.v3',source:'synthetic_only',
-        estimator:'MML-EM 2PL',examinees,repetitions_per_condition:repetitions,total_fits:repetitions*scenarios.length,
-        design:'independent_null_calibration_and_validation',
-        calibration:{method:'empirical_null_quantile',calibration_scenario:'2PL',validation_scenario:'independent_2PL',
-          primary_statistic:primaryStatistic,nominal_level:.05,cutoff_95:cutoff,
-          calibration_repetitions:repetitions,validation_repetitions:repetitions,
-          validation_false_positives:validationExceed,validation_false_positive_rate:validationExceed/repetitions,
-          note:'Cutoff ditentukan dari 100 replikasi 2PL kalibrasi, lalu false-positive diukur pada 100 replikasi 2PL independen. Hasil tetap pilot dan khusus untuk konfigurasi simulasi ini.'},
-        diagnostics_note:'Mean absolute Q3 dan item-curve RMS adalah diagnostik sekunder. Detection rates bersyarat pada mekanisme pembangkitan data sintetis yang digunakan.',
+      const calibrations={};
+      for(const n of sampleSizes){
+        const atN=results.filter(x=>x.examinees===n);
+        const calibration=atN.find(x=>x.role==='kalibrasi');
+        const validation=atN.find(x=>x.role==='validasi_nol');
+        const calibrationValues=calibration.runs.filter(x=>x.converged&&Number.isFinite(x[primaryStatistic])).map(x=>x[primaryStatistic]);
+        if(calibrationValues.length<80)throw new Error('N='+n+': hanya '+calibrationValues.length+'/100 fit kalibrasi konvergen; cutoff tidak cukup stabil.');
+        const cutoff=quantile(calibrationValues,.95);
+        const summarize=runs=>{
+          const valid=runs.filter(x=>x.converged&&Number.isFinite(x[primaryStatistic]));
+          const positives=valid.filter(x=>x[primaryStatistic]>cutoff).length;
+          const operational=positives/runs.length,conditional=valid.length?positives/valid.length:null;
+          return {exceedance_count:positives,valid_diagnostic_count:valid.length,
+            failed_or_unavailable_count:runs.length-valid.length,
+            operational_rate:operational,conditional_rate:conditional,
+            operational_wilson_95:wilsonInterval(positives,runs.length),
+            conditional_wilson_95:wilsonInterval(positives,valid.length),
+            operational_mcse:Math.sqrt(operational*(1-operational)/runs.length),
+            conditional_mcse:valid.length?Math.sqrt(conditional*(1-conditional)/valid.length):null};
+        };
+        const nullSummary=summarize(validation.runs);
+        calibrations[n]={cutoff_95:cutoff,calibration_repetitions:repetitions,
+          calibration_valid_diagnostics:calibrationValues.length,
+          validation_repetitions:repetitions,validation_false_positives:nullSummary.exceedance_count,
+          validation_false_positive_rate:nullSummary.operational_rate,
+          validation_conditional_false_positive_rate:nullSummary.conditional_rate,
+          validation_operational_wilson_95:nullSummary.operational_wilson_95,
+          validation_conditional_wilson_95:nullSummary.conditional_wilson_95,
+          validation_operational_mcse:nullSummary.operational_mcse,
+          validation_conditional_mcse:nullSummary.conditional_mcse};
+        for(const scenario of atN){
+          const summary=summarize(scenario.runs);
+          scenario.primary_statistic=primaryStatistic;
+          scenario.empirical_null_cutoff_95=cutoff;
+          scenario.exceedance_count=summary.exceedance_count;
+          scenario.valid_diagnostic_count=summary.valid_diagnostic_count;
+          scenario.failed_or_unavailable_count=summary.failed_or_unavailable_count;
+          scenario.empirical_detection_rate=scenario.role==='benchmark'?null:summary.operational_rate;
+          scenario.benchmark_exceedance_rate=scenario.role==='benchmark'?summary.operational_rate:null;
+          scenario.conditional_detection_rate=summary.conditional_rate;
+          scenario.operational_wilson_95=summary.operational_wilson_95;
+          scenario.conditional_wilson_95=summary.conditional_wilson_95;
+          scenario.operational_mcse=summary.operational_mcse;
+          scenario.conditional_mcse=summary.conditional_mcse;
+          scenario.empirical_false_positive_rate=scenario.role==='validasi_nol'?summary.operational_rate:null;
+        }
+      }
+      latest={schema:'pytago.irt.model-fit-monte-carlo.v5',source:'synthetic_only',
+        estimator:'MML-EM 2PL',sample_sizes:sampleSizes,repetitions_per_condition:repetitions,
+        item_count:CFG.items,total_fits:totalFits,primary_statistic:primaryStatistic,
+        design:'sample_size_stratified_independent_null_calibration_and_validation',
+        calibration_by_sample_size:calibrations,
+        diagnostics_note:'Pada setiap N, cutoff Max |Q3| dikalibrasi dari 100 replikasi 2PL dan diuji pada 100 replikasi 2PL independen. Alternatif power mencakup 3PL dengan c=0,05/0,15/0,25 dan 2D dengan loading sekunder 0,25/0,45/0,70. Rasch/1PL dilaporkan sebagai benchmark, bukan power karena Q3 tidak menguji kesamaan diskriminasi. Rate operasional memakai seluruh replikasi; kegagalan konvergensi dihitung sebagai kegagalan deteksi. Rate kondisional hanya memakai fit konvergen. Wilson CI dan MCSE mengukur ketidakpastian Monte Carlo per kondisi, belum ketidakpastian cutoff kalibrasi.',
+        interpretation_limits:'Power/detection rate adalah estimasi untuk generator sintetis dan konfigurasi item/distribusi yang ditentukan, bukan power universal atau validasi data empiris. N=500/1000/2000; 20 butir; 100 replikasi per kondisi.',
         scenarios:results,generated_at:new Date().toISOString()};
-      renderMisspecification(root,results,latest.calibration);
+      renderMisspecification(root,results,calibrations);
       exportButton.disabled=false;
-      const total=results.reduce((s,x)=>s+x.converged_count,0);
-      status.textContent='Selesai: '+total+'/500 estimasi konvergen. Cutoff kalibrasi Max |Q3| = '+fmt(cutoff)+'.';
-      status.className=total===500?'pesan ok':'pesan';
+      const totalConverged=results.reduce((sum,x)=>sum+x.converged_count,0);
+      status.textContent='Selesai: '+totalConverged+'/'+totalFits+' estimasi konvergen · 3 ukuran sampel · 27 kondisi.';
+      status.className=totalConverged===totalFits?'pesan ok':'pesan';
     } catch(err) {
       status.textContent='Uji Monte Carlo model-fit gagal: '+(err&&err.message?err.message:String(err));
       status.className='pesan error';
@@ -719,12 +895,19 @@
       status.className='pesan error';
     } finally {buttons.forEach(b=>b.disabled=false);}
   }
-  function renderMisspecification(root,results,calibration) {
-    const rows=results.map(s=>'<tr><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_iterations)+'</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+fmt(s.mean_item_curve_rms)+'</td><td>'+fmt(s.mean_estimated_a)+'</td><td>'+(s.role==='kalibrasi'?'Dipakai menentukan cutoff':s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)')+'</td></tr>').join('');
+  function renderMisspecification(root,results,calibrations) {
+    const rows=results.map(s=>{
+      const rate=s.role==='kalibrasi'?'Kalibrasi cutoff':s.role==='benchmark'?'Benchmark: '+s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.benchmark_exceedance_rate*100)+'%)':s.exceedance_count+'/'+s.repetitions+' ('+fmt(s.empirical_detection_rate*100)+'%)';
+      const ci=s.operational_wilson_95;
+      return '<tr><td>'+s.examinees+'</td><td>'+esc(s.label)+'</td><td>'+s.converged_count+'/'+s.repetitions+' ('+fmt(s.convergence_rate*100)+'%)</td><td>'+fmt(s.mean_abs_q3)+'</td><td>'+fmt(s.max_abs_q3)+'</td><td>'+rate+'</td><td>'+(s.role==='kalibrasi'?'—':fmt(ci.lower*100)+'–'+fmt(ci.upper*100)+'%')+'</td></tr>';
+    }).join('');
+    const calibrationCards=Object.entries(calibrations).map(([n,x])=>
+      '<div class="card" style="margin:8px 0"><b>N='+n+'</b><p>Cutoff Max |Q3|: '+fmt(x.cutoff_95)+' · valid calibration '+x.calibration_valid_diagnostics+'/'+x.calibration_repetitions+'</p><p>False positive operasional: '+x.validation_false_positives+'/'+x.validation_repetitions+' ('+fmt(x.validation_false_positive_rate*100)+'%) · Wilson 95% '+fmt(x.validation_operational_wilson_95.lower*100)+'–'+fmt(x.validation_operational_wilson_95.upper*100)+'%</p><p>False positive kondisional: '+fmt(x.validation_conditional_false_positive_rate*100)+'% · MCSE '+fmt(x.validation_conditional_mcse*100)+' percentage points</p></div>'
+    ).join('');
     root.querySelector('#pse-results').innerHTML=
-      '<div class="card" style="margin:12px 0"><h3>Model Fit Validation · Monte Carlo independen</h3><p>Lima kondisi, masing-masing 100 replikasi × 1.000 peserta × 20 butir. Total 500 estimasi MML-EM 2PL. Replikasi kontrol untuk kalibrasi cutoff dipisahkan dari replikasi kontrol untuk validasi false positive.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Kondisi</th><th>Konvergensi</th><th>Rerata iterasi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>RMS kurva</th><th>Rerata a estimasi</th><th>Hasil cutoff</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
-      '<div class="card" style="margin:12px 0"><h3>Kalibrasi dan validasi distribusi nol</h3><p>Statistik primer: Max |Q3|. Cutoff 95% ditentukan hanya dari 100 replikasi kontrol 2PL kalibrasi.</p><p><b>Cutoff:</b> '+fmt(calibration.cutoff_95)+' · <b>False positive pada 100 replikasi 2PL baru:</b> '+calibration.validation_false_positives+'/100 ('+fmt(calibration.validation_false_positive_rate*100)+'%).</p><p>Detection rate pada 1PL, 3PL, dan 2D dihitung terhadap cutoff yang sama. Mean |Q3| dan RMS kurva adalah diagnostik sekunder.</p><p><b>Batas interpretasi:</b> hasil ini tetap pilot dan cutoff hanya berlaku untuk konfigurasi simulasi ini (N=1.000, 20 butir, serta distribusi parameter dan kemampuan yang digunakan). Cutoff bukan standar universal; estimasi false-positive dan detection rate memiliki ketidakpastian Monte Carlo.</p></div>'+
-      results.map(s=>'<div class="card" style="margin:10px 0;overflow:auto"><h4>'+esc(s.label)+' · 100 replikasi</h4><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>Rep</th><th>Konvergen</th><th>Iterasi</th><th>Mean |Q3|</th><th>Max |Q3|</th><th>RMS kurva</th><th>Cutoff terlampaui</th></tr></thead><tbody>'+s.runs.map(r=>'<tr><td>'+r.repetition+'</td><td>'+(r.converged?'Ya':'Tidak')+'</td><td>'+r.iterations+'</td><td>'+fmt(r.mean_abs_q3)+'</td><td>'+fmt(r.max_abs_q3)+'</td><td>'+fmt(r.item_curve_rms)+'</td><td>'+(s.role==='kalibrasi'?'—':r.max_abs_q3>calibration.cutoff_95?'Ya':'Tidak')+'</td></tr>').join('')+'</tbody></table></div>').join('');
+      '<div class="card" style="margin:12px 0"><h3>Power Analysis · desain multi-N</h3><p>27 kondisi × 100 replikasi = 2.700 estimasi MML-EM 2PL. Kondisi Rasch ditampilkan sebagai benchmark, bukan alternatif power berbasis Q3. Ukuran sampel 500, 1.000, dan 2.000; 20 butir. Cutoff null dikalibrasi dan divalidasi secara independen pada setiap ukuran sampel.</p><p>Alternatif untuk estimasi detection/power: 3PL dengan c=0,05, 0,15, 0,25; dan 2D dengan loading sekunder 0,25, 0,45, 0,70. Rasch/1PL adalah benchmark karena Q3 menguji dependensi residual, bukan restriksi kesamaan diskriminasi.</p><div style="overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap"><thead><tr><th>N</th><th>Kondisi</th><th>Konvergensi</th><th>Mean |Q3|</th><th>Rerata Max |Q3|</th><th>Detection / benchmark exceedance</th><th>Wilson 95%</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
+      '<div class="card" style="margin:12px 0"><h3>Kalibrasi false-positive per ukuran sampel</h3>'+calibrationCards+'</div>'+
+      '<div class="card" style="margin:12px 0"><h3>Batas interpretasi</h3><p>Rate operasional menghitung kegagalan konvergensi sebagai kegagalan deteksi; rate kondisional hanya memakai fit konvergen. Wilson CI/MCSE mengukur ketidakpastian Monte Carlo dari replikasi pengujian, tetapi belum memasukkan ketidakpastian cutoff yang berasal dari 100 replikasi kalibrasi.</p><p>Hasil ini adalah estimasi power sintetis untuk generator dan parameter yang ditentukan, bukan power universal atau bukti validitas pada data peserta Pytago. Untuk laporan final, jumlah replikasi dan kalibrasi cutoff perlu ditingkatkan.</p></div>';
   }
   async function runSampleSensitivity() {
     const root=document.getElementById('pytago-synth-panel');
@@ -844,7 +1027,7 @@
     const url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=(latest.schema||'pytago-irt-results').replace(/[^a-z0-9.-]+/gi,'-')+'.json';a.click();URL.revokeObjectURL(url);
   }
-  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,getLatest:()=>latest});
+  window.PytagoSyntheticEngine=Object.freeze({config:CFG,generate:generate,estimateMML2PL:estimateMML2PL,estimateJointObservedSE:estimateJointObservedSE,computeYenQ3:computeYenQ3,runMisspecification:runMisspecification,runLocalDependenceNullValidation:runLocalDependenceNullValidation,runLocalDependenceAlternativePilot:runLocalDependenceAlternativePilot,getLatest:()=>latest});
   new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true,attributes:true});
   mount();
 })();

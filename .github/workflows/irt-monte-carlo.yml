@@ -1,0 +1,42 @@
+name: IRT Monte Carlo Power Analysis
+
+on:
+  # The branch is already covered by its pull_request event. Keeping a push
+  # trigger as well caused the same expensive simulation to run twice.
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never spend runner time on duplicate Monte-carlo executions for one PR.
+concurrency:
+  group: irt-monte-carlo-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  monte-carlo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run 2,700-fit Monte Carlo simulation
+        run: node scripts/run-irt-monte-carlo.js
+        env:
+          SIM_SEED: "20261127"
+      - name: Upload simulation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytago-irt-model-fit-monte-carlo-v5
+          path: artifacts/pytago-irt-model-fit-monte-carlo-v5.json
+          if-no-files-found: warn
+          retention-days: 30
